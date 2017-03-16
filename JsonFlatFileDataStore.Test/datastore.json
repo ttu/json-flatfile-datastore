@@ -1,12 +1,30 @@
 ﻿{
   "user": [
     {
-      "id": "abba",
-      "name": "James"
+      "id": "1",
+      "name": "James",
+      "age": 40,
+      "location": "NY"
     },
     {
-      "id": "abba2",
-      "name": "Phil"
+      "id": "2",
+      "name": "Phil",
+      "age": 25,
+      "location": "London"
+    },
+    {
+      "id": "3",
+      "name": "Raymond",
+      "age": 30,
+      "location": "SF"
+    }
+  ],
+  "movies": [
+    {
+      "name": "Die Hard"
+    },
+    {
+      "name": "Predator"
     }
   ],
   "family": [
