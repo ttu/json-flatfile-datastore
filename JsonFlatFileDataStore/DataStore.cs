@@ -23,7 +23,18 @@ namespace JsonFlatFileDataStore
         public DataStore(string path)
         {
             _filePath = path;
-            var json = File.ReadAllText(path);
+
+            string json = "{}";
+
+            try
+            {
+                json = File.ReadAllText(path);
+            }
+            catch (FileNotFoundException)
+            {
+                File.WriteAllText(path, json);
+            }
+
             _jsonData = JObject.Parse(json);
 
             // Run updates on background thread and use BlockingCollection to prevent
