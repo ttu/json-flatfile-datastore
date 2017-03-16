@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Xunit;
@@ -30,8 +31,7 @@ namespace JsonFlatFileDataStore.Test
 
         private string Up([CallerMemberName] string name = "")
         {
-            var dir = @"C:\src\GitHub\json-flatfile-datastore\JsonFlatFileDataStore.Test";
-            //var dir = Directory.GetCurrentDirectory();
+            var dir = Path.GetDirectoryName(typeof(DataStoreTests).GetTypeInfo().Assembly.Location);
 
             var path = Path.Combine(dir, "datastore.json");
             var content = File.ReadAllText(path);
