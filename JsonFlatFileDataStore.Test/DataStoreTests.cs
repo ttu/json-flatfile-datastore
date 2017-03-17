@@ -341,8 +341,9 @@ namespace JsonFlatFileDataStore.Test
                                 .AsQueryable()
                                 .Single(p => p.name == "Phil");
 
-            await dynamicCollection.InsertOneAsync(new { id = "2", name = "Raymond", age = 32 });
-            await dynamicCollection.DeleteOneAsync(e => e.name == "Raymond");
+            await dynamicCollection.InsertOneAsync(new { id = "4", name = "Raymond", age = 32 });
+            await dynamicCollection.ReplaceOneAsync(e => e.id == "4", new { id = "2", name = "Barry", age = 32 });
+            await dynamicCollection.DeleteOneAsync(e => e.name == "Barry");
 
             var typedCollection = store.GetCollection<User>();
 
@@ -350,8 +351,10 @@ namespace JsonFlatFileDataStore.Test
                                 .AsQueryable()
                                 .Single(p => p.Name == "Phil");
 
-            typedCollection.InsertOne(new User { Id = "3", Name = "Jim", Age = 52 });
-            typedCollection.DeleteOne(e => e.Name == "Jim");
+            typedCollection.InsertOne(new User { Id = "5", Name = "Jim", Age = 52 });
+            typedCollection.ReplaceOne(e => e.Id == "5", new User { Id = "3", Name = "Barry", Age = 52 });
+            typedCollection.DeleteOne(e => e.Name == "Barry");
+            typedCollection.DeleteMany(e => e.Age < 31);
 
             Assert.Equal("Phil", userDynamic.name);
             Assert.Equal("Phil", userTyped.Name);
