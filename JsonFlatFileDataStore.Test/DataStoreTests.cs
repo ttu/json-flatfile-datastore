@@ -12,7 +12,7 @@ namespace JsonFlatFileDataStore.Test
     {
         private class User
         {
-            public string Id { get; set; }
+            public int Id { get; set; }
 
             public string Name { get; set; }
 
@@ -127,7 +127,7 @@ namespace JsonFlatFileDataStore.Test
             var collection = store.GetCollection("user");
             Assert.Equal(3, collection.Count);
 
-            collection.InsertOne(new { id = "acac", name = "Teddy" });
+            collection.InsertOne(new { id = 16, name = "Teddy" });
             Assert.Equal(4, collection.Count);
 
             var collection2 = store.GetCollection("user");
@@ -151,7 +151,7 @@ namespace JsonFlatFileDataStore.Test
             var collection = store.GetCollection<User>("user");
             Assert.Equal(3, collection.Count);
 
-            collection.InsertOne(new User { Id = "acac", Name = "Teddy" });
+            collection.InsertOne(new User { Id = 12, Name = "Teddy" });
             Assert.Equal(4, collection.Count);
 
             var collection2 = store.GetCollection("user");
@@ -175,7 +175,7 @@ namespace JsonFlatFileDataStore.Test
             var collection = store.GetCollection<User>("user");
             Assert.Equal(3, collection.Count);
 
-            await collection.InsertOneAsync(new User { Id = "acac", Name = "Teddy" });
+            await collection.InsertOneAsync(new User { Id = 24, Name = "Teddy" });
             Assert.Equal(4, collection.Count);
 
             var collection2 = store.GetCollection("user");
@@ -199,7 +199,7 @@ namespace JsonFlatFileDataStore.Test
             var collection = store.GetCollection<User>("user");
             Assert.Equal(3, collection.Count);
 
-            collection.InsertOne(new User { Id = "acac", Name = "Teddy" });
+            collection.InsertOne(new User { Id = 11, Name = "Teddy" });
             Assert.Equal(4, collection.Count);
 
             var store2 = new DataStore(newFilePath);
@@ -207,11 +207,11 @@ namespace JsonFlatFileDataStore.Test
             var collection2 = store2.GetCollection<User>("user");
             Assert.Equal(4, collection2.Count);
 
-            collection2.ReplaceOne(e => e.Id == "acac", new User { Id = "acac", Name = "Theodor" });
+            collection2.ReplaceOne(e => e.Id == 11, new User { Id = 11, Name = "Theodor" });
 
             var store3 = new DataStore(newFilePath);
             var collection3 = store3.GetCollection<User>("user");
-            var updated = collection3.Find(e => e.Id == "acac").First();
+            var updated = collection3.Find(e => e.Id == 11).First();
             Assert.Equal("Theodor", updated.Name);
 
             Down(newFilePath);
@@ -227,13 +227,13 @@ namespace JsonFlatFileDataStore.Test
             var collection = store.GetCollection<User>("user");
             Assert.Equal(3, collection.Count);
 
-            collection.InsertOne(new User { Id = "acac", Name = "Teddy" });
+            collection.InsertOne(new User { Id = 11, Name = "Teddy" });
             Assert.Equal(4, collection.Count);
 
             var store2 = new DataStore(newFilePath);
 
             var collection2 = store2.GetCollection<User>("user");
-            collection2.DeleteOne(e => e.Id == "acac");
+            collection2.DeleteOne(e => e.Id == 11);
             Assert.Equal(3, collection2.Count);
 
             var store3 = new DataStore(newFilePath);
@@ -253,7 +253,7 @@ namespace JsonFlatFileDataStore.Test
             var collection = store.GetCollection("book");
             Assert.Equal(0, collection.Count);
 
-            await collection.InsertOneAsync(new { Id = "1", Name = "Some name" });
+            await collection.InsertOneAsync(new { Id = 1, Name = "Some name" });
             Assert.Equal(1, collection.Count);
 
             var store2 = new DataStore(newFilePath);
@@ -261,7 +261,7 @@ namespace JsonFlatFileDataStore.Test
             var collection2 = store2.GetCollection("book");
             Assert.Equal(1, collection2.Count);
 
-            await collection2.DeleteOneAsync(e => e.Id == "1");
+            await collection2.DeleteOneAsync(e => e.Id == 1);
             Assert.Equal(0, collection2.Count);
 
             var store3 = new DataStore(newFilePath);
@@ -283,7 +283,7 @@ namespace JsonFlatFileDataStore.Test
 
             for (int i = 0; i < 100; i++)
             {
-                collection.InsertOne(new User { Id = i.ToString(), Name = "Teddy" });
+                collection.InsertOne(new User { Id = i, Name = "Teddy" });
             }
 
             var store2 = new DataStore(newFilePath);
@@ -303,7 +303,7 @@ namespace JsonFlatFileDataStore.Test
             var collection = store.GetCollection<User>("user");
             Assert.Equal(3, collection.Count);
 
-            var tasks = Enumerable.Range(0, 100).Select(i => collection.InsertOneAsync(new User { Id = i.ToString(), Name = "Teddy" }));
+            var tasks = Enumerable.Range(0, 100).Select(i => collection.InsertOneAsync(new User { Id = i, Name = "Teddy" }));
 
             await Task.WhenAll(tasks);
 
@@ -341,8 +341,8 @@ namespace JsonFlatFileDataStore.Test
                                 .AsQueryable()
                                 .Single(p => p.name == "Phil");
 
-            await dynamicCollection.InsertOneAsync(new { id = "4", name = "Raymond", age = 32 });
-            await dynamicCollection.ReplaceOneAsync(e => e.id == "4", new { id = "2", name = "Barry", age = 32 });
+            await dynamicCollection.InsertOneAsync(new { id = 14, name = "Raymond", age = 32 });
+            await dynamicCollection.ReplaceOneAsync(e => e.id == 14, new { id = 14, name = "Barry", age = 32 });
             await dynamicCollection.DeleteOneAsync(e => e.name == "Barry");
 
             var typedCollection = store.GetCollection<User>();
@@ -351,8 +351,8 @@ namespace JsonFlatFileDataStore.Test
                                 .AsQueryable()
                                 .Single(p => p.Name == "Phil");
 
-            typedCollection.InsertOne(new User { Id = "5", Name = "Jim", Age = 52 });
-            typedCollection.ReplaceOne(e => e.Id == "5", new User { Id = "3", Name = "Barry", Age = 52 });
+            typedCollection.InsertOne(new User { Id = 15, Name = "Jim", Age = 52 });
+            typedCollection.ReplaceOne(e => e.Id == 15, new User { Id = 15, Name = "Barry", Age = 52 });
             typedCollection.DeleteOne(e => e.Name == "Barry");
             typedCollection.DeleteMany(e => e.Age < 31);
 

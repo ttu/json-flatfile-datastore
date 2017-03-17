@@ -17,13 +17,13 @@ Example user collection
 {
   "user": [
     {
-      "id": "1",
+      "id": 1,
       "name": "Phil",
       "age": 40,
       "city": "NY"
     },
 	{
-      "id": "2",
+      "id": 2,
       "name": "Larry",
       "age": 37,
       "city": "London"
@@ -45,9 +45,9 @@ var userDynamic = dynamicCollection
                     .Single(p => p.name == "Phil");
 
 // Add new item
-await dynamicCollection.InsertOneAsync(new { id = "3", name = "Raymond", age = 32 });
+await dynamicCollection.InsertOneAsync(new { id = 3, name = "Raymond", age = 32 });
 // Replace added item
-await dynamicCollection.ReplaceOneAsync(e => e.id == "3", new { id = "3", name = "Barry", age = 32 });
+await dynamicCollection.ReplaceOneAsync(e => e.id == 3, new { id = 3, name = "Barry", age = 32 });
 // Delete item
 await dynamicCollection.DeleteOneAsync(e => e.name == "Barry");
 ```
@@ -65,9 +65,9 @@ var userTyped = typedCollection
                     .Single(p => p.Name == "Phil");
 
 // Add new item
-typedCollection.InsertOne(new User { Id = "3", Name = "Jim", Age = 52 });
+typedCollection.InsertOne(new User { Id = 3, Name = "Jim", Age = 52 });
 // Replace added item
-typedCollection.ReplaceOne(e => e.Id == "3", new User { Id = "3", Name = "Barry", Age = 52 });
+typedCollection.ReplaceOne(e => e.Id == 3, new User { Id = 3, Name = "Barry", Age = 52 });
 // Delete item
 typedCollection.DeleteOne(e => e.Name == "Barry");
 ```
@@ -96,7 +96,7 @@ Links:
 
 If collection name is not defined with typed collection, class name is converted to lowercase. E.g. User is user, UserFamiy is userfamily etc.
 
-```chsharp
+```csharp
 var store = new DataStore(newFilePath);
 // JSON { "movie": [] };
 var collection = store.GetCollection<Movie>();
