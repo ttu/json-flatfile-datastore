@@ -50,17 +50,17 @@ namespace JsonFlatFileDataStore
             await _commit(_path, _data.Value, true);
         }
 
-        public void UpdateOne(Predicate<T> filter, T entity)
+        public void UpdateOne(Predicate<T> filter, dynamic entity)
         {
-            // TODO: Update with reflection
-            //var toUpdate = Find(filter).First();
-            ReplaceOne(filter, entity);
+            var toUpdate = Find(filter).First();
+            ObjectExtensions.CopyProperties(entity, toUpdate);
+            ReplaceOne(filter, toUpdate);
         }
 
-        public async Task UpdateOneAsync(Predicate<T> filter, T entity)
+        public async Task UpdateOneAsync(Predicate<T> filter, dynamic entity)
         {
-            // TODO: Update with reflection
-            //var toUpdate = Find(filter).First();
+            var toUpdate = Find(filter).First();
+            ObjectExtensions.CopyProperties(entity, toUpdate);
             await ReplaceOneAsync(filter, entity);
         }
 

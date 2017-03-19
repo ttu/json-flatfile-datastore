@@ -56,7 +56,7 @@ namespace JsonFlatFileDataStore
         /// </summary>
         /// <param name="filter"></param>
         /// <param name="entity"></param>
-        void UpdateOne(Predicate<T> filter, T entity);
+        void UpdateOne(Predicate<T> filter, dynamic entity);
 
         /// <summary>
         /// Update the first item that matches the filter
@@ -64,8 +64,7 @@ namespace JsonFlatFileDataStore
         /// <param name="filter"></param>
         /// <param name="entity"></param>
         /// <returns></returns>
-        // TODO: Not implemented
-        //Task UpdateOneAsync(Predicate<T> filter, T entity);
+        Task UpdateOneAsync(Predicate<T> filter, dynamic entity);
 
         /// <summary>
         /// Delete first item that matches the filter

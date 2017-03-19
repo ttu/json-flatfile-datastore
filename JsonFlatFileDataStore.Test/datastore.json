@@ -32,8 +32,8 @@
       "id": "AndersenFamily",
       "lastName": "Andersen",
       "parents": [
-        { "firstName": "Thomas" },
-        { "firstName": "Mary Kay" }
+        { "firstName": "Thomas", "age": 41 },
+        { "firstName": "Mary Kay", "age": 43 }
       ],
       "children": [
         {

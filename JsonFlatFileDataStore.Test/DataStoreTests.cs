@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -10,34 +9,6 @@ namespace JsonFlatFileDataStore.Test
 {
     public class DataStoreTests
     {
-        private class User
-        {
-            public int Id { get; set; }
-
-            public string Name { get; set; }
-
-            public int Age { get; set; }
-
-            public string Location { get; set; }
-        }
-
-        private class Movie
-        {
-            public string Name { get; set; }
-        }
-
-        private class Family
-        {
-            public string Id { get; set; }
-
-            public List<Parent> Parents { get; set; }
-        }
-
-        private class Parent
-        {
-            public string FirstName { get; set; }
-        }
-
         private string Up([CallerMemberName] string name = "")
         {
             var dir = Path.GetDirectoryName(typeof(DataStoreTests).GetTypeInfo().Assembly.Location);
@@ -185,6 +156,37 @@ namespace JsonFlatFileDataStore.Test
 
             var collection3 = store2.GetCollection("user");
             Assert.Equal(4, collection3.Count);
+
+            Down(newFilePath);
+        }
+
+        [Fact]
+        public void UpdateOne_User()
+        {
+            var newFilePath = Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection<User>("user");
+            Assert.Equal(3, collection.Count);
+
+            collection.InsertOne(new User { Id = 11, Name = "Teddy", Age = 21 });
+            Assert.Equal(4, collection.Count);
+
+            var store2 = new DataStore(newFilePath);
+            var collection2 = store2.GetCollection<User>("user");
+            Assert.Equal(4, collection2.Count);
+
+            collection2.UpdateOne(e => e.Id == 11, new { Age = 22 });
+
+            var store3 = new DataStore(newFilePath);
+            var collection3 = store3.GetCollection<User>("user");
+            var updated = collection3.Find(e => e.Id == 11).First();
+            Assert.Equal(22, updated.Age);
+            Assert.Equal("Teddy", updated.Name);
+
+            // Try to update property that doesn't exist
+            collection2.UpdateOne(e => e.Id == 11, new { SomeThatIsNotThere = "No" });
 
             Down(newFilePath);
         }
