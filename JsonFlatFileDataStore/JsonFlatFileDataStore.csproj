@@ -2,14 +2,22 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard1.6</TargetFramework>
+    <Authors>Tomi Tuhkanen</Authors>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <PackageProjectUrl>https://github.com/ttu/json-flatfile-datastore</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/ttu/json-flatfile-datastore</RepositoryUrl>
+    <Version>0.1.0</Version>
+    <Company />
+    <Description>Simple json flat file database</Description>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/ttu/json-flatfile-datastore/master/LICENSE</PackageLicenseUrl>
+    <PackageTags>json flatfile datastore database linq</PackageTags>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
     <PackageReference Include="System.Linq.Queryable" Version="4.3.0" />
     <PackageReference Include="System.Reflection" Version="4.3.0" />
-    <PackageReference Include="System.Reflection.Extensions" Version="4.3.0" />
-    <PackageReference Include="System.Reflection.Primitives" Version="4.3.0" />
     <PackageReference Include="System.Reflection.TypeExtensions" Version="4.3.0" />
   </ItemGroup>
 
