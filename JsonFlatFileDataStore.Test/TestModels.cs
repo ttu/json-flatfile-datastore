@@ -38,4 +38,11 @@ namespace JsonFlatFileDataStore.Test
     {
         public string City { get; set; }
     }
+
+    internal class Owner
+    {
+        public string FirstName { get; set; }
+
+        public List<int> MyValues { get; set; }
+    }
 }
