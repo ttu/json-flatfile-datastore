@@ -1,13 +1,11 @@
 JSON Flat file Datastore
 ----------------------------------
 
-Dead simple flat file json datastore.
+Simple flat file json datastore.
 
-No relations. No indexes. No bells. No whistles. Just basics.
-
-Works with dynamic and typed data.
-
-Has sync and async methods.
+	* No relations. No indexes. No bells. No whistles. Just basics.
+	* Works with dynamic and typed data.
+	* Synchronous and asynchronous methods.
 
 ## Functionality
 
@@ -60,39 +58,84 @@ var userTyped = collection
 ```
 
 #### Insert
-Insert a new item to the collection
+
+`InsertOne` and `InsertOneAsync` will insert a new item to the collection.
+
 ```csharp
 // Async and dynamic
-await collection.InsertOneAsync(new { id = 3, name = "Raymond", age = 32 });
+await collection.InsertOneAsync(new { id = 3, name = "Raymond", age = 32, city = "NY" });
+
 // Sync and typed
-collection.InsertOne(new User { Id = 3, Name = "Raymond", Age = 32 });
+collection.InsertOne(new User { Id = 3, Name = "Raymond", Age = 32, City = "NY" });
 ```
 
 #### Replace
-Replace first item that matches the filter
+
+`ReplaceOne` and `ReplaceOneAsync` will replacec the first item that matches the filter.
+
 ```csharp
 // Sync and dynamic
 collection.ReplaceOne(e => e.id == 3, new { id = 3, name = "Barry", age = 33 });
+
 // Async and typed
 await collection.ReplaceOneAsync(e => e.Id == 3, new User { Id = 3, Name = "Barry", Age = 33 });
 ```
 
 #### Update
-Update first item that matches the filter with passed properties from dynamic object
+
+`UpdateOne` and `UpdateOneAsync` will update the first item that matches the filter with passed properties from dynamic object.
+
 ```csharp
 // Dynamic
 await collection.UpdateOneAsync(e => e.id == 3, new { age = 42 });
+
 // Typed
-await collection.UpdateOneAsync(e => e.Id == 3, new { age = 42 });
+await collection.UpdateOneAsync(e => e.Name == "Phil", new { age = 42 });
+```
+
+Update can also update items from collection and add new items to collection.
+
+```csharp
+var family = new Family
+{
+	Id = 12,
+	FamilyName = "Andersen",
+    Parents = new List<Parent>
+    {
+        new Parent {  FirstName = "Jim", Age = 52 }
+    },
+    Address = new Address { City = "Helsinki" }
+};
+
+await collection.InsertOneAsync(family);
+
+// Adds a second parent to the list
+await collection.UpdateOneAsync(e => e.Id == 12, new { Parents = new[] { null, new { FirstName = "Sally", age = 41 } } });
+
+// Updates the first parent's age to 42
+await collection.UpdateOneAsync(e => e.Id == 12, new { Parents = new[] { new { age = 42 } } });
 ```
 
 #### Delete
-Delete first object that matches the filter. DeleteOne and DeleteOneAsync.
+
+`DeleteOne` and `DeleteOneAsync` will remove first object that matches the filter.
+
 ```csharp
 // Dynamic
-collection.DeleteOneAsync(e => e.id == 3);
+await collection.DeleteOneAsync(e => e.id == 3);
+
 // Typed
-collection.DeleteOneAsync(e => e.Id == 3);
+await collection.DeleteOneAsync(e => e.Id == 3);
+```
+
+`DeleteMany` and `DeleteManyAsyn` will delete all items that match the filter.
+
+```csharp
+// Dynamic
+await collection.DeleteManyAsync(e => e.city == "NY");
+
+// Typed
+await collection.DeleteManyAsync(e => e.City == "NY");
 ```
 
 ### Collection naming
@@ -117,9 +160,7 @@ If this is used with e.g. Web API, add it to DI-container as a singleton. This w
 
 ### API
 
-API is almost identical to MongoDB's C# API, so switching to MongoDB is easy. Use type inference as types are not interchangable.
-
-Links:
+API is almost identical to MongoDB's C# API, so switching to MongoDB or (DocumentDB)[https://docs.microsoft.com/en-us/azure/documentdb/documentdb-protocol-mongodb] might be easy. Use type inference as types are not interchangable.
 
 [MongoDB-C#-linq](http://mongodb.github.io/mongo-csharp-driver/2.4/reference/driver/crud/linq/#queryable)
 
