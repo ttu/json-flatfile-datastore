@@ -114,7 +114,7 @@ namespace JsonFlatFileDataStore.Test
         [Fact]
         public void Reflection_CopyProperties_Array_Values_Typed()
         {
-            var item = new Owner();
+            var item = new PrivateOwner();
             item.FirstName = "Theodor";
             item.MyValues = new List<int> { 1, 2, 3 };
 

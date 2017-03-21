@@ -18,6 +18,7 @@ namespace JsonFlatFileDataStore
         private readonly JObject _jsonData;
         private readonly string _filePath;
         private readonly Func<JObject, string> _toJsonFunc;
+        private readonly Func<string, string> _pathToCamelCase;
 
         private readonly BlockingCollection<Action> _updates = new BlockingCollection<Action>();
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
@@ -32,6 +33,7 @@ namespace JsonFlatFileDataStore
         public DataStore(string path, bool useLowerCamelCase = true)
         {
             _filePath = path;
+
             _toJsonFunc = useLowerCamelCase
                         ? new Func<JObject, string>(s =>
                         {
@@ -41,6 +43,10 @@ namespace JsonFlatFileDataStore
                             return JsonConvert.SerializeObject(jObject, Formatting.Indented, _serializerSettings);
                         })
                         : new Func<JObject, string>(s => s.ToString());
+
+            _pathToCamelCase = useLowerCamelCase
+                                ? new Func<string, string>(s => string.Concat(s.Select((x, i) => i == 0 ? char.ToLower(x).ToString() : x.ToString())))
+                                : new Func<string, string>(s => s);
 
             string json = "{}";
 
@@ -55,8 +61,7 @@ namespace JsonFlatFileDataStore
 
             _jsonData = JObject.Parse(json);
 
-            // Run updates on background thread and use BlockingCollection to prevent
-            // multiple updates running at the same time
+            // Run updates on background thread and use BlockingCollection to prevent multiple updates running at the same time
             Task.Run(() =>
             {
                 while (!_cts.IsCancellationRequested)
@@ -81,7 +86,7 @@ namespace JsonFlatFileDataStore
         public IDocumentCollection<T> GetCollection<T>(string path = null) where T : class
         {
             var convertFunc = new Func<JToken, T>(e => JsonConvert.DeserializeObject<T>(e.ToString()));
-            return GetCollection<T>(path ?? typeof(T).Name.ToLower(), convertFunc);
+            return GetCollection<T>(path ?? _pathToCamelCase(typeof(T).Name), convertFunc);
         }
 
         public IDocumentCollection<dynamic> GetCollection(string path)

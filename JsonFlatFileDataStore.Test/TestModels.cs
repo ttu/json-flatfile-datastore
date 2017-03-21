@@ -39,7 +39,7 @@ namespace JsonFlatFileDataStore.Test
         public string City { get; set; }
     }
 
-    internal class Owner
+    internal class PrivateOwner
     {
         public string FirstName { get; set; }
 

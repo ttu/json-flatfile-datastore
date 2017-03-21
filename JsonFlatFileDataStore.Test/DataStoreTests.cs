@@ -280,15 +280,27 @@ namespace JsonFlatFileDataStore.Test
 
             var store = new DataStore(newFilePath);
 
-            var collection = store.GetCollection<Owner>("Owner");
+            var collection = store.GetCollection<PrivateOwner>("PrivateOwner");
             Assert.Equal(0, collection.Count);
 
-            await collection.InsertOneAsync(new Owner { FirstName = "Jimmy" , OwnerLongTestProperty = "UT" });
+            await collection.InsertOneAsync(new PrivateOwner { FirstName = "Jimmy" , OwnerLongTestProperty = "UT" });
             Assert.Equal(1, collection.Count);
 
             var json = File.ReadAllText(newFilePath);
 
+            Assert.True(json.Contains("privateOwner"));
             Assert.True(json.Contains("ownerLongTestProperty"));
+
+            var store2 = new DataStore(newFilePath);
+
+            var collectionUppercase = store2.GetCollection<PrivateOwner>("PrivateOwner");
+            Assert.Equal(0, collectionUppercase.Count);
+
+            var collectionLowercase = store2.GetCollection<PrivateOwner>("privateOwner");
+            Assert.Equal(1, collectionLowercase.Count);
+
+            var collectionNocase = store2.GetCollection<PrivateOwner>();
+            Assert.Equal(1, collectionNocase.Count);
 
             Down(newFilePath);
         }
@@ -300,10 +312,10 @@ namespace JsonFlatFileDataStore.Test
 
             var store = new DataStore(newFilePath, false);
 
-            var collection = store.GetCollection<Owner>("Owner");
+            var collection = store.GetCollection<PrivateOwner>("Owner");
             Assert.Equal(0, collection.Count);
 
-            await collection.InsertOneAsync(new Owner { FirstName = "Jimmy", OwnerLongTestProperty = "UT" });
+            await collection.InsertOneAsync(new PrivateOwner { FirstName = "Jimmy", OwnerLongTestProperty = "UT" });
             Assert.Equal(1, collection.Count);
 
             var json = File.ReadAllText(newFilePath);
