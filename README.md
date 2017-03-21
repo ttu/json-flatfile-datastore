@@ -1,15 +1,17 @@
 JSON Flat file Datastore
 ----------------------------------
 
-Simple flat file json datastore.
+[![Build status](https://ci.appveyor.com/api/projects/status/adq9as6ruraln8tn?svg=true)](https://ci.appveyor.com/project/ttu/json-flatfile-datastore)
 
-	* No relations. No indexes. No bells. No whistles. Just basics.
-	* Works with dynamic and typed data.
-	* Synchronous and asynchronous methods.
+Simple flat file JSON datastore.
+
+* No relations. No indexes. No bells. No whistles. Just basics
+* Works with dynamic and typed data
+* Synchronous and asynchronous methods
 
 ## Functionality
 
-Example user collection in json
+Example user collection in JSON
 
 ```json
 {
@@ -31,6 +33,11 @@ Example user collection in json
 ```
 
 #### Query
+
+Collection can be queried with LINQ by getting queryable from collection with `AsQueryable` method.
+
+NOTE: Insted of IQueryable, AsQueryable will return IEnumerable, because IQueryable doesn't allow dynamic's in LINQ queries. With this datastore it won't matter as all data is already loaded to the memory.
+
 Dynamic data
 
 ```csharp
@@ -47,6 +54,7 @@ var userDynamic = collection
 Typed data
 
 ```csharp
+
 var store = new DataStore(pathToJson);
 
 var collection = store.GetCollection<User>();
@@ -62,10 +70,14 @@ var userTyped = collection
 `InsertOne` and `InsertOneAsync` will insert a new item to the collection.
 
 ```csharp
-// Async and dynamic
+// Asynchronous method and dynamic data
+// Before update : { }
+// After update  : { "id": 3, "name": "Raymond", "age": 32, "city" = "NY" }
 await collection.InsertOneAsync(new { id = 3, name = "Raymond", age = 32, city = "NY" });
 
-// Sync and typed
+// Synchronous method and typed data
+// Before update : { }
+// After update  : { "id": 3, "name": "Raymond", "age": 32, "city" = "NY" }
 collection.InsertOne(new User { Id = 3, Name = "Raymond", Age = 32, City = "NY" });
 ```
 
@@ -75,9 +87,13 @@ collection.InsertOne(new User { Id = 3, Name = "Raymond", Age = 32, City = "NY" 
 
 ```csharp
 // Sync and dynamic
+// Before update : { "id": 3, "name": "Raymond", "age": 32, "city": "NY" }
+// After update  : { "id": 3, "name": "Barry", "age": 42 }
 collection.ReplaceOne(e => e.id == 3, new { id = 3, name = "Barry", age = 33 });
 
 // Async and typed
+// Before update : { "id": 3, "name": "Raymond", "age": 32, "city": "NY" }
+// After update  : { "id": 3, "name": "Barry", "age": 42 }
 await collection.ReplaceOneAsync(e => e.Id == 3, new User { Id = 3, Name = "Barry", Age = 33 });
 ```
 
@@ -87,19 +103,23 @@ await collection.ReplaceOneAsync(e => e.Id == 3, new User { Id = 3, Name = "Barr
 
 ```csharp
 // Dynamic
+// Before update : { "id": 1, "name": "Barry", "age": 33 }
+// After update  : { "id": 1, "name": "Barry", "age": 42 }
 await collection.UpdateOneAsync(e => e.id == 3, new { age = 42 });
 
 // Typed
+// Before update : { "id": 1, "name": "Phil", "age": 40, "city": "NY" }
+// After update  : { "id": 1, "name": "Phil", "age": 42, "city": "NY" }
 await collection.UpdateOneAsync(e => e.Name == "Phil", new { age = 42 });
 ```
 
-Update can also update items from collection and add new items to collection.
+Update can also update items from collection and add new items to collection. Null items in passed update data are skipped, so with null items data can be set to update item in correct index.
 
 ```csharp
 var family = new Family
 {
-	Id = 12,
-	FamilyName = "Andersen",
+    Id = 12,
+    FamilyName = "Andersen",
     Parents = new List<Parent>
     {
         new Parent {  FirstName = "Jim", Age = 52 }
@@ -140,10 +160,12 @@ await collection.DeleteManyAsync(e => e.City == "NY");
 
 ### Collection naming
 
-If collection name is not defined with typed collection, class name is converted to lowercase. E.g. User is user, UserFamiy is userfamily etc.
+Collection name must be always defined with dynamic collections. If collection name is not defined with typed collection, class name is converted to lower camel case. E.g. User is user, UserFamily is userfamily etc.
 
 ```csharp
 var store = new DataStore(newFilePath);
+// JSON { "movie": [] };
+var collection = store.GetCollection("movie");
 // JSON { "movie": [] };
 var collection = store.GetCollection<Movie>();
 // JSON { "movies": [] };
@@ -152,19 +174,30 @@ var collection = store.GetCollection<Movie>("movies");
 
 ### Writing to file
 
+By default JSON is written in lower camel case. This can be changed with useLowerCamelCase parameter in DataStore's constructor.
+
+```csharp
+// This will write JSON in lower camel case
+// e.g. { "myMovies" : [ { "longName": "xxxxx" } ] }
+var store = new DataStore(newFilePath);
+
+// This will write JSON in upper camel case
+// e.g. { "MyMovies" : [ { "LongName": "xxxxx" } ] }
+var store = new DataStore(newFilePath, false);
+```
+
 Changes are committed immediately from collection to DataStore's internal collection. Each update creates a write updates to a blocking collection, which is processed on background. 
 
 On commit, datastore always writes whole collection to the file, even when only one item is changed.
 
-If this is used with e.g. Web API, add it to DI-container as a singleton. This way DataStore's internal state is correct and application does not have to rely on the state on the file.
+If this is used with e.g. Web API, add it to DI container as a singleton. This way DataStore's internal state is correct and application does not have to rely on the state on the file.
 
 ### API
 
-API is almost identical to MongoDB's C# API, so switching to MongoDB or (DocumentDB)[https://docs.microsoft.com/en-us/azure/documentdb/documentdb-protocol-mongodb] might be easy. Use type inference as types are not interchangable.
+API is almost identical to MongoDB's C# API, so switching to MongoDB or [DocumentDB](https://docs.microsoft.com/en-us/azure/documentdb/documentdb-protocol-mongodb) might be easy. Use type inference as types are not interchangable.
 
-[MongoDB-C#-linq](http://mongodb.github.io/mongo-csharp-driver/2.4/reference/driver/crud/linq/#queryable)
-
-[MongoDB-C#-crud](http://mongodb.github.io/mongo-csharp-driver/2.4/reference/driver/crud/writing/)
+* [MongoDB-C#-linq](http://mongodb.github.io/mongo-csharp-driver/2.4/reference/driver/crud/linq/#queryable)
+* [MongoDB-C#-crud](http://mongodb.github.io/mongo-csharp-driver/2.4/reference/driver/crud/writing/)
 
 ### License
 
