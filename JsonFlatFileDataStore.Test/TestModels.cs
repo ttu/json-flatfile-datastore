@@ -43,6 +43,8 @@ namespace JsonFlatFileDataStore.Test
     {
         public string FirstName { get; set; }
 
+        public string OwnerLongTestProperty { get; set; }
+
         public List<int> MyValues { get; set; }
     }
 }

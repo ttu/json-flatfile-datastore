@@ -250,7 +250,7 @@ namespace JsonFlatFileDataStore.Test
         {
             var newFilePath = Up();
 
-            var store = new DataStore(newFilePath);
+            var store = new DataStore(newFilePath, false);
 
             var collection = store.GetCollection("book");
             Assert.Equal(0, collection.Count);
@@ -269,6 +269,46 @@ namespace JsonFlatFileDataStore.Test
             var store3 = new DataStore(newFilePath);
             var collection3 = store3.GetCollection("book");
             Assert.Equal(0, collection3.Count);
+
+            Down(newFilePath);
+        }
+
+        [Fact]
+        public async Task WriteToFile_In_LowerCamelCase()
+        {
+            var newFilePath = Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection<Owner>("Owner");
+            Assert.Equal(0, collection.Count);
+
+            await collection.InsertOneAsync(new Owner { FirstName = "Jimmy" , OwnerLongTestProperty = "UT" });
+            Assert.Equal(1, collection.Count);
+
+            var json = File.ReadAllText(newFilePath);
+
+            Assert.True(json.Contains("ownerLongTestProperty"));
+
+            Down(newFilePath);
+        }
+
+        [Fact]
+        public async Task WriteToFile_In_UpperCamelCase()
+        {
+            var newFilePath = Up();
+
+            var store = new DataStore(newFilePath, false);
+
+            var collection = store.GetCollection<Owner>("Owner");
+            Assert.Equal(0, collection.Count);
+
+            await collection.InsertOneAsync(new Owner { FirstName = "Jimmy", OwnerLongTestProperty = "UT" });
+            Assert.Equal(1, collection.Count);
+
+            var json = File.ReadAllText(newFilePath);
+
+            Assert.True(json.Contains("OwnerLongTestProperty"));
 
             Down(newFilePath);
         }

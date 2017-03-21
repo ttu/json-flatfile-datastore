@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -16,13 +17,30 @@ namespace JsonFlatFileDataStore
     {
         private readonly JObject _jsonData;
         private readonly string _filePath;
-        private readonly ExpandoObjectConverter _converter = new ExpandoObjectConverter();
+        private readonly Func<JObject, string> _toJsonFunc;
+
         private readonly BlockingCollection<Action> _updates = new BlockingCollection<Action>();
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
 
-        public DataStore(string path)
+        private readonly ExpandoObjectConverter _converter = new ExpandoObjectConverter();
+
+        private readonly JsonSerializerSettings _serializerSettings = new JsonSerializerSettings()
+        {
+            ContractResolver = new CamelCasePropertyNamesContractResolver()
+        };
+
+        public DataStore(string path, bool useLowerCamelCase = true)
         {
             _filePath = path;
+            _toJsonFunc = useLowerCamelCase
+                        ? new Func<JObject, string>(s =>
+                        {
+                            // Serializing JObject ignores SerializerSettings, so we have to first deserialize to ExpandoObject and then serialize
+                            // http://json.codeplex.com/workitem/23853
+                            var jObject = JsonConvert.DeserializeObject<ExpandoObject>(_jsonData.ToString());
+                            return JsonConvert.SerializeObject(jObject, Formatting.Indented, _serializerSettings);
+                        })
+                        : new Func<JObject, string>(s => s.ToString());
 
             string json = "{}";
 
@@ -94,14 +112,13 @@ namespace JsonFlatFileDataStore
         {
             bool waitFlag = true;
 
-            // string wouldn't actually need a local copy, but still better to be safe ;)
-            string pathBu = path;
             List<T> dataBu = data.ToList();
 
             _updates.Add(new Action(() =>
             {
-                _jsonData[pathBu] = JArray.FromObject(dataBu);
-                File.WriteAllText(_filePath, _jsonData.ToString());
+                _jsonData[path] = JArray.FromObject(dataBu);
+                string json = _toJsonFunc(_jsonData);
+                File.WriteAllText(_filePath, json);
                 waitFlag = false;
             }));
 
