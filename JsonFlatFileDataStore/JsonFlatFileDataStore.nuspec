@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>Tomi Tuhkanen</authors>
+    <owners>$author$</owners>
+    <licenseUrl>https://raw.githubusercontent.com/ttu/json-flatfile-datastore/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/ttu/json-flatfile-datastore</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>$description$</description>
+    <releaseNotes>First release</releaseNotes>
+    <copyright>Copyright 2017</copyright>
+    <tags>json flatfile datastore database linq</tags>
+  </metadata>
+</package>

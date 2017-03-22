@@ -1,13 +1,16 @@
-JSON Flat file Datastore
+JSON Flat File Datastore
 ----------------------------------
 
-[![Build status](https://ci.appveyor.com/api/projects/status/adq9as6ruraln8tn?svg=true)](https://ci.appveyor.com/project/ttu/json-flatfile-datastore)
+[![Build status](https://ci.appveyor.com/api/projects/status/adq9as6ruraln8tn?svg=true)](https://ci.appveyor.com/project/ttu/json-flatfile-datastore) [![NuGet](https://img.shields.io/nuget/v/JsonFlatFileDataStore.svg)](https://www.nuget.org/packages/JsonFlatFileDataStore/)
 
 Simple flat file JSON datastore.
 
 * No relations. No indexes. No bells. No whistles. Just basics
 * Works with dynamic and typed data
 * Synchronous and asynchronous methods
+* [.NET Standard 1.4](https://github.com/dotnet/standard/blob/master/docs/versions.md)
+  * .NET Core 1.0 ->
+  * .NET 4.6.1 ->
 
 ## Functionality
 
@@ -36,9 +39,9 @@ Example user collection in JSON
 
 Collection can be queried with LINQ by getting queryable from collection with `AsQueryable` method.
 
-NOTE: Insted of IQueryable, AsQueryable will return IEnumerable, because IQueryable doesn't allow dynamic's in LINQ queries. With this datastore it won't matter as all data is already loaded to the memory.
+NOTE: AsQueryable will return IEnumerable, insted of IQueryable, because IQueryable doesn't support dynamic's in LINQ queries. With this datastore it won't matter as all data is already loaded into memory.
 
-Dynamic data
+`AsQueryable` LINQ query with dynamic data
 
 ```csharp
 var store = new DataStore(pathToJson);
@@ -51,7 +54,7 @@ var userDynamic = collection
                     .Single(p => p.name == "Phil");
 ```
 
-Typed data
+`AsQueryable` LINQ query with typed data
 
 ```csharp
 
@@ -158,6 +161,29 @@ await collection.DeleteManyAsync(e => e.city == "NY");
 await collection.DeleteManyAsync(e => e.City == "NY");
 ```
 
+### Id field value
+
+
+If incrementing id field values is used, `GetNextIdValue` returns next id field value. If id property is integer, last item's value is incremented by one. If field is not integer it is converted to string and number is parsed from the end of the string and incremented by one.
+
+```csharp
+var store = new DataStore(newFilePath, keyProperty: "myId");
+
+// myId is an integer
+collection.InsertOne(new { myId = 2 });
+// nextId = 3
+var nextId = collection.GetNextIdValue();
+
+// myId is a string
+collection.InsertOne(new { myId = "hello" });
+// nextId = "hello0"
+var nextId = collection.GetNextIdValue();
+
+collection.InsertOne(new { myId = "hello3" });
+// nextId = "hello4"
+var nextId = collection.GetNextIdValue();
+``` 
+
 ### Collection naming
 
 Collection name must be always defined with dynamic collections. If collection name is not defined with typed collection, class name is converted to lower camel case. E.g. User is user, UserFamily is userfamily etc.
@@ -191,6 +217,26 @@ Changes are committed immediately from collection to DataStore's internal collec
 On commit, datastore always writes whole collection to the file, even when only one item is changed.
 
 If this is used with e.g. Web API, add it to DI container as a singleton. This way DataStore's internal state is correct and application does not have to rely on the state on the file.
+
+### Dynamic and error CS1977
+
+This is a message you will see if you try to use dynamic with lambdas:
+
+> CS1977: Cannot use a lambda expression as an argument to a dynamically dispatched operation without first casting it to a delegate or expression tree type
+
+A lambda needs to know the data type of the parameter at compile time. Cast dynamic to an object and compiler will happily accept it, as it believes you know what you are doing and leaves validation to Dynamic Language Runtime.  
+```csharp
+dynamic dynamicUser = new { id = 11, name = "Theodor" };
+
+// This will give CS1977 error
+collection2.ReplaceOne(e => e.id == 11, dynamicUser);
+
+// Compiler will accept this
+collection2.ReplaceOne(e => e.id == 11, dynamicUser as object);
+
+// Compiler will also accept this
+collection2.ReplaceOne((Predicate<dynamic>)(e => e.id == 11), dynamicUser);
+```
 
 ### API
 

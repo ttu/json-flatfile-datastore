@@ -1,11 +1,11 @@
 ## Changelog
 
 ### [Unreleased]
-* Everything
+*
 
-## [0.1.0] - 2017-xx-xx
+## [1.0.0] - 2017-03-22
+* AsQueryable, Find, GetNextIdValue, InsertOne, ReplaceOne, UpdateOne, DeleteOne, DeleteMany
+* Synchronous and asynchronous methods
 * Handle dynamic and typed collections
-* Basic functionality 
-	* Query, InsertOne, ReplaceOne, UpdateOne, DeleteOne, DeleteMany
-	* synchronous and asynchronous
-* Write data to json on background thread
+* Handle different camel cases
+* Write data to JSON on background thread
