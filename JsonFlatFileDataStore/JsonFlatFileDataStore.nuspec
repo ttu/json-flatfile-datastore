@@ -10,7 +10,7 @@
     <projectUrl>https://github.com/ttu/json-flatfile-datastore</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>First release</releaseNotes>
+    <releaseNotes>https://raw.githubusercontent.com/ttu/json-flatfile-datastore/master/CHANGELOG.md</releaseNotes>
     <copyright>Copyright 2017</copyright>
     <tags>json flatfile datastore database linq</tags>
   </metadata>
