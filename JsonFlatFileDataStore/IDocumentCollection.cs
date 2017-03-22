@@ -24,6 +24,12 @@ namespace JsonFlatFileDataStore
         IEnumerable<T> Find(Predicate<T> query);
 
         /// <summary>
+        /// Get next value for id field
+        /// </summary>
+        /// <returns></returns>
+        dynamic GetNextIdValue();
+
+        /// <summary>
         /// Inserts a single item
         /// </summary>
         /// <param name="entity"></param>

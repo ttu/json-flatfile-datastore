@@ -1,5 +1,8 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -8,12 +11,14 @@ namespace JsonFlatFileDataStore
     public class DocumentCollection<T> : IDocumentCollection<T>
     {
         private readonly string _path;
+        private readonly string _idField;
         private readonly Lazy<List<T>> _data;
         private readonly Func<string, List<T>, bool, Task> _commit;
 
-        public DocumentCollection(Func<string, List<T>, bool, Task> commit, Lazy<List<T>> data, string path)
+        public DocumentCollection(Func<string, List<T>, bool, Task> commit, Lazy<List<T>> data, string path, string idField)
         {
             _path = path;
+            _idField = idField;
             _commit = commit;
             _data = data;
         }
@@ -23,6 +28,40 @@ namespace JsonFlatFileDataStore
         public IEnumerable<T> AsQueryable() => _data.Value.AsQueryable();
 
         public IEnumerable<T> Find(Predicate<T> query) => _data.Value.Where(t => query(t));
+
+        private string ParseNextIntegertToKeyValue(string input)
+        {
+            int nextInt = 0;
+
+            if (input == null)
+                return $"{nextInt}";
+
+            var chars = input.ToArray().Reverse().TakeWhile(char.IsNumber).Reverse().ToArray();
+
+            if (chars.Count() == 0)
+                return $"{input}{nextInt}";
+
+            input = input.Substring(0, input.Length - chars.Count());
+
+            if (int.TryParse(new string(chars), out nextInt))
+                nextInt += 1;
+
+            return $"{input}{nextInt}";
+        }
+
+        public dynamic GetNextIdValue()
+        {
+            var lastItem = _data.Value.Last();
+            var expando = JsonConvert.DeserializeObject<ExpandoObject>(JsonConvert.SerializeObject(lastItem), new ExpandoObjectConverter());
+            // Problem here is if we have typed data with upper camel case properties but lower camel case in JSON, so need to use OrdinalIgnoreCase string comparer
+            var expandoAsIgnoreCase = new Dictionary<string, dynamic>(expando, StringComparer.OrdinalIgnoreCase);
+            dynamic keyValue = expandoAsIgnoreCase[_idField];
+
+            if (keyValue is Int64)
+                return (int)keyValue + 1;
+
+            return ParseNextIntegertToKeyValue(keyValue.ToString());
+        }
 
         public void InsertOne(T entity)
         {

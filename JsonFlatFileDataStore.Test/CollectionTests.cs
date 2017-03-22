@@ -33,6 +33,86 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
+        public void GetNextIdValue_id()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection("user");
+            var lastItem = collection
+                            .AsQueryable()
+                            .OrderBy(e => e.id)
+                            .Last();
+
+            Assert.Equal(3, lastItem.id);
+
+            var nextId = collection.GetNextIdValue();
+            Assert.Equal(4, nextId);
+
+            collection.InsertOne(new { id = nextId });
+
+            nextId = collection.GetNextIdValue();
+            Assert.Equal(5, nextId);
+        }
+
+        [Fact]
+        public void GetNextIdValue_string()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath, keyProperty: "helloField");
+
+            var collection = store.GetCollection("collectionWithStringId");
+
+            collection.InsertOne(new { helloField = "SomeValue" });
+
+            var inserted = collection.AsQueryable().First();
+
+            var nextId = collection.GetNextIdValue();
+            Assert.Equal("SomeValue0", nextId);
+
+            collection.InsertOne(new { helloField = nextId });
+
+            nextId = collection.GetNextIdValue();
+            Assert.Equal("SomeValue1", nextId);
+        }
+
+        [Fact]
+        public void GetNextIdValue_string_empty()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath, keyProperty: "myId");
+
+            var collection = store.GetCollection("collectionWithStringId");
+
+            collection.InsertOne(new { myId = "" });
+
+            var inserted = collection.AsQueryable().First();
+
+            var nextId = collection.GetNextIdValue();
+            Assert.Equal("0", nextId);
+
+            collection.InsertOne(new { myId = nextId });
+
+            nextId = collection.GetNextIdValue();
+            Assert.Equal("1", nextId);
+        }
+
+        [Fact]
+        public void GetNextIdValue_typed_User()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection<User>("user");
+            var nextId = collection.GetNextIdValue();
+            Assert.Equal(4, nextId);
+        }
+
+        [Fact]
         public void AsQueryable_ComplicatedModel_Dynamic_And_Typed()
         {
             var newFilePath = UTHelpers.Up();
@@ -154,7 +234,7 @@ namespace JsonFlatFileDataStore.Test
             collection2.UpdateOne(e => e.Id == 11, new { SomeThatIsNotThere = "No" });
 
             UTHelpers.Down(newFilePath);
-        }
+        }    
 
         [Fact]
         public void ReplaceOne_User()

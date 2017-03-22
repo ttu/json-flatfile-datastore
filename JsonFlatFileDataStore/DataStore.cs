@@ -17,6 +17,8 @@ namespace JsonFlatFileDataStore
     {
         private readonly JObject _jsonData;
         private readonly string _filePath;
+        private readonly string _keyProperty;
+
         private readonly Func<JObject, string> _toJsonFunc;
         private readonly Func<string, string> _pathToCamelCase;
 
@@ -30,7 +32,7 @@ namespace JsonFlatFileDataStore
             ContractResolver = new CamelCasePropertyNamesContractResolver()
         };
 
-        public DataStore(string path, bool useLowerCamelCase = true)
+        public DataStore(string path, bool useLowerCamelCase = true, string keyProperty = null)
         {
             _filePath = path;
 
@@ -47,6 +49,9 @@ namespace JsonFlatFileDataStore
             _pathToCamelCase = useLowerCamelCase
                                 ? new Func<string, string>(s => string.Concat(s.Select((x, i) => i == 0 ? char.ToLower(x).ToString() : x.ToString())))
                                 : new Func<string, string>(s => s);
+
+            // Default key property is id or Id
+            _keyProperty = keyProperty ?? (useLowerCamelCase ? "id" : "Id");
 
             string json = "{}";
 
@@ -92,7 +97,7 @@ namespace JsonFlatFileDataStore
         public IDocumentCollection<dynamic> GetCollection(string path)
         {
             // As we don't want to return JObjects when using dynamic, JObjects will be converted to ExpandoObjects
-            var convertFunc = new Func<JToken, dynamic>(e => JsonConvert.DeserializeObject<ExpandoObject>(e.ToString(), new ExpandoObjectConverter()) as dynamic);
+            var convertFunc = new Func<JToken, dynamic>(e => JsonConvert.DeserializeObject<ExpandoObject>(e.ToString(), _converter) as dynamic);
             return GetCollection<dynamic>(path, convertFunc);
         }
 
@@ -110,7 +115,7 @@ namespace JsonFlatFileDataStore
                                    .ToList()
                                ?? new List<T>());
 
-            return new DocumentCollection<T>((sender, dataToUpdate, async) => Commit(sender, dataToUpdate, async), data, path);
+            return new DocumentCollection<T>((sender, dataToUpdate, async) => Commit(sender, dataToUpdate, async), data, path, _keyProperty);
         }
 
         private async Task Commit<T>(string path, IList<T> data, bool async = false)
