@@ -66,6 +66,9 @@ namespace JsonFlatFileDataStore.Test
 
             var collection = store.GetCollection("collectionWithStringId");
 
+            var shouldBeNone = collection.GetNextIdValue();
+            Assert.Equal(0, shouldBeNone);
+
             collection.InsertOne(new { helloField = "SomeValue" });
 
             var inserted = collection.AsQueryable().First();

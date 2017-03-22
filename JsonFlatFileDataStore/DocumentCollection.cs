@@ -51,6 +51,9 @@ namespace JsonFlatFileDataStore
 
         public dynamic GetNextIdValue()
         {
+            if (!_data.Value.Any())
+                return 0;
+
             var lastItem = _data.Value.Last();
             var expando = JsonConvert.DeserializeObject<ExpandoObject>(JsonConvert.SerializeObject(lastItem), new ExpandoObjectConverter());
             // Problem here is if we have typed data with upper camel case properties but lower camel case in JSON, so need to use OrdinalIgnoreCase string comparer
