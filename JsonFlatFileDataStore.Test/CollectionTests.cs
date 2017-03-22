@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -234,7 +235,7 @@ namespace JsonFlatFileDataStore.Test
             collection2.UpdateOne(e => e.Id == 11, new { SomeThatIsNotThere = "No" });
 
             UTHelpers.Down(newFilePath);
-        }    
+        }
 
         [Fact]
         public void ReplaceOne_User()
@@ -260,6 +261,44 @@ namespace JsonFlatFileDataStore.Test
             var collection3 = store3.GetCollection<User>("user");
             var updated = collection3.Find(e => e.Id == 11).First();
             Assert.Equal("Theodor", updated.Name);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public void ReplaceOne_Dynamic()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection("user");
+            Assert.Equal(3, collection.Count);
+
+            dynamic dT = new { id = 11, name = "Teddy" };
+            collection.InsertOne(dT);
+            dynamic dC = new { id = 12, name = "Charlie" };
+            collection.InsertOne(dC);
+            Assert.Equal(5, collection.Count);
+
+            var store2 = new DataStore(newFilePath);
+            var collection2 = store2.GetCollection("user");
+            Assert.Equal(5, collection2.Count);
+
+            dynamic d2 = new { id = 11, name = "Theodor" };
+            collection2.ReplaceOne(e => e.id == 11, d2 as object);
+
+            dynamic d3 = new { id = 12, name = "Charlton" };
+            collection2.ReplaceOne((Predicate<dynamic>)(e => e.id == 12), d3);
+
+            var store3 = new DataStore(newFilePath);
+            var collection3 = store3.GetCollection("user");
+
+            var updated = collection3.Find(e => e.id == 11).First();
+            Assert.Equal("Theodor", updated.name);
+
+            var updated2 = collection3.Find(e => e.id == 12).First();
+            Assert.Equal("Charlton", updated2.name);
 
             UTHelpers.Down(newFilePath);
         }
