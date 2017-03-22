@@ -14,7 +14,7 @@ public static class ObjectExtensions
     public static void CopyProperties(this object source, object destination)
     {
         if (source == null || destination == null)
-            throw new Exception("Source or/and Destination óbjects are null");
+            throw new Exception("source or/and destination objects are null");
 
         if (destination.GetType() == typeof(ExpandoObject))
             HandleExpando(source, destination);
