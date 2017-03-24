@@ -8,7 +8,7 @@ namespace JsonFlatFileDataStore.Test
     public class CollectionTests
     {
         [Fact]
-        public void Find_And_AsQueryable()
+        public void FindAndAsQueryable_Linq()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -34,7 +34,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void GetNextIdValue_id()
+        public void GetNextIdValue_IntegerId()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -58,7 +58,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void GetNextIdValue_string()
+        public void GetNextIdValue_StringType()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -83,7 +83,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void GetNextIdValue_string_empty()
+        public void GetNextIdValue_StringTypeEmpty()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -105,7 +105,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void GetNextIdValue_typed_User()
+        public void GetNextIdValue_TypedUser()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -117,7 +117,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void AsQueryable_ComplicatedModel_Dynamic_And_Typed()
+        public void AsQueryable_DynamicAndTypedComplicatedModel()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -138,7 +138,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void InsertOne_Dynamic()
+        public void InsertOne_DynamicUser()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -162,7 +162,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void InsertOne_User()
+        public void InsertOne_TypedUser()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -186,7 +186,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public async Task InsertOneAsync_User()
+        public async Task InsertOneAsync_TypedUser()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -210,7 +210,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void UpdateOne_User()
+        public void UpdateOne_TypedUser()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -241,7 +241,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void ReplaceOne_User()
+        public void ReplaceOne_TypedUser()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -269,7 +269,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void ReplaceOne_Dynamic()
+        public void ReplaceOne_DynamicUser()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -307,7 +307,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void DeleteOne_User()
+        public void DeleteOne_TypedUser()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -333,7 +333,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public async Task DeleteOneAsync_NewCollection()
+        public async Task DeleteOneAsync_DynamicNewCollection()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -361,7 +361,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public async Task InsertOne_100_Sync_Test_Threaded()
+        public async Task InsertOne_100SyncThreaded()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -399,7 +399,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public async Task InsertOne_100_Async_Test()
+        public async Task InsertOne_100Async()
         {
             var newFilePath = UTHelpers.Up();
 

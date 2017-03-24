@@ -7,7 +7,7 @@ namespace JsonFlatFileDataStore.Test
     public class CopyPropertiesTests
     {
         [Fact]
-        public void Reflection_CopyProperties_AdressCity()
+        public void CopyProperties_TypedAndDynamicAddressCity()
         {
             var family = new Family { Address = new Address { City = "Helsinki" } };
 
@@ -19,7 +19,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void Reflection_CopyProperties_Family_Typed()
+        public void CopyProperties_TypedFamily()
         {
             var family = new Family
             {
@@ -61,7 +61,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void Reflection_CopyProperties_Family_Dynamic()
+        public void CopyProperties_DynamicFamily()
         {
             dynamic family = new ExpandoObject();
 
@@ -112,7 +112,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void Reflection_CopyProperties_Array_Values_Typed()
+        public void CopyProperties_TypedArrayValueTypes()
         {
             var item = new PrivateOwner();
             item.FirstName = "Theodor";
@@ -124,7 +124,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void Reflection_CopyProperties_Array_Values_Dynamic()
+        public void CopyProperties_DynamicArrayValueTypes()
         {
             dynamic item = new ExpandoObject();
             item.FirstName = "Theodor";
@@ -136,7 +136,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void Reflection_CopyProperties_FamilyParents()
+        public void CopyProperties_TypedFamilyParents()
         {
             var family = new Family
             {

@@ -22,7 +22,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public async Task WriteToFile_In_LowerCamelCase()
+        public async Task WriteToFile_LowerCamelCase()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -54,7 +54,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public async Task WriteToFile_In_UpperCamelCase()
+        public async Task WriteToFile_UpperCamelCase()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -74,7 +74,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void TypedCollection_Different_Name()
+        public void GetCollection_TypedCollection_NameParameter()
         {
             var newFilePath = UTHelpers.Up();
 
