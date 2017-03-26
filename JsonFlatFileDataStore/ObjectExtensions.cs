@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.Linq;
 using System.Reflection;
 
 public static class ObjectExtensions
@@ -11,7 +12,7 @@ public static class ObjectExtensions
     /// </summary>
     /// <param name="source">The source</param>
     /// <param name="destination">The destination</param>
-    public static void CopyProperties(this object source, object destination)
+    public static void CopyProperties(object source, object destination)
     {
         if (source == null || destination == null)
             throw new Exception("source or/and destination objects are null");
@@ -24,15 +25,9 @@ public static class ObjectExtensions
 
     private static void HandleTyped(object source, object destination)
     {
-        var typeDest = destination.GetType();
-        var typeSrc = source.GetType();
-
-        foreach (var srcProp in typeSrc.GetProperties())
+        foreach (var srcProp in GetProperties(source))
         {
-            if (!srcProp.CanRead)
-                continue;
-
-            var targetProperty = typeDest.GetProperty(srcProp.Name);
+            var targetProperty = destination.GetType().GetProperty((string)srcProp.Name);
 
             if (targetProperty == null)
                 continue;
@@ -41,7 +36,7 @@ public static class ObjectExtensions
             {
                 var arrayType = srcProp.PropertyType.GetElementType();
 
-                var sourceArray = (IList)srcProp.GetValue(source, null);
+                var sourceArray = (IList)GetValue(source, srcProp);
                 var targetArray = (IList)targetProperty.GetValue(destination, null);
 
                 var type = targetProperty.PropertyType;
@@ -76,10 +71,9 @@ public static class ObjectExtensions
             if (!targetProperty.CanWrite)
                 continue;
 
-            if (srcProp.PropertyType.GetTypeInfo().IsClass && srcProp.PropertyType != typeof(string) &&
-                 targetProperty.PropertyType.GetTypeInfo().IsClass && targetProperty.PropertyType != typeof(string))
+            if (IsReferenceType(srcProp) && IsReferenceType(targetProperty))
             {
-                CopyProperties(srcProp.GetValue(source, null), targetProperty.GetValue(destination, null));
+                CopyProperties(GetValue(source, srcProp), targetProperty.GetValue(destination, null));
                 continue;
             }
 
@@ -89,28 +83,22 @@ public static class ObjectExtensions
             if ((targetProperty.GetSetMethod().Attributes & MethodAttributes.Static) != 0)
                 continue;
 
-            if (!targetProperty.PropertyType.IsAssignableFrom(srcProp.PropertyType))
+            if (!targetProperty.PropertyType.IsAssignableFrom((Type)srcProp.PropertyType))
                 continue;
 
-            targetProperty.SetValue(destination, srcProp.GetValue(source, null), null);
+            targetProperty.SetValue(destination, GetValue(source, srcProp), null);
         }
     }
 
     private static void HandleExpando(object source, object destination)
     {
-        var typeDest = destination.GetType();
-        var typeSrc = source.GetType();
-
-        foreach (var srcProp in typeSrc.GetProperties())
+        foreach (var srcProp in GetProperties(source))
         {
-            if (!srcProp.CanRead)
-                continue;
-
             if (IsArrayOrList(srcProp.PropertyType))
             {
                 var arrayType = srcProp.PropertyType.GetElementType();
 
-                var sourceArray = (IList)srcProp.GetValue(source, null);
+                var sourceArray = (IList)GetValue(source, srcProp);
                 var targetArray = (IList)((IDictionary<string, object>)destination)[srcProp.Name];
 
                 var type = targetArray.GetType();
@@ -153,7 +141,33 @@ public static class ObjectExtensions
                 continue;
             }
 
-           ((IDictionary<string, object>)destination)[srcProp.Name] = srcProp.GetValue(source, null);
+           ((IDictionary<string, object>)destination)[srcProp.Name] = GetValue(source, srcProp);
+        }
+    }
+
+    private static bool IsReferenceType(dynamic srcProp)
+    {
+        return srcProp.PropertyType.IsClass && srcProp.PropertyType != typeof(string);
+    }
+
+    private static object GetValue(object source, dynamic srcProp)
+    {
+        return source.GetType() == typeof(ExpandoObject)
+                    ? srcProp.Value
+                    : srcProp.GetValue(source, null);
+    }
+
+    private static IEnumerable<dynamic> GetProperties(object source)
+    {
+        if (source.GetType() == typeof(ExpandoObject))
+        {
+            return ((IDictionary<string, object>)source)
+                .Select(i => new { Name = i.Key, Value = i.Value, PropertyType = i.Value.GetType() })
+                .ToList();
+        }
+        else
+        {
+            return source.GetType().GetProperties();
         }
     }
 

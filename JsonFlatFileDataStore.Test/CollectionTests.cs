@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Dynamic;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
@@ -236,6 +237,33 @@ namespace JsonFlatFileDataStore.Test
 
             // Try to update property that doesn't exist
             collection2.UpdateOne(e => e.Id == 11, new { SomeThatIsNotThere = "No" });
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public async Task UpdateOne_DynamicUser()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection("user");
+            Assert.Equal(3, collection.Count);
+
+            await collection.InsertOneAsync(new { id = 11, name = "Teddy", age = 21 });
+
+            dynamic source = new ExpandoObject();
+            source.age = 22;
+            await collection.UpdateOneAsync(e => e.id == 11, source as object);
+
+            await collection.UpdateOneAsync(e => e.id == 11, new { someThatIsNotThere = "No" });
+
+            var store2 = new DataStore(newFilePath);
+            var collection2 = store2.GetCollection("user");
+            var updated = collection2.Find(e => e.id == 11).First();
+            Assert.Equal(21, updated.age);
+            Assert.Equal("Teddy", updated.name);
 
             UTHelpers.Down(newFilePath);
         }

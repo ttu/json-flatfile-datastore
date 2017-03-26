@@ -1,7 +1,7 @@
 ## Changelog
 
 ### [Unreleased]
-*
+* Use ExpandoObject as a source on CopyProperties
 
 ### [1.0.2] - 2017-03-26
 * Fix for UpdateOneAsync

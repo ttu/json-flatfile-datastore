@@ -124,6 +124,41 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
+        public void CopyProperties_TypedExpandoSource()
+        {
+            var item = new PrivateOwner();
+            item.FirstName = "Theodor";
+            item.MyValues = new List<int> { };
+
+            var source = new ExpandoObject();
+            var items = source as IDictionary<string, object>;
+            items.Add("FirstName", "Alter");
+            items.Add("MyValues", new List<int> { 1, 2 });
+
+            ObjectExtensions.CopyProperties(source, item);
+            Assert.Equal(1, item.MyValues[0]);
+            Assert.Equal(2, item.MyValues[1]);
+        }
+
+        [Fact]
+        public void CopyProperties_DynamicExpandoSource()
+        {
+            dynamic item = new ExpandoObject();
+            item.FirstName = "Theodor";
+            item.MyValues = new List<int> { };
+
+            var source = new ExpandoObject();
+            var items = source as IDictionary<string, object>;
+            items.Add("FirstName", "Alter");
+            items.Add("MyValues", new List<int> { 1, 2 });
+
+            ObjectExtensions.CopyProperties(source, item);
+            Assert.Equal("Alter", item.FirstName);
+            Assert.Equal(1, item.MyValues[0]);
+            Assert.Equal(2, item.MyValues[1]);
+        }
+
+        [Fact]
         public void CopyProperties_DynamicArrayValueTypes()
         {
             dynamic item = new ExpandoObject();

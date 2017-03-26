@@ -19,18 +19,8 @@ Example user collection in JSON
 ```json
 {
   "user": [
-    {
-      "id": 1,
-      "name": "Phil",
-      "age": 40,
-      "city": "NY"
-    },
-	{
-      "id": 2,
-      "name": "Larry",
-      "age": 37,
-      "city": "London"
-    }
+    { "id": 1, "name": "Phil", "age": 40, "city": "NY" },
+    { "id": 2, "name": "Larry", "age": 37, "city": "London" }
   ]
 }
 ```
@@ -102,13 +92,15 @@ await collection.ReplaceOneAsync(e => e.Id == 3, new User { Id = 3, Name = "Barr
 
 #### Update
 
-`UpdateOne` and `UpdateOneAsync` will update the first item that matches the filter with passed properties from dynamic object.
+`UpdateOne` and `UpdateOneAsync` will update the first item that matches the filter with passed properties from dynamic object. Dynamic object can be an Anonymous type or and ExpandoObject.
 
 ```csharp
 // Dynamic
 // Before update : { "id": 1, "name": "Barry", "age": 33 }
 // After update  : { "id": 1, "name": "Barry", "age": 42 }
-await collection.UpdateOneAsync(e => e.id == 3, new { age = 42 });
+dynamic source = new ExpandoObject();
+source.age = 42;
+await collection.UpdateOneAsync(e => e.id == 3, source as object);
 
 // Typed
 // Before update : { "id": 1, "name": "Phil", "age": 40, "city": "NY" }
