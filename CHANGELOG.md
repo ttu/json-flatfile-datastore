@@ -1,7 +1,10 @@
 ## Changelog
 
 ### [Unreleased]
-* Use ExpandoObject as a source on CopyProperties
+*
+
+### [1.1.0] - 2017-03-27
+* Use ExpandoObject as a source on CopyProperties / UpdateOne
 * Collection methods will return true if operation is succesful
 
 ### [1.0.2] - 2017-03-26
