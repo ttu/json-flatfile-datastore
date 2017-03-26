@@ -2,6 +2,7 @@
 
 ### [Unreleased]
 * Use ExpandoObject as a source on CopyProperties
+* Collection methods will return true if operation is succesful
 
 ### [1.0.2] - 2017-03-26
 * Fix for UpdateOneAsync

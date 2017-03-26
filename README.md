@@ -60,7 +60,7 @@ var userTyped = collection
 
 #### Insert
 
-`InsertOne` and `InsertOneAsync` will insert a new item to the collection.
+`InsertOne` and `InsertOneAsync` will insert a new item to the collection. Method returns true if insert was succesful.
 
 ```csharp
 // Asynchronous method and dynamic data
@@ -76,7 +76,7 @@ collection.InsertOne(new User { Id = 3, Name = "Raymond", Age = 32, City = "NY" 
 
 #### Replace
 
-`ReplaceOne` and `ReplaceOneAsync` will replacec the first item that matches the filter.
+`ReplaceOne` and `ReplaceOneAsync` will replace the first item that matches the filter. Method will return true if item(s) found with fiter.
 
 ```csharp
 // Sync and dynamic
@@ -92,7 +92,7 @@ await collection.ReplaceOneAsync(e => e.Id == 3, new User { Id = 3, Name = "Barr
 
 #### Update
 
-`UpdateOne` and `UpdateOneAsync` will update the first item that matches the filter with passed properties from dynamic object. Dynamic object can be an Anonymous type or and ExpandoObject.
+`UpdateOne` and `UpdateOneAsync` will update the first item that matches the filter with passed properties from dynamic object. Dynamic object can be an Anonymous type or and ExpandoObject. Method will return true if item(s) found with filter.
 
 ```csharp
 // Dynamic
@@ -133,7 +133,7 @@ await collection.UpdateOneAsync(e => e.Id == 12, new { Parents = new[] { new { a
 
 #### Delete
 
-`DeleteOne` and `DeleteOneAsync` will remove first object that matches the filter.
+`DeleteOne` and `DeleteOneAsync` will remove first object that matches the filter. Method returns true if item(s) found with filter.
 
 ```csharp
 // Dynamic
@@ -143,7 +143,7 @@ await collection.DeleteOneAsync(e => e.id == 3);
 await collection.DeleteOneAsync(e => e.Id == 3);
 ```
 
-`DeleteMany` and `DeleteManyAsyn` will delete all items that match the filter.
+`DeleteMany` and `DeleteManyAsyn` will delete all items that match the filter. Method returns true if item(s) found with filter.
 
 ```csharp
 // Dynamic

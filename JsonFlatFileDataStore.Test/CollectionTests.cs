@@ -220,7 +220,8 @@ namespace JsonFlatFileDataStore.Test
             var collection = store.GetCollection<User>("user");
             Assert.Equal(3, collection.Count);
 
-            collection.InsertOne(new User { Id = 11, Name = "Teddy", Age = 21 });
+            var insertResult = collection.InsertOne(new User { Id = 11, Name = "Teddy", Age = 21 });
+            Assert.True(insertResult);
             Assert.Equal(4, collection.Count);
 
             var store2 = new DataStore(newFilePath);
@@ -255,7 +256,8 @@ namespace JsonFlatFileDataStore.Test
 
             dynamic source = new ExpandoObject();
             source.age = 22;
-            await collection.UpdateOneAsync(e => e.id == 11, source as object);
+            var updateResult = await collection.UpdateOneAsync(e => e.id == 11, source as object);
+            Assert.True(updateResult);
 
             await collection.UpdateOneAsync(e => e.id == 11, new { someThatIsNotThere = "No" });
 
@@ -378,12 +380,30 @@ namespace JsonFlatFileDataStore.Test
             var collection2 = store2.GetCollection("book");
             Assert.Equal(1, collection2.Count);
 
-            await collection2.DeleteOneAsync(e => e.Id == 1);
+            var deleteResult = await collection2.DeleteOneAsync(e => e.Id == 1);
+            Assert.True(deleteResult);
             Assert.Equal(0, collection2.Count);
 
             var store3 = new DataStore(newFilePath);
             var collection3 = store3.GetCollection("book");
             Assert.Equal(0, collection3.Count);
+
+            UTHelpers.Down(newFilePath);
+        }
+        
+        [Fact]
+        public async Task DeleteMany_NotFoundAndFound()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath, false);
+            var collection = store.GetCollection("user");
+
+            var result = await collection.DeleteManyAsync(e => e.id == 56789);
+            Assert.False(result);
+
+            result = await collection.DeleteManyAsync(e => e.id == 1);
+            Assert.True(result);
 
             UTHelpers.Down(newFilePath);
         }

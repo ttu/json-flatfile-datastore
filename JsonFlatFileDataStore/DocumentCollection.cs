@@ -66,68 +66,120 @@ namespace JsonFlatFileDataStore
             return ParseNextIntegertToKeyValue(keyValue.ToString());
         }
 
-        public void InsertOne(T entity)
+        public bool InsertOne(T entity)
         {
             _data.Value.Add(entity);
             _commit(_path, _data.Value, false);
+            return true;
         }
 
-        public async Task InsertOneAsync(T entity)
+        public async Task<bool> InsertOneAsync(T entity)
         {
             _data.Value.Add(entity);
             await _commit(_path, _data.Value, true);
+            return true;
         }
 
-        public void ReplaceOne(Predicate<T> filter, T entity)
+        public bool ReplaceOne(Predicate<T> filter, T entity)
         {
-            var index = _data.Value.IndexOf(Find(filter).First());
+            var matches = Find(filter);
+
+            if (!matches.Any())
+                return false;
+
+            var index = _data.Value.IndexOf(matches.First());
             _data.Value[index] = entity;
             _commit(_path, _data.Value, false);
+            return true;
         }
 
-        public async Task ReplaceOneAsync(Predicate<T> filter, T entity)
+        public async Task<bool> ReplaceOneAsync(Predicate<T> filter, T entity)
         {
-            var index = _data.Value.IndexOf(Find(filter).First());
+            var matches = Find(filter);
+
+            if (!matches.Any())
+                return false;
+
+            var index = _data.Value.IndexOf(matches.First());
             _data.Value[index] = entity;
             await _commit(_path, _data.Value, true);
+            return true;
         }
 
-        public void UpdateOne(Predicate<T> filter, dynamic entity)
+        public bool UpdateOne(Predicate<T> filter, dynamic entity)
         {
-            var toUpdate = Find(filter).First();
+            var matches = Find(filter);
+
+            if (!matches.Any())
+                return false;
+
+            var toUpdate = matches.First();
             ObjectExtensions.CopyProperties(entity, toUpdate);
             ReplaceOne(filter, toUpdate);
+            return true;
         }
 
-        public async Task UpdateOneAsync(Predicate<T> filter, dynamic entity)
+        public async Task<bool> UpdateOneAsync(Predicate<T> filter, dynamic entity)
         {
-            var toUpdate = Find(filter).First();
+            var matches = Find(filter);
+
+            if (!matches.Any())
+                return false;
+
+            var toUpdate = matches.First();
             ObjectExtensions.CopyProperties(entity, toUpdate);
             await ReplaceOneAsync(filter, toUpdate);
+            return true;
         }
 
-        public void DeleteOne(Predicate<T> filter)
+        public bool DeleteOne(Predicate<T> filter)
         {
-            _data.Value.Remove(Find(filter).First());
+            var matches = Find(filter);
+
+            if (!matches.Any())
+                return false;
+
+            _data.Value.Remove(matches.First());
             _commit(_path, _data.Value, false);
+            return true;
         }
 
-        public async Task DeleteOneAsync(Predicate<T> filter)
+        public async Task<bool> DeleteOneAsync(Predicate<T> filter)
         {
+            var matches = Find(filter);
+
+            if (!matches.Any())
+                return false;
+
             _data.Value.Remove(Find(filter).First());
             await _commit(_path, _data.Value, true);
+            return true;
         }
 
-        public void DeleteMany(Predicate<T> filter)
+        public bool DeleteMany(Predicate<T> filter)
         {
-            _data.Value.RemoveAll(filter);
-            _commit(_path, _data.Value, false);
+            var removed = _data.Value.RemoveAll(filter);
+
+            if (removed > 0)
+            {
+                _commit(_path, _data.Value, false);
+                return true;
+            }
+
+            return false;
         }
 
-        public async Task DeleteManyAsync(Predicate<T> filter)
+        public async Task<bool> DeleteManyAsync(Predicate<T> filter)
         {
-            _data.Value.RemoveAll(filter);
-            await _commit(_path, _data.Value, true);
+            var removed = _data.Value.RemoveAll(filter);
+
+            if (removed > 0)
+            {
+                await _commit(_path, _data.Value, true);
+                return true;
+            }
+
+            return false;
         }
     }
 }
