@@ -210,7 +210,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void UpdateOne_TypedUser()
+        public async Task UpdateOne_TypedUser()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -226,7 +226,7 @@ namespace JsonFlatFileDataStore.Test
             var collection2 = store2.GetCollection<User>("user");
             Assert.Equal(4, collection2.Count);
 
-            collection2.UpdateOne(e => e.Id == 11, new { Age = 22 });
+            await collection2.UpdateOneAsync(e => e.Id == 11, new { Age = 22 });
 
             var store3 = new DataStore(newFilePath);
             var collection3 = store3.GetCollection<User>("user");

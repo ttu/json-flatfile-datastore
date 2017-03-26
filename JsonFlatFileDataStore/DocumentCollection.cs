@@ -103,7 +103,7 @@ namespace JsonFlatFileDataStore
         {
             var toUpdate = Find(filter).First();
             ObjectExtensions.CopyProperties(entity, toUpdate);
-            await ReplaceOneAsync(filter, entity);
+            await ReplaceOneAsync(filter, toUpdate);
         }
 
         public void DeleteOne(Predicate<T> filter)
