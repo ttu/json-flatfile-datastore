@@ -12,6 +12,10 @@ Simple flat file JSON datastore.
   * .NET Core 1.0 ->
   * .NET 4.6.1 ->
 
+##### Example project
+
+[Fake JSON Server](https://github.com/ttu/dotnet-fake-json-server) is a .NET Core Web API which uses JSON Flat File Datastore with dynamic data.
+
 ## Functionality
 
 Example user collection in JSON
