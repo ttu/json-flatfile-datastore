@@ -66,21 +66,21 @@ namespace JsonFlatFileDataStore
             return ParseNextIntegertToKeyValue(keyValue.ToString());
         }
 
-        public bool InsertOne(T entity)
+        public bool InsertOne(T item)
         {
-            _data.Value.Add(entity);
+            _data.Value.Add(item);
             _commit(_path, _data.Value, false);
             return true;
         }
 
-        public async Task<bool> InsertOneAsync(T entity)
+        public async Task<bool> InsertOneAsync(T item)
         {
-            _data.Value.Add(entity);
+            _data.Value.Add(item);
             await _commit(_path, _data.Value, true);
             return true;
         }
 
-        public bool ReplaceOne(Predicate<T> filter, T entity)
+        public bool ReplaceOne(Predicate<T> filter, T item)
         {
             var matches = Find(filter);
 
@@ -88,12 +88,12 @@ namespace JsonFlatFileDataStore
                 return false;
 
             var index = _data.Value.IndexOf(matches.First());
-            _data.Value[index] = entity;
+            _data.Value[index] = item;
             _commit(_path, _data.Value, false);
             return true;
         }
 
-        public async Task<bool> ReplaceOneAsync(Predicate<T> filter, T entity)
+        public async Task<bool> ReplaceOneAsync(Predicate<T> filter, T item)
         {
             var matches = Find(filter);
 
@@ -101,12 +101,12 @@ namespace JsonFlatFileDataStore
                 return false;
 
             var index = _data.Value.IndexOf(matches.First());
-            _data.Value[index] = entity;
+            _data.Value[index] = item;
             await _commit(_path, _data.Value, true);
             return true;
         }
 
-        public bool UpdateOne(Predicate<T> filter, dynamic entity)
+        public bool UpdateOne(Predicate<T> filter, dynamic item)
         {
             var matches = Find(filter);
 
@@ -114,12 +114,12 @@ namespace JsonFlatFileDataStore
                 return false;
 
             var toUpdate = matches.First();
-            ObjectExtensions.CopyProperties(entity, toUpdate);
+            ObjectExtensions.CopyProperties(item, toUpdate);
             ReplaceOne(filter, toUpdate);
             return true;
         }
 
-        public async Task<bool> UpdateOneAsync(Predicate<T> filter, dynamic entity)
+        public async Task<bool> UpdateOneAsync(Predicate<T> filter, dynamic item)
         {
             var matches = Find(filter);
 
@@ -127,7 +127,7 @@ namespace JsonFlatFileDataStore
                 return false;
 
             var toUpdate = matches.First();
-            ObjectExtensions.CopyProperties(entity, toUpdate);
+            ObjectExtensions.CopyProperties(item, toUpdate);
             await ReplaceOneAsync(filter, toUpdate);
             return true;
         }

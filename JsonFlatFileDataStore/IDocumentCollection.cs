@@ -31,48 +31,48 @@ namespace JsonFlatFileDataStore
         /// <summary>
         /// Inserts a single item
         /// </summary>
-        /// <param name="entity"></param>
+        /// <param name="item"></param>
         /// <returns>true if operation succesful</returns>
-        bool InsertOne(T entity);
+        bool InsertOne(T item);
 
         /// <summary>
         /// Inserts a single item
         /// </summary>
-        /// <param name="entity"></param>
+        /// <param name="item"></param>
         /// <returns>true if operation succesful</returns>
-        Task<bool> InsertOneAsync(T entity);
+        Task<bool> InsertOneAsync(T item);
 
         /// <summary>
         /// Replace the first item that matches the filter
         /// </summary>
         /// <param name="filter"></param>
-        /// <param name="entity"></param>
+        /// <param name="item"></param>
         /// <returns>true if items found for replacement</returns>
-        bool ReplaceOne(Predicate<T> filter, T entity);
+        bool ReplaceOne(Predicate<T> filter, T item);
 
         /// <summary>
         /// Replace the first item that matches the filter
         /// </summary>
         /// <param name="filter"></param>
-        /// <param name="entity"></param>
+        /// <param name="item"></param>
         /// <returns>true if items found for replacement</returns>
-        Task<bool> ReplaceOneAsync(Predicate<T> filter, T entity);
+        Task<bool> ReplaceOneAsync(Predicate<T> filter, T item);
 
         /// <summary>
         /// Update the first item that matches the filter
         /// </summary>
         /// <param name="filter"></param>
-        /// <param name="entity"></param>
+        /// <param name="item"></param>
         /// <returns>true if items found for update</returns>
-        bool UpdateOne(Predicate<T> filter, dynamic entity);
+        bool UpdateOne(Predicate<T> filter, dynamic item);
 
         /// <summary>
         /// Update the first item that matches the filter
         /// </summary>
         /// <param name="filter"></param>
-        /// <param name="entity"></param>
+        /// <param name="item"></param>
         /// <returns>true if items found for update</returns>
-        Task<bool> UpdateOneAsync(Predicate<T> filter, dynamic entity);
+        Task<bool> UpdateOneAsync(Predicate<T> filter, dynamic item);
 
         /// <summary>
         /// Delete first item that matches the filter
