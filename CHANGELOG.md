@@ -2,6 +2,7 @@
 
 ### [Unreleased]
 * Fix for CopyProperties when handling different list types
+* Fix for CopyProperties with patch data with inner ExpandoObjects
 
 ### [1.1.0] - 2017-03-27
 * Use ExpandoObject as a source on CopyProperties / UpdateOne

@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Dynamic;
 using Xunit;
@@ -188,6 +190,56 @@ namespace JsonFlatFileDataStore.Test
             ObjectExtensions.CopyProperties(new { Age = 49 }, family.Parents[0]);
             Assert.Equal(49, family.Parents[0].Age);
             Assert.Equal("Helsinki", family.Address.City);
+        }
+
+        [Fact]
+        public void Patch_InnerExpandos_Dynamic()
+        {
+            dynamic work = new ExpandoObject();
+            work.name = "EMACS";
+
+            dynamic user = new ExpandoObject();
+            user.name = "Timmy";
+            user.age = 30;
+            user.work = work;
+
+            var patchData = new Dictionary<string, object>();
+            patchData.Add("age", 41);
+            patchData.Add("name", "Ramses");
+            patchData.Add("work", new Dictionary<string, object>() { { "name", "ACME"} });
+
+            var jobject = JObject.FromObject(patchData);
+            dynamic patchExpando = JsonConvert.DeserializeObject<ExpandoObject>(jobject.ToString());
+
+            ObjectExtensions.CopyProperties(patchExpando, user);
+            Assert.Equal("Ramses", user.name);
+            Assert.Equal("ACME", user.work.name);
+        }
+
+        [Fact]
+        public void Patch_InnerExpandos_Typed()
+        {
+            var user = new User()
+            {
+                Name = "Timmy",
+                Age = 30,
+                Work = new UserWorkplace
+                {
+                    Name = "EMACS"
+                }
+            };
+
+            var patchData = new Dictionary<string, object>();
+            patchData.Add("Age", 41);
+            patchData.Add("Name", "Ramses");
+            patchData.Add("Work", new Dictionary<string, object>() { { "Name", "ACME" } });
+
+            var jobject = JObject.FromObject(patchData);
+            dynamic patchExpando = JsonConvert.DeserializeObject<ExpandoObject>(jobject.ToString());
+
+            ObjectExtensions.CopyProperties(patchExpando, user);
+            Assert.Equal("Ramses", user.Name);
+            Assert.Equal("ACME", user.Work.Name);
         }
     }
 }

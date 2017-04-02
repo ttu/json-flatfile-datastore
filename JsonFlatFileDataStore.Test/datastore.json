@@ -4,19 +4,31 @@
       "id": 1,
       "name": "James",
       "age": 40,
-      "location": "NY"
+      "location": "NY",
+      "work": {
+        "name": "ACME",
+        "location": "NY"
+      }
     },
     {
       "id": 2,
       "name": "Phil",
       "age": 25,
-      "location": "London"
+      "location": "London",
+      "work": {
+        "name": "Box Company",
+        "location": "London"
+      }
     },
     {
       "id": 3,
       "name": "Raymond",
       "age": 30,
-      "location": "SF"
+      "location": "SF",
+      "work": {
+        "name": "Railways Co",
+        "location": "SF"
+      }
     }
   ],
   "movies": [

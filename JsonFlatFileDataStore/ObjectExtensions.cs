@@ -33,7 +33,15 @@ public static class ObjectExtensions
             if (targetProperty == null)
                 continue;
 
-            if (IsArrayOrList(srcProp.PropertyType))
+            if (srcProp.PropertyType == typeof(ExpandoObject))
+            {
+                var targetValue = targetProperty.GetValue(destination, null);
+                var sourceValue = GetValue(source, srcProp);
+                HandleTyped(sourceValue, targetValue);
+                continue;
+            }
+
+            if (IsEnumerable(srcProp.PropertyType))
             {
                 var arrayType = srcProp.PropertyType.GetElementType();
 
@@ -95,7 +103,13 @@ public static class ObjectExtensions
     {
         foreach (var srcProp in GetProperties(source))
         {
-            if (IsArrayOrList(srcProp.PropertyType))
+            if (srcProp.PropertyType == typeof(ExpandoObject))
+            {
+                var destinationValue = ((IDictionary<string, object>)destination)[srcProp.Name];
+                var sourceValue = GetValue(source, srcProp);
+                HandleExpando(sourceValue, destinationValue);
+            }
+            else if (IsEnumerable(srcProp.PropertyType))
             {
                 var arrayType = srcProp.PropertyType.GetElementType();
 
@@ -138,11 +152,11 @@ public static class ObjectExtensions
                         }
                     }
                 }
-
-                continue;
             }
-
-           ((IDictionary<string, object>)destination)[srcProp.Name] = GetValue(source, srcProp);
+            else
+            {
+                ((IDictionary<string, object>)destination)[srcProp.Name] = GetValue(source, srcProp);
+            }
         }
     }
 
@@ -172,7 +186,7 @@ public static class ObjectExtensions
         }
     }
 
-    private static bool IsArrayOrList(Type toTest)
+    private static bool IsEnumerable(Type toTest)
     {
         return typeof(IEnumerable).IsAssignableFrom(toTest) && toTest != typeof(string);
     }

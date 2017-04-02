@@ -12,6 +12,15 @@ namespace JsonFlatFileDataStore.Test
         public int Age { get; set; }
 
         public string Location { get; set; }
+
+        public UserWorkplace Work { get; set; }
+    }
+
+    internal class UserWorkplace
+    {
+        public string Name { get; set; }
+
+        public string Location { get; set; }
     }
 
     internal class Movie
