@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
@@ -41,7 +42,7 @@ public static class ObjectExtensions
 
                 var type = targetProperty.PropertyType;
 
-                if (type.GetGenericTypeDefinition() == typeof(List<>))
+                if (IsGenericListOrColletion(type))
                 {
                     type = type.GetGenericArguments()[0];
                 }
@@ -103,7 +104,7 @@ public static class ObjectExtensions
 
                 var type = targetArray.GetType();
 
-                if (type.GetGenericTypeDefinition() == typeof(List<>))
+                if (IsGenericListOrColletion(type))
                 {
                     type = type.GetGenericArguments()[0];
                 }
@@ -174,5 +175,13 @@ public static class ObjectExtensions
     private static bool IsArrayOrList(Type toTest)
     {
         return typeof(IEnumerable).IsAssignableFrom(toTest) && toTest != typeof(string);
+    }
+
+    private static bool IsGenericListOrColletion(Type toTest)
+    {
+        return toTest.GetGenericTypeDefinition() == typeof(IList<>) ||
+               toTest.GetGenericTypeDefinition() == typeof(List<>) ||
+               toTest.GetGenericTypeDefinition() == typeof(ICollection<>) ||
+               toTest.GetGenericTypeDefinition() == typeof(Collection<>);
     }
 }

@@ -1,7 +1,7 @@
 ## Changelog
 
 ### [Unreleased]
-*
+* Fix for CopyProperties when handling different list types
 
 ### [1.1.0] - 2017-03-27
 * Use ExpandoObject as a source on CopyProperties / UpdateOne
