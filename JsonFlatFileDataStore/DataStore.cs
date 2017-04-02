@@ -77,8 +77,15 @@ namespace JsonFlatFileDataStore
             });
         }
 
+        /// <summary>
+        /// Is backgound thread executing writes from queue
+        /// </summary>
         public bool IsUpdating => _updates.Count > 0;
 
+        /// <summary>
+        /// Update all content from json file
+        /// </summary>
+        /// <param name="jsonData">New content</param>
         public void UpdateAll(string jsonData)
         {
             _updates.Add(new Action(() =>
@@ -88,19 +95,34 @@ namespace JsonFlatFileDataStore
             }));
         }
 
-        public IDocumentCollection<T> GetCollection<T>(string path = null) where T : class
+        /// <summary>
+        /// Get collection
+        /// </summary>
+        /// <typeparam name="T">Item type</typeparam>
+        /// <param name="name">Collection name</param>
+        /// <returns>Typed IDocumentCollection</returns>
+        public IDocumentCollection<T> GetCollection<T>(string name = null) where T : class
         {
             var convertFunc = new Func<JToken, T>(e => JsonConvert.DeserializeObject<T>(e.ToString()));
-            return GetCollection<T>(path ?? _pathToCamelCase(typeof(T).Name), convertFunc);
+            return GetCollection<T>(name ?? _pathToCamelCase(typeof(T).Name), convertFunc);
         }
 
-        public IDocumentCollection<dynamic> GetCollection(string path)
+        /// <summary>
+        /// Get dynamic collection
+        /// </summary>
+        /// <param name="name">Collection name</param>
+        /// <returns>Dynamic IDocumentCollection</returns>
+        public IDocumentCollection<dynamic> GetCollection(string name)
         {
             // As we don't want to return JObjects when using dynamic, JObjects will be converted to ExpandoObjects
             var convertFunc = new Func<JToken, dynamic>(e => JsonConvert.DeserializeObject<ExpandoObject>(e.ToString(), _converter) as dynamic);
-            return GetCollection<dynamic>(path, convertFunc);
+            return GetCollection<dynamic>(name, convertFunc);
         }
 
+        /// <summary>
+        /// Get all collections
+        /// </summary>
+        /// <returns>List of collection names</returns>
         public IEnumerable<string> ListCollections()
         {
             return _jsonData.Children().Select(c => c.Path);

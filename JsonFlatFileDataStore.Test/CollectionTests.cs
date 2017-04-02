@@ -126,14 +126,14 @@ namespace JsonFlatFileDataStore.Test
 
             var itemDynamic = store.GetCollection("family")
                                 .AsQueryable()
-                                .Single(p => p.id == "AndersenFamily");
+                                .Single(p => p.id == 12);
 
             var itemTyped = store.GetCollection<Family>()
-                              .Find(p => p.Id == "AndersenFamily")
+                              .Find(p => p.Id == 12)
                               .First();
 
-            Assert.Equal("Thomas", itemDynamic.parents[0].firstName);
-            Assert.Equal("Thomas", itemTyped.Parents[0].FirstName);
+            Assert.Equal("Naomi", itemDynamic.parents[0].name);
+            Assert.Equal("Naomi", itemTyped.Parents[0].Name);
 
             UTHelpers.Down(newFilePath);
         }
