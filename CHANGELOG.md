@@ -1,6 +1,9 @@
 ## Changelog
 
 ### [Unreleased]
+* 
+
+### [1.1.1] - 2017-04-02
 * Fix for CopyProperties when handling different list types
 * Fix for CopyProperties with patch data with inner ExpandoObjects
 

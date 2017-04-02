@@ -147,7 +147,7 @@ var user = new User
 };
 
 // JSON: { "Age": 41, "Name": "James", "Work": { "Name": "ACME" } }
-// Anoymous type: new { Age = 41, Name = "James", Work = new { Name = "ACME" } };
+// Anonymous type: new { Age = 41, Name = "James", Work = new { Name = "ACME" } };
 var patchData = new Dictionary<string, object>();
 patchData.Add("Age", 41);
 patchData.Add("Name", "James");
