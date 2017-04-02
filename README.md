@@ -8,6 +8,7 @@ Simple flat file JSON datastore.
 * No relations. No indexes. No bells. No whistles. Just basics
 * Works with dynamic and typed data
 * Synchronous and asynchronous methods
+* Data is stored in JSON file. It is easy to initialize and easy to edit
 * [.NET Standard 1.4](https://github.com/dotnet/standard/blob/master/docs/versions.md)
   * .NET Core 1.0 ->
   * .NET 4.6.1 ->
@@ -133,6 +134,29 @@ await collection.UpdateOneAsync(e => e.Id == 12, new { Parents = new[] { null, n
 
 // Updates the first parent's age to 42
 await collection.UpdateOneAsync(e => e.Id == 12, new { Parents = new[] { new { age = 42 } } });
+```
+
+Easy way to create a patch ExpandoObject on runtime is to crete a dictionary and then serialize it to JSON and deserialize to ExpandoObject.
+
+```csharp
+var user = new User
+{
+    Name = "Timmy",
+    Age = 30,
+    Work = new WorkPlace { Name = "EMACS" }
+};
+
+// JSON: { "Age": 41, "Name": "James", "Work": { "Name": "ACME" } }
+// Anoymous type: new { Age = 41, Name = "James", Work = new { Name = "ACME" } };
+var patchData = new Dictionary<string, object>();
+patchData.Add("Age", 41);
+patchData.Add("Name", "James");
+patchData.Add("Work", new Dictionary<string, object> { { "Name", "ACME" } });
+
+var jobject = JObject.FromObject(patchData);
+dynamic patchExpando = JsonConvert.DeserializeObject<ExpandoObject>(jobject.ToString());
+
+await collection.UpdateOneAsync(e => e.Id == 12, patchExpando);
 ```
 
 #### Delete

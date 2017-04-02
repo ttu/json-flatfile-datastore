@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -390,7 +393,7 @@ namespace JsonFlatFileDataStore.Test
 
             UTHelpers.Down(newFilePath);
         }
-        
+
         [Fact]
         public async Task DeleteMany_NotFoundAndFound()
         {
@@ -463,6 +466,43 @@ namespace JsonFlatFileDataStore.Test
             var store2 = new DataStore(newFilePath);
             var collection2 = store.GetCollection<User>("user");
             Assert.Equal(103, collection2.Count);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public void UpdateOne_InnetExpandos()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection<User>("user");
+
+            var user = new User
+            {
+                Id = 4,
+                Name = "Timmy",
+                Age = 30,
+                Work = new WorkPlace { Name = "EMACS" }
+            };
+
+            collection.InsertOne(user);
+
+            var patchData = new Dictionary<string, object>();
+            patchData.Add("Age", 41);
+            patchData.Add("Name", "James");
+            patchData.Add("Work", new Dictionary<string, object> { { "Name", "ACME" } });
+
+            var jobject = JObject.FromObject(patchData);
+            dynamic patchExpando = JsonConvert.DeserializeObject<ExpandoObject>(jobject.ToString());
+
+            collection.UpdateOne(i => i.Id == 4, patchExpando as object);
+
+            var collection2 = store.GetCollection<User>("user");
+            var userCheck = collection2.Find(i => i.Id == 4).FirstOrDefault();
+            Assert.Equal("James", userCheck.Name);
+            Assert.Equal("ACME", userCheck.Work.Name);
 
             UTHelpers.Down(newFilePath);
         }

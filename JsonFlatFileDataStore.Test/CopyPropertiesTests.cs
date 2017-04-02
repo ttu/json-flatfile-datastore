@@ -205,40 +205,37 @@ namespace JsonFlatFileDataStore.Test
 
             var patchData = new Dictionary<string, object>();
             patchData.Add("age", 41);
-            patchData.Add("name", "Ramses");
-            patchData.Add("work", new Dictionary<string, object>() { { "name", "ACME"} });
+            patchData.Add("name", "James");
+            patchData.Add("work", new Dictionary<string, object> { { "name", "ACME" } });
 
             var jobject = JObject.FromObject(patchData);
             dynamic patchExpando = JsonConvert.DeserializeObject<ExpandoObject>(jobject.ToString());
 
             ObjectExtensions.CopyProperties(patchExpando, user);
-            Assert.Equal("Ramses", user.name);
+            Assert.Equal("James", user.name);
             Assert.Equal("ACME", user.work.name);
         }
 
         [Fact]
         public void Patch_InnerExpandos_Typed()
         {
-            var user = new User()
+            var user = new User
             {
                 Name = "Timmy",
                 Age = 30,
-                Work = new UserWorkplace
-                {
-                    Name = "EMACS"
-                }
+                Work = new WorkPlace { Name = "EMACS" }
             };
 
             var patchData = new Dictionary<string, object>();
             patchData.Add("Age", 41);
-            patchData.Add("Name", "Ramses");
-            patchData.Add("Work", new Dictionary<string, object>() { { "Name", "ACME" } });
+            patchData.Add("Name", "James");
+            patchData.Add("Work", new Dictionary<string, object> { { "Name", "ACME" } });
 
             var jobject = JObject.FromObject(patchData);
             dynamic patchExpando = JsonConvert.DeserializeObject<ExpandoObject>(jobject.ToString());
 
             ObjectExtensions.CopyProperties(patchExpando, user);
-            Assert.Equal("Ramses", user.Name);
+            Assert.Equal("James", user.Name);
             Assert.Equal("ACME", user.Work.Name);
         }
     }

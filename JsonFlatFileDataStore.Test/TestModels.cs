@@ -13,10 +13,10 @@ namespace JsonFlatFileDataStore.Test
 
         public string Location { get; set; }
 
-        public UserWorkplace Work { get; set; }
+        public WorkPlace Work { get; set; }
     }
 
-    internal class UserWorkplace
+    internal class WorkPlace
     {
         public string Name { get; set; }
 
