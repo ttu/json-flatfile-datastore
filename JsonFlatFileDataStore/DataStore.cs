@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace JsonFlatFileDataStore
 {
-    public class DataStore
+    public class DataStore : IDataStore
     {
         private readonly JObject _jsonData;
         private readonly string _filePath;
@@ -77,15 +77,8 @@ namespace JsonFlatFileDataStore
             });
         }
 
-        /// <summary>
-        /// Is backgound thread executing writes from queue
-        /// </summary>
         public bool IsUpdating => _updates.Count > 0;
 
-        /// <summary>
-        /// Update all content from json file
-        /// </summary>
-        /// <param name="jsonData">New content</param>
         public void UpdateAll(string jsonData)
         {
             _updates.Add(new Action(() =>
@@ -95,23 +88,12 @@ namespace JsonFlatFileDataStore
             }));
         }
 
-        /// <summary>
-        /// Get collection
-        /// </summary>
-        /// <typeparam name="T">Item type</typeparam>
-        /// <param name="name">Collection name</param>
-        /// <returns>Typed IDocumentCollection</returns>
         public IDocumentCollection<T> GetCollection<T>(string name = null) where T : class
         {
             var convertFunc = new Func<JToken, T>(e => JsonConvert.DeserializeObject<T>(e.ToString()));
             return GetCollection<T>(name ?? _pathToCamelCase(typeof(T).Name), convertFunc);
         }
 
-        /// <summary>
-        /// Get dynamic collection
-        /// </summary>
-        /// <param name="name">Collection name</param>
-        /// <returns>Dynamic IDocumentCollection</returns>
         public IDocumentCollection<dynamic> GetCollection(string name)
         {
             // As we don't want to return JObjects when using dynamic, JObjects will be converted to ExpandoObjects
