@@ -1,6 +1,9 @@
 ## Changelog
 
 ### [Unreleased]
+*
+
+### [1.1.2] - 2017-04-03
 * Interface for DataStore
 
 ### [1.1.1] - 2017-04-02

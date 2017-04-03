@@ -5,13 +5,13 @@ JSON Flat File Datastore
 
 Simple flat file JSON datastore.
 
-* No relations. No indexes. No bells. No whistles. Just basics
-* Works with dynamic and typed data
-* Synchronous and asynchronous methods
-* Data is stored in JSON file. It is easy to initialize and easy to edit
+* No relations. No indexes. No bells. No whistles. Just basics.
+* Works with dynamic and typed data.
+* Synchronous and asynchronous methods.
+* Data is stored in JSON file. It is easy to initialize and easy to edit.
 * [.NET Standard 1.4](https://github.com/dotnet/standard/blob/master/docs/versions.md)
-  * .NET Core 1.0 ->
-  * .NET 4.6.1 ->
+  * .NET Core 1.0
+  * .NET 4.6.1
 
 ##### Example project
 
@@ -19,7 +19,7 @@ Simple flat file JSON datastore.
 
 ## Functionality
 
-Example user collection in JSON
+Example user collection in JSON:
 
 ```json
 {
@@ -32,11 +32,11 @@ Example user collection in JSON
 
 #### Query
 
-Collection can be queried with LINQ by getting queryable from collection with `AsQueryable` method.
+Collection can be queried with LINQ by getting queryable from the collection with `AsQueryable` method.
 
 NOTE: AsQueryable will return IEnumerable, insted of IQueryable, because IQueryable doesn't support dynamic's in LINQ queries. With this datastore it won't matter as all data is already loaded into memory.
 
-`AsQueryable` LINQ query with dynamic data
+`AsQueryable` LINQ query with dynamic data:
 
 ```csharp
 var store = new DataStore(pathToJson);
@@ -49,7 +49,7 @@ var userDynamic = collection
                     .Single(p => p.name == "Phil");
 ```
 
-`AsQueryable` LINQ query with typed data
+`AsQueryable` LINQ query with typed data:
 
 ```csharp
 
@@ -81,7 +81,7 @@ collection.InsertOne(new User { Id = 3, Name = "Raymond", Age = 32, City = "NY" 
 
 #### Replace
 
-`ReplaceOne` and `ReplaceOneAsync` will replace the first item that matches the filter. Method will return true if item(s) found with fiter.
+`ReplaceOne` and `ReplaceOneAsync` will replace the first item that matches the filter. Method will return true if item(s) found with the filter.
 
 ```csharp
 // Sync and dynamic
@@ -97,7 +97,7 @@ await collection.ReplaceOneAsync(e => e.Id == 3, new User { Id = 3, Name = "Barr
 
 #### Update
 
-`UpdateOne` and `UpdateOneAsync` will update the first item that matches the filter with passed properties from dynamic object. Dynamic object can be an Anonymous type or and ExpandoObject. Method will return true if item(s) found with filter.
+`UpdateOne` and `UpdateOneAsync` will update the first item that matches the filter with passed properties from dynamic object. Dynamic object can be an Anonymous type or an ExpandoObject. Method will return true if item(s) found with the filter.
 
 ```csharp
 // Dynamic
@@ -113,7 +113,7 @@ await collection.UpdateOneAsync(e => e.id == 3, source as object);
 await collection.UpdateOneAsync(e => e.Name == "Phil", new { age = 42 });
 ```
 
-Update can also update items from collection and add new items to collection. Null items in passed update data are skipped, so with null items data can be set to update item in correct index.
+Update can also update items from the collection and add new items to the collection. Null items in the passed update data are skipped, so with null items data in the correct index can be updated.
 
 ```csharp
 var family = new Family
@@ -136,7 +136,7 @@ await collection.UpdateOneAsync(e => e.Id == 12, new { Parents = new[] { null, n
 await collection.UpdateOneAsync(e => e.Id == 12, new { Parents = new[] { new { age = 42 } } });
 ```
 
-Easy way to create a patch ExpandoObject on runtime is to crete a dictionary and then serialize it to JSON and deserialize to ExpandoObject.
+Easy way to create a patch ExpandoObject on runtime is to crete a dictionary and then to serialize it to a JSON and deserialize to an ExpandoObject.
 
 ```csharp
 var user = new User
@@ -159,9 +159,15 @@ dynamic patchExpando = JsonConvert.DeserializeObject<ExpandoObject>(jobject.ToSt
 await collection.UpdateOneAsync(e => e.Id == 12, patchExpando);
 ```
 
+##### Limitations
+
+Dictionaries won't work with Updates. This is becauses dictionaries and objects are similiar when serialized to JSON, so serialization creates an ExpandoObject from Dictionary.
+
+Update's are mainly meant to be used with HTTP PATCH, so normally Replace is easier and better way to update data. 
+
 #### Delete
 
-`DeleteOne` and `DeleteOneAsync` will remove first object that matches the filter. Method returns true if item(s) found with filter.
+`DeleteOne` and `DeleteOneAsync` will remove the first object that matches the filter. Method returns true if item(s) found with the filter.
 
 ```csharp
 // Dynamic
@@ -171,7 +177,7 @@ await collection.DeleteOneAsync(e => e.id == 3);
 await collection.DeleteOneAsync(e => e.Id == 3);
 ```
 
-`DeleteMany` and `DeleteManyAsyn` will delete all items that match the filter. Method returns true if item(s) found with filter.
+`DeleteMany` and `DeleteManyAsyn` will delete all items that match the filter. Method returns true if item(s) found with the filter.
 
 ```csharp
 // Dynamic
@@ -181,10 +187,10 @@ await collection.DeleteManyAsync(e => e.city == "NY");
 await collection.DeleteManyAsync(e => e.City == "NY");
 ```
 
-### Id field value
+### Id-field value
 
 
-If incrementing id field values is used, `GetNextIdValue` returns next id field value. If id property is integer, last item's value is incremented by one. If field is not integer it is converted to string and number is parsed from the end of the string and incremented by one.
+If incrementing id-field values is used, `GetNextIdValue` returns next id-field value. If id-property is integer, last item's value is incremented by one. If field is not an integer, it is converted to a string and number is parsed from the end of the string and incremented by one.
 
 ```csharp
 var store = new DataStore(newFilePath, keyProperty: "myId");
@@ -206,7 +212,7 @@ var nextId = collection.GetNextIdValue();
 
 ### Collection naming
 
-Collection name must be always defined with dynamic collections. If collection name is not defined with typed collection, class name is converted to lower camel case. E.g. User is user, UserFamily is userfamily etc.
+Collection name must be always defined when dynamic collections are used. If collection name is not defined with a typed collection, class-name is converted to lower camel case. E.g. User is user, UserFamily is userfamily etc.
 
 ```csharp
 var store = new DataStore(newFilePath);
@@ -232,15 +238,15 @@ var store = new DataStore(newFilePath);
 var store = new DataStore(newFilePath, false);
 ```
 
-Changes are committed immediately from collection to DataStore's internal collection. Each update creates a write updates to a blocking collection, which is processed on background. 
+Changes are committed immediately from cthe ollection to the DataStore's internal collection. Each update creates a write updates to a blocking collection, which is processed on background. 
 
-On commit, datastore always writes whole collection to the file, even when only one item is changed.
+On commit, the datastore always writes whole collection to the file, even when only one item is changed.
 
-If this is used with e.g. Web API, add it to DI container as a singleton. This way DataStore's internal state is correct and application does not have to rely on the state on the file.
+If this is used with e.g. Web API, add DataStore to the DI container as a singleton. This way DataStore's internal state is correct and application does not have to rely on the state on the file.
 
 ### Dynamic and error CS1977
 
-This is a message you will see if you try to use dynamic with lambdas:
+This is the message you will see if you try to use dynamic types with lambdas:
 
 > CS1977: Cannot use a lambda expression as an argument to a dynamically dispatched operation without first casting it to a delegate or expression tree type
 
@@ -260,7 +266,7 @@ collection2.ReplaceOne((Predicate<dynamic>)(e => e.id == 11), dynamicUser);
 
 ### API
 
-API is almost identical to MongoDB's C# API, so switching to MongoDB or [DocumentDB](https://docs.microsoft.com/en-us/azure/documentdb/documentdb-protocol-mongodb) might be easy. Use type inference as types are not interchangable.
+API is almost identical to the MongoDB's C# API, so switching to the MongoDB or [DocumentDB](https://docs.microsoft.com/en-us/azure/documentdb/documentdb-protocol-mongodb) might be easy. Use type inference as types are not interchangable.
 
 * [MongoDB-C#-linq](http://mongodb.github.io/mongo-csharp-driver/2.4/reference/driver/crud/linq/#queryable)
 * [MongoDB-C#-crud](http://mongodb.github.io/mongo-csharp-driver/2.4/reference/driver/crud/writing/)
