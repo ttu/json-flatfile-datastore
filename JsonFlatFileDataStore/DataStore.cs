@@ -53,25 +53,18 @@ namespace JsonFlatFileDataStore
             // Default key property is id or Id
             _keyProperty = keyProperty ?? (useLowerCamelCase ? "id" : "Id");
 
-            string json = "{}";
-
-            try
-            {
-                json = File.ReadAllText(path);
-            }
-            catch (FileNotFoundException)
-            {
-                File.WriteAllText(path, json);
-            }
+            string json = ReadJsonFromFile(path);
 
             _jsonData = JObject.Parse(json);
 
             // Run updates on background thread and use BlockingCollection to prevent multiple updates running at the same time
             Task.Run(() =>
             {
-                while (!_cts.IsCancellationRequested)
+                var token = _cts.Token;
+
+                while (!token.IsCancellationRequested)
                 {
-                    var updateAction = _updates.Take();
+                    var updateAction = _updates.Take(token);
                     updateAction();
                 }
             });
@@ -84,7 +77,7 @@ namespace JsonFlatFileDataStore
             _updates.Add(new Action(() =>
             {
                 _jsonData.ReplaceAll(JObject.Parse(jsonData));
-                File.WriteAllText(_filePath, _jsonData.ToString());
+                WriteJsonToFile(_filePath, _jsonData.ToString());
             }));
         }
 
@@ -132,7 +125,7 @@ namespace JsonFlatFileDataStore
             {
                 _jsonData[path] = JArray.FromObject(dataBu);
                 string json = _toJsonFunc(_jsonData);
-                File.WriteAllText(_filePath, json);
+                WriteJsonToFile(_filePath, json);
                 waitFlag = false;
             }));
 
@@ -142,6 +135,42 @@ namespace JsonFlatFileDataStore
                     await Task.Delay(1);
                 else
                     Task.Delay(1).Wait();
+            }
+        }
+
+        private string ReadJsonFromFile(string path)
+        {
+            while (true)
+            {
+                try
+                {
+                    return File.ReadAllText(path);
+                }
+                catch (FileNotFoundException)
+                {
+                    File.WriteAllText(path, "{}");
+                    return "{}";
+                }
+                catch (IOException e) when (e.Message.Contains("because it is being used by another process"))
+                {
+                    // If some other process is using this file try operation again
+                }
+            }
+        }
+
+        private void WriteJsonToFile(string path, string content)
+        {
+            while (true)
+            {
+                try
+                {
+                    File.WriteAllText(path, content);
+                    break;
+                }
+                catch (IOException e) when (e.Message.Contains("because it is being used by another process"))
+                {
+                    // If some other process is using this file try operation again
+                }
             }
         }
     }

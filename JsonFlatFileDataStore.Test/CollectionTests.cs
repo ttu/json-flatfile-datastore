@@ -439,11 +439,11 @@ namespace JsonFlatFileDataStore.Test
             await Task.WhenAll(tasks);
 
             var store2 = new DataStore(newFilePath);
-            var collection2 = store.GetCollection<User>("user");
+            var collection2 = store2.GetCollection<User>("user");
             Assert.Equal(3, collection2.Count);
-            var collection_0 = store.GetCollection<User>("user_0");
+            var collection_0 = store2.GetCollection<User>("user_0");
             Assert.Equal(50, collection_0.Count);
-            var collection_1 = store.GetCollection<User>("user_1");
+            var collection_1 = store2.GetCollection<User>("user_1");
             Assert.Equal(50, collection_1.Count);
 
             UTHelpers.Down(newFilePath);
@@ -464,7 +464,7 @@ namespace JsonFlatFileDataStore.Test
             await Task.WhenAll(tasks);
 
             var store2 = new DataStore(newFilePath);
-            var collection2 = store.GetCollection<User>("user");
+            var collection2 = store2.GetCollection<User>("user");
             Assert.Equal(103, collection2.Count);
 
             UTHelpers.Down(newFilePath);
