@@ -193,7 +193,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void Patch_InnerExpandos_Dynamic()
+        public void CopyProperties_DynamicWithInnerExpandos()
         {
             dynamic work = new ExpandoObject();
             work.name = "EMACS";
@@ -217,7 +217,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void Patch_InnerExpandos_Typed()
+        public void CopyProperties_TypedWithInnerExpandos()
         {
             var user = new User
             {
@@ -237,6 +237,44 @@ namespace JsonFlatFileDataStore.Test
             ObjectExtensions.CopyProperties(patchExpando, user);
             Assert.Equal("James", user.Name);
             Assert.Equal("ACME", user.Work.Name);
+        }
+
+        [Fact]
+        public void CopyProperties_TypedWithDictionary()
+        {
+            var user = new PrivateOwner
+            {
+                FirstName = "Timmy",
+                MyStrings = new Dictionary<string, string> { { "A", "ABBA" }, { "B", "ACDC" } },
+                MyIntegers = new Dictionary<int, int> { { 1, 111 }, { 2, 222 } }
+            };
+
+            var patchData = new ExpandoObject();
+            var items = patchData as IDictionary<string, object>;
+            items.Add("MyStrings", new Dictionary<string, string> { { "C", "CEEC" }, });
+            items.Add("MyIntegers", new Dictionary<int, int> { { 3, 333 } });
+
+            ObjectExtensions.CopyProperties(patchData, user);
+            Assert.Equal("CEEC", user.MyStrings["C"]);
+            Assert.Equal(333, user.MyIntegers[3]);
+        }
+
+        [Fact]
+        public void CopyProperties_DynamicithDictionary()
+        {
+            dynamic user = new ExpandoObject();
+            user.FirstName = "Timmy";
+            user.MyStrings = new Dictionary<string, string> { { "A", "ABBA" }, { "B", "ACDC" } };
+            user.MyIntegers = new Dictionary<int, int> { { 1, 111 }, { 2, 222 } };
+
+            var patchData = new ExpandoObject();
+            var items = patchData as IDictionary<string, object>;
+            items.Add("MyStrings", new Dictionary<string, string> { { "C", "CEEC" }, });
+            items.Add("MyIntegers", new Dictionary<int, int> { { 3, 333 } });
+
+            ObjectExtensions.CopyProperties(patchData, user);
+            Assert.Equal("CEEC", user.MyStrings["C"]);
+            Assert.Equal(333, user.MyIntegers[3]);
         }
     }
 }

@@ -35,6 +35,10 @@ namespace JsonFlatFileDataStore.Test
         public string OwnerLongTestProperty { get; set; }
 
         public List<int> MyValues { get; set; }
+
+        public Dictionary<string, string> MyStrings { get; set; }
+
+        public Dictionary<int, int> MyIntegers { get; set; }
     }
 
     internal class Family

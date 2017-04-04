@@ -41,6 +41,21 @@ public static class ObjectExtensions
                 continue;
             }
 
+            if (IsDictionary(srcProp.PropertyType))
+            {
+                var targetDict = (IDictionary)targetProperty.GetValue(destination, null);
+                var sourceDict = (IDictionary)GetValue(source, srcProp);
+
+                targetDict.Clear();
+                foreach (var item in sourceDict)
+                {
+                    var kvp = (DictionaryEntry)item;
+                    targetDict.Add(kvp.Key, kvp.Value);
+                }
+
+                continue;
+            }
+
             if (IsEnumerable(srcProp.PropertyType))
             {
                 var arrayType = srcProp.PropertyType.GetElementType();
@@ -108,6 +123,20 @@ public static class ObjectExtensions
                 var destinationValue = ((IDictionary<string, object>)destination)[srcProp.Name];
                 var sourceValue = GetValue(source, srcProp);
                 HandleExpando(sourceValue, destinationValue);
+            }
+            else if (IsDictionary(srcProp.PropertyType))
+            {
+                var targetDict = (IDictionary)((IDictionary<string, object>)destination)[srcProp.Name];
+                var sourceDict = (IDictionary)GetValue(source, srcProp);
+
+                targetDict.Clear();
+                foreach (var item in sourceDict)
+                {
+                    var kvp = (DictionaryEntry)item;
+                    targetDict.Add(kvp.Key, kvp.Value);
+                }
+
+                continue;
             }
             else if (IsEnumerable(srcProp.PropertyType))
             {
@@ -189,6 +218,11 @@ public static class ObjectExtensions
     private static bool IsEnumerable(Type toTest)
     {
         return typeof(IEnumerable).IsAssignableFrom(toTest) && toTest != typeof(string);
+    }
+
+    private static bool IsDictionary(Type toTest)
+    {
+        return typeof(IDictionary).IsAssignableFrom(toTest) && toTest != typeof(string);
     }
 
     private static bool IsGenericListOrColletion(Type toTest)

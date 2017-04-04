@@ -141,6 +141,7 @@ Easy way to create a patch ExpandoObject on runtime is to crete a dictionary and
 ```csharp
 var user = new User
 {
+    Id = 12,
     Name = "Timmy",
     Age = 30,
     Work = new WorkPlace { Name = "EMACS" }
@@ -161,9 +162,26 @@ await collection.UpdateOneAsync(e => e.Id == 12, patchExpando);
 
 ##### Limitations
 
-Dictionaries won't work with Updates. This is becauses dictionaries and objects are similiar when serialized to JSON, so serialization creates an ExpandoObject from Dictionary.
+Dictionaries won't work when serializing JSON or data to ExpandoObjects. This is becauses dictionaries and objects are similiar when serialized to JSON, so serialization creates an ExpandoObject from Dictionary. Update's are mainly meant to be used with HTTP PATCH, so normally Replace is easier and better way to update data. 
 
-Update's are mainly meant to be used with HTTP PATCH, so normally Replace is easier and better way to update data. 
+If the update Expando is created manually then Dictionaries content can be updated. Unlike List, Dictionary's whole content is replaced with the update data's content.
+```csharp
+var player = new Player
+{
+    Id = 423,
+    Scores = new Dictionary<string, int> 
+    { 
+        { "Blue Max", 1256 }, 
+        { "Pacman", 3221 }
+    },
+};
+
+var patchData = new ExpandoObject();
+var items = patchData as IDictionary<string, object>;
+items.Add("Scores", new Dictionary<string, string> { { "Blue Max", 1345 }, { "Outrun", 1234 }, { "Pacman", 3221 }, });
+
+await collection.UpdateOneAsync(e => e.Id == 423, patchData);
+```
 
 #### Delete
 
