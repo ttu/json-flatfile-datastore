@@ -1,8 +1,11 @@
 ## Changelog
 
 ### [Unreleased]
-* Handle dictionaries in ICollection UpdateOne
+*
 
+### [1.1.3] - 2017-04-04
+* Handle dictionaries in ICollection UpdateOne
+ 
 ### [1.1.2] - 2017-04-03
 * Interface for DataStore
 
