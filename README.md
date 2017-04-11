@@ -8,7 +8,7 @@ Simple flat file JSON datastore.
 * No relations. No indexes. No bells. No whistles. Just basics.
 * Works with dynamic and typed data.
 * Synchronous and asynchronous methods.
-* Data is stored in JSON file. It is easy to initialize and easy to edit.
+* Data is stored in a JSON file. It is easy to initialize and easy to edit.
 * [.NET Standard 1.4](https://github.com/dotnet/standard/blob/master/docs/versions.md)
   * .NET Core 1.0
   * .NET 4.6.1

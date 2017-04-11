@@ -3,19 +3,22 @@
 ### [Unreleased]
 *
 
+### [1.2.0] - 2017-04-11
+* InsertMany, UpdateMany and ReplaceMany methods to IDocumentCollection
+
 ### [1.1.3] - 2017-04-04
-* Handle dictionaries in ICollection UpdateOne
+* Handle dictionaries in IDocumentCollection UpdateOne
  
 ### [1.1.2] - 2017-04-03
 * Interface for DataStore
 
 ### [1.1.1] - 2017-04-02
-* Fix for ICollection UpdateOne when handling different list types
-* Fix for ICollection UpdateOne with patch data that contais inner ExpandoObjects
+* Fix for IDocumentCollection UpdateOne when handling different list types
+* Fix for IDocumentCollection UpdateOne with patch data that contais inner ExpandoObjects
 
 ### [1.1.0] - 2017-03-27
-* Use ExpandoObject as a source on ICollection UpdateOne
-* ICollection methods will return true if operation is succesful
+* Use ExpandoObject as a source on IDocumentCollection UpdateOne
+* IDocumentCollection methods will return true if operation is succesful
 
 ### [1.0.2] - 2017-03-26
 * Fix for UpdateOneAsync
