@@ -79,6 +79,17 @@ await collection.InsertOneAsync(new { id = 3, name = "Raymond", age = 32, city =
 collection.InsertOne(new User { Id = 3, Name = "Raymond", Age = 32, City = "NY" });
 ```
 
+`InsertMany` and `InsertManyAsync` will insert a list of items to the collection.
+```csharp
+var newItems = new[]
+{
+    new User { Id = 3, Name = "Raymond", Age = 32, City = "NY" },
+    new User { Id = 4, Name = "Ted", Age = 43, City = "NY" }
+};
+
+collection.InsertMany(newItems);
+```
+
 #### Replace
 
 `ReplaceOne` and `ReplaceOneAsync` will replace the first item that matches the filter. Method will return true if item(s) found with the filter.
@@ -93,6 +104,12 @@ collection.ReplaceOne(e => e.id == 3, new { id = 3, name = "Barry", age = 33 });
 // Before update : { "id": 3, "name": "Raymond", "age": 32, "city": "NY" }
 // After update  : { "id": 3, "name": "Barry", "age": 42 }
 await collection.ReplaceOneAsync(e => e.Id == 3, new User { Id = 3, Name = "Barry", Age = 33 });
+```
+
+`ReplaceMany` and `ReplaceManyAsync` will replace all items that match the filter.
+
+```csharp
+collection.ReplaceMany(e => e.City == "NY", new { City = "New York" });
 ```
 
 #### Update
@@ -111,6 +128,12 @@ await collection.UpdateOneAsync(e => e.id == 3, source as object);
 // Before update : { "id": 1, "name": "Phil", "age": 40, "city": "NY" }
 // After update  : { "id": 1, "name": "Phil", "age": 42, "city": "NY" }
 await collection.UpdateOneAsync(e => e.Name == "Phil", new { age = 42 });
+```
+
+`UpdateMany` and `UpdateManyAsync` will update all items that match the filter.
+
+```csharp
+await collection.UpdateManyAsync(e => e.Age == 30, new { age = 31 });
 ```
 
 Update can also update items from the collection and add new items to the collection. Null items in the passed update data are skipped, so with null items data in the correct index can be updated.

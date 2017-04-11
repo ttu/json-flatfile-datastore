@@ -14,13 +14,15 @@ namespace JsonFlatFileDataStore
         private readonly string _idField;
         private readonly Lazy<List<T>> _data;
         private readonly Func<string, List<T>, bool, Task> _commit;
+        private readonly Func<T, T> _insertConvert;
 
-        public DocumentCollection(Func<string, List<T>, bool, Task> commit, Lazy<List<T>> data, string path, string idField)
+        public DocumentCollection(Func<string, List<T>, bool, Task> commit, Lazy<List<T>> data, string path, string idField, Func<T,T> insertConvert)
         {
             _path = path;
             _idField = idField;
             _commit = commit;
             _data = data;
+            _insertConvert = insertConvert;
         }
 
         public int Count => _data.Value.Count;
@@ -68,14 +70,36 @@ namespace JsonFlatFileDataStore
 
         public bool InsertOne(T item)
         {
-            _data.Value.Add(item);
+            _data.Value.Add(_insertConvert(item));
             _commit(_path, _data.Value, false);
             return true;
         }
 
         public async Task<bool> InsertOneAsync(T item)
         {
-            _data.Value.Add(item);
+            _data.Value.Add(_insertConvert(item));
+            await _commit(_path, _data.Value, true);
+            return true;
+        }
+
+        public bool InsertMany(IEnumerable<T> items)
+        {
+            foreach (var item in items)
+            {
+                _data.Value.Add(_insertConvert(item));
+            }
+
+            _commit(_path, _data.Value, false);
+            return true;
+        }
+
+        public async Task<bool> InsertManyAsync(IEnumerable<T> items)
+        {
+            foreach (var item in items)
+            {
+                _data.Value.Add(_insertConvert(item));
+            }
+
             await _commit(_path, _data.Value, true);
             return true;
         }
@@ -93,6 +117,23 @@ namespace JsonFlatFileDataStore
             return true;
         }
 
+        public bool ReplaceMany(Predicate<T> filter, T item)
+        {
+            var matches = Find(filter);
+
+            if (!matches.Any())
+                return false;
+
+            foreach (var match in matches.ToList())
+            {
+                var index = _data.Value.IndexOf(match);
+                _data.Value[index] = item;
+            }
+
+            _commit(_path, _data.Value, false);
+            return true;
+        }
+
         public async Task<bool> ReplaceOneAsync(Predicate<T> filter, T item)
         {
             var matches = Find(filter);
@@ -106,6 +147,23 @@ namespace JsonFlatFileDataStore
             return true;
         }
 
+        public async Task<bool> ReplaceManyAsync(Predicate<T> filter, T item)
+        {
+            var matches = Find(filter);
+
+            if (!matches.Any())
+                return false;
+
+            foreach (var match in matches.ToList())
+            {
+                var index = _data.Value.IndexOf(match);
+                _data.Value[index] = item;
+            }
+
+            await _commit(_path, _data.Value, true);
+            return true;
+        }
+
         public bool UpdateOne(Predicate<T> filter, dynamic item)
         {
             var matches = Find(filter);
@@ -115,7 +173,7 @@ namespace JsonFlatFileDataStore
 
             var toUpdate = matches.First();
             ObjectExtensions.CopyProperties(item, toUpdate);
-            ReplaceOne(filter, toUpdate);
+            _commit(_path, _data.Value, false);
             return true;
         }
 
@@ -128,7 +186,39 @@ namespace JsonFlatFileDataStore
 
             var toUpdate = matches.First();
             ObjectExtensions.CopyProperties(item, toUpdate);
-            await ReplaceOneAsync(filter, toUpdate);
+            await _commit(_path, _data.Value, true);
+            return true;
+        }
+
+        public bool UpdateMany(Predicate<T> filter, dynamic item)
+        {
+            var matches = Find(filter);
+
+            if (!matches.Any())
+                return false;
+
+            foreach (var toUpdate in matches)
+            {
+                ObjectExtensions.CopyProperties(item, toUpdate);
+            }
+
+            _commit(_path, _data.Value, false);
+            return true;
+        }
+
+        public async Task<bool> UpdateManyAsync(Predicate<T> filter, dynamic item)
+        {
+            var matches = Find(filter);
+
+            if (!matches.Any())
+                return false;
+
+            foreach (var toUpdate in matches)
+            {
+                ObjectExtensions.CopyProperties(item, toUpdate);
+            }
+
+            await _commit(_path, _data.Value, true);
             return true;
         }
 
@@ -160,26 +250,22 @@ namespace JsonFlatFileDataStore
         {
             var removed = _data.Value.RemoveAll(filter);
 
-            if (removed > 0)
-            {
-                _commit(_path, _data.Value, false);
-                return true;
-            }
+            if (removed == 0)
+                return false;
 
-            return false;
+            _commit(_path, _data.Value, false);
+            return true;
         }
 
         public async Task<bool> DeleteManyAsync(Predicate<T> filter)
         {
             var removed = _data.Value.RemoveAll(filter);
 
-            if (removed > 0)
-            {
-                await _commit(_path, _data.Value, true);
-                return true;
-            }
+            if (removed == 0)
+                return false;
 
-            return false;
+            await _commit(_path, _data.Value, true);
+            return true;
         }
     }
 }

@@ -84,15 +84,18 @@ namespace JsonFlatFileDataStore
 
         public IDocumentCollection<T> GetCollection<T>(string name = null) where T : class
         {
-            var convertFunc = new Func<JToken, T>(e => JsonConvert.DeserializeObject<T>(e.ToString()));
-            return GetCollection<T>(name ?? _pathToCamelCase(typeof(T).Name), convertFunc);
+            var readConvert = new Func<JToken, T>(e => JsonConvert.DeserializeObject<T>(e.ToString()));
+            var insertConvert = new Func<T, T>(e => e);
+            return GetCollection<T>(name ?? _pathToCamelCase(typeof(T).Name), readConvert, insertConvert);
         }
 
         public IDocumentCollection<dynamic> GetCollection(string name)
         {
             // As we don't want to return JObjects when using dynamic, JObjects will be converted to ExpandoObjects
-            var convertFunc = new Func<JToken, dynamic>(e => JsonConvert.DeserializeObject<ExpandoObject>(e.ToString(), _converter) as dynamic);
-            return GetCollection<dynamic>(name, convertFunc);
+            var readConvert = new Func<JToken, dynamic>(e => JsonConvert.DeserializeObject<ExpandoObject>(e.ToString(), _converter) as dynamic);
+            var insertConvert = new Func<dynamic, dynamic>(e => JsonConvert.DeserializeObject<ExpandoObject>(JsonConvert.SerializeObject(e), _converter));
+
+            return GetCollection<dynamic>(name, readConvert, insertConvert);
         }
 
         /// <summary>
@@ -104,16 +107,16 @@ namespace JsonFlatFileDataStore
             return _jsonData.Children().Select(c => c.Path);
         }
 
-        private IDocumentCollection<T> GetCollection<T>(string path, Func<JToken, T> convertFunc)
+        private IDocumentCollection<T> GetCollection<T>(string path, Func<JToken, T> readConvert, Func<T, T> insertConvert)
         {
             var data = new Lazy<List<T>>(() =>
                                _jsonData[path]?
                                    .Children()
-                                   .Select(e => convertFunc(e))
+                                   .Select(e => readConvert(e))
                                    .ToList()
                                ?? new List<T>());
 
-            return new DocumentCollection<T>((sender, dataToUpdate, async) => Commit(sender, dataToUpdate, async), data, path, _keyProperty);
+            return new DocumentCollection<T>((sender, dataToUpdate, async) => Commit(sender, dataToUpdate, async), data, path, _keyProperty, insertConvert);
         }
 
         private async Task Commit<T>(string path, IList<T> data, bool async = false)

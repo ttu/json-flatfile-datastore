@@ -267,8 +267,85 @@ namespace JsonFlatFileDataStore.Test
             var store2 = new DataStore(newFilePath);
             var collection2 = store2.GetCollection("user");
             var updated = collection2.Find(e => e.id == 11).First();
-            Assert.Equal(21, updated.age);
+            Assert.Equal(22, updated.age);
             Assert.Equal("Teddy", updated.name);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public async Task UpdateMany_DynamicUser()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection("user");
+            Assert.Equal(3, collection.Count);
+
+            var newUsers = new[] {
+                new { id = 20, name = "A1", age = 55 },
+                new { id = 21, name = "A2", age = 55 },
+                new { id = 22, name = "A3", age = 55 }
+            };
+
+            await collection.InsertManyAsync(newUsers);
+
+            dynamic source = new ExpandoObject();
+            source.age = 98;
+            var updateResult = await collection.UpdateManyAsync(e => e.age == 55, source as object);
+            Assert.True(updateResult);
+
+            var store2 = new DataStore(newFilePath);
+            var collection2 = store2.GetCollection("user");
+            var updated = collection2.Find(e => e.age == 98);
+            Assert.Equal(3, updated.Count());
+
+            await collection2.DeleteManyAsync(e => e.age == 98);
+
+            var store3 = new DataStore(newFilePath);
+            var collection3 = store3.GetCollection("user");
+            var updated2 = collection2.Find(e => e.age == 98);
+            Assert.Equal(0, updated2.Count());
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public void UpdateMany_TypedUser()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection<User>();
+            Assert.Equal(3, collection.Count);
+
+            var newUsers = new[] 
+            {
+                new User { Id = 20, Name = "A1", Age = 55 },
+                new User { Id = 21, Name = "A2", Age = 55 },
+                new User { Id = 22, Name = "A3", Age = 55 }
+            };
+
+            collection.InsertMany(newUsers);
+
+            dynamic source = new ExpandoObject();
+            source.Age = 98;
+            var updateResult = collection.UpdateMany(e => e.Age == 55, source as object);
+            Assert.True(updateResult);
+
+            var store2 = new DataStore(newFilePath);
+            var collection2 = store2.GetCollection<User>();
+            var updated = collection2.Find(e => e.Age == 98);
+            Assert.Equal(3, updated.Count());
+
+            collection2.DeleteMany(e => e.Age == 98);
+
+            var store3 = new DataStore(newFilePath);
+            var collection3 = store3.GetCollection<User>();
+            var updated2 = collection2.Find(e => e.Age == 98);
+            Assert.Equal(0, updated2.Count());
 
             UTHelpers.Down(newFilePath);
         }
@@ -297,6 +374,35 @@ namespace JsonFlatFileDataStore.Test
             var collection3 = store3.GetCollection<User>("user");
             var updated = collection3.Find(e => e.Id == 11).First();
             Assert.Equal("Theodor", updated.Name);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public void ReplaceMany_TypedUser()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection<User>("user");
+            Assert.Equal(3, collection.Count);
+
+            collection.InsertOne(new User { Id = 11, Name = "Teddy" });
+            collection.InsertOne(new User { Id = 11, Name = "Teddy2" });
+            Assert.Equal(5, collection.Count);
+
+            var store2 = new DataStore(newFilePath);
+
+            var collection2 = store2.GetCollection<User>("user");
+            Assert.Equal(5, collection2.Count);
+
+            collection2.ReplaceMany(e => e.Id == 11, new User { Id = 11, Name = "Theodor" });
+
+            var store3 = new DataStore(newFilePath);
+            var collection3 = store3.GetCollection<User>("user");
+            var updated = collection3.Find(e => e.Id == 11 && e.Name == "Theodor");
+            Assert.Equal(2, updated.Count());
 
             UTHelpers.Down(newFilePath);
         }
