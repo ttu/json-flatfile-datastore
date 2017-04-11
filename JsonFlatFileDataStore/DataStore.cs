@@ -5,6 +5,7 @@ using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Dynamic;
 using System.IO;
 using System.Linq;
@@ -62,7 +63,7 @@ namespace JsonFlatFileDataStore
             {
                 var token = _cts.Token;
 
-                while (!token.IsCancellationRequested)
+                while (token != null && !token.IsCancellationRequested)
                 {
                     var updateAction = _updates.Take(token);
                     updateAction();
@@ -140,6 +141,8 @@ namespace JsonFlatFileDataStore
 
         private string ReadJsonFromFile(string path)
         {
+            Stopwatch sw = null;
+
             while (true)
             {
                 try
@@ -153,13 +156,18 @@ namespace JsonFlatFileDataStore
                 }
                 catch (IOException e) when (e.Message.Contains("because it is being used by another process"))
                 {
-                    // If some other process is using this file try operation again
+                    // If some other process is using this file, try operation again unless elapsed times is greater than x
+                    sw = sw ?? Stopwatch.StartNew();
+                    if (sw.ElapsedMilliseconds > 10000)
+                        throw;
                 }
             }
         }
 
         private void WriteJsonToFile(string path, string content)
         {
+            Stopwatch sw = null;
+
             while (true)
             {
                 try
@@ -169,7 +177,10 @@ namespace JsonFlatFileDataStore
                 }
                 catch (IOException e) when (e.Message.Contains("because it is being used by another process"))
                 {
-                    // If some other process is using this file try operation again
+                    // If some other process is using this file, try operation again unless elapsed times is greater than x
+                    sw = sw ?? Stopwatch.StartNew();
+                    if (sw.ElapsedMilliseconds > 10000)
+                        throw;
                 }
             }
         }
