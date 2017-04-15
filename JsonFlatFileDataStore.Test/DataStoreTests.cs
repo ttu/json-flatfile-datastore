@@ -1,4 +1,7 @@
-﻿using System.IO;
+﻿using NSubstitute;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
@@ -119,6 +122,46 @@ namespace JsonFlatFileDataStore.Test
             Assert.Equal("Phil", userTyped.Name);
 
             UTHelpers.Down(pathToJson);
+        }
+
+        [Fact]
+        public void GetCollection_Mocked()
+        {
+            var innerCollection = new DocumentCollection<Movie>(
+                new Func<string, Func<List<Movie>, bool>, bool, Task<bool>>((s, d, i) => { return Task.FromResult(true); }),
+                new Lazy<List<Movie>>(() => new List<Movie> { new Movie { Name = "Commando" } }),
+                @"/path/to/file",
+                "id",
+                new Func<Movie, Movie>(m => m));
+
+            var store = Substitute.For<IDataStore>();
+            store.GetCollection<Movie>().Returns(innerCollection);
+
+            var collection = store.GetCollection<Movie>();
+            Assert.Equal(1, collection.Count);
+
+            var result = collection.InsertOne(new Movie { Name = "Predator" });
+            Assert.True(result);
+            Assert.Equal(2, collection.Count);
+            Assert.Equal(1, collection.AsQueryable().Count(e => e.Name == "Predator"));
+        }
+
+        [Fact]
+        public void GetCollection_Exception()
+        {
+            var innerCollection = new DocumentCollection<Movie>(
+                new Func<string, Func<List<Movie>, bool>, bool, Task<bool>>((s, d, i) => { throw new Exception("Failed"); }),
+                new Lazy<List<Movie>>(() => new List<Movie> { new Movie { Name = "Commando" } }),
+                @"/path/to/file",
+                "id",
+                new Func<Movie, Movie>(m => m));
+
+            var store = Substitute.For<IDataStore>();
+            store.GetCollection<Movie>().Returns(innerCollection);
+
+            var collection = store.GetCollection<Movie>();
+
+            Assert.Throws<Exception>(() => collection.InsertOne(new Movie { Name = "Predator" }));
         }
     }
 }

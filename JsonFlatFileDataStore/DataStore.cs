@@ -116,30 +116,58 @@ namespace JsonFlatFileDataStore
                                    .ToList()
                                ?? new List<T>());
 
-            return new DocumentCollection<T>((sender, dataToUpdate, async) => Commit(sender, dataToUpdate, async), data, path, _keyProperty, insertConvert);
+            return new DocumentCollection<T>(
+                (sender, dataToUpdate, isOperationAsync) => Commit(sender, dataToUpdate, isOperationAsync, readConvert), 
+                data, 
+                path, 
+                _keyProperty, 
+                insertConvert);
         }
 
-        private async Task Commit<T>(string path, IList<T> data, bool async = false)
+        private async Task<bool> Commit<T>(string dataPath, Func<List<T>, bool> commitOperation, bool isOperationAsync, Func<JToken, T> readConvert)
         {
             bool waitFlag = true;
-
-            List<T> dataBu = data.ToList();
+            bool result = false;
+            Exception actionException = null;
 
             _updates.Add(new Action(() =>
             {
-                _jsonData[path] = JArray.FromObject(dataBu);
-                string json = _toJsonFunc(_jsonData);
-                WriteJsonToFile(_filePath, json);
+                var selectedData = _jsonData[dataPath]?
+                                   .Children()
+                                   .Select(e => readConvert(e))
+                                   .ToList()
+                                   ?? new List<T>();
+
+                if (commitOperation(selectedData))
+                {
+                    _jsonData[dataPath] = JArray.FromObject(selectedData);
+                    string json = _toJsonFunc(_jsonData);
+
+                    try
+                    {
+                        result = WriteJsonToFile(_filePath, json);
+                    }
+                    catch (Exception e)
+                    {
+                        actionException = e;
+                    }
+                }
+
                 waitFlag = false;
             }));
 
             while (waitFlag)
             {
-                if (async)
+                if (isOperationAsync)
                     await Task.Delay(1);
                 else
                     Task.Delay(1).Wait();
             }
+
+            if (actionException != null)
+                throw actionException;
+
+            return result;
         }
 
         private string ReadJsonFromFile(string path)
@@ -167,7 +195,7 @@ namespace JsonFlatFileDataStore
             }
         }
 
-        private void WriteJsonToFile(string path, string content)
+        private bool WriteJsonToFile(string path, string content)
         {
             Stopwatch sw = null;
 
@@ -176,14 +204,19 @@ namespace JsonFlatFileDataStore
                 try
                 {
                     File.WriteAllText(path, content);
-                    break;
+                    return true;
                 }
                 catch (IOException e) when (e.Message.Contains("because it is being used by another process"))
                 {
                     // If some other process is using this file, try operation again unless elapsed times is greater than x
                     sw = sw ?? Stopwatch.StartNew();
                     if (sw.ElapsedMilliseconds > 10000)
-                        throw;
+                        return false;
+                }
+                catch (Exception)
+                {
+                    // Bad this now is that there is no logging here
+                    return false;
                 }
             }
         }

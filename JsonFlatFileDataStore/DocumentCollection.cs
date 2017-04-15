@@ -13,10 +13,10 @@ namespace JsonFlatFileDataStore
         private readonly string _path;
         private readonly string _idField;
         private readonly Lazy<List<T>> _data;
-        private readonly Func<string, List<T>, bool, Task> _commit;
+        private readonly Func<string, Func<List<T>, bool>, bool, Task<bool>> _commit;
         private readonly Func<T, T> _insertConvert;
 
-        public DocumentCollection(Func<string, List<T>, bool, Task> commit, Lazy<List<T>> data, string path, string idField, Func<T,T> insertConvert)
+        public DocumentCollection(Func<string, Func<List<T>, bool>, bool, Task<bool>> commit, Lazy<List<T>> data, string path, string idField, Func<T, T> insertConvert)
         {
             _path = path;
             _idField = idField;
@@ -70,202 +70,304 @@ namespace JsonFlatFileDataStore
 
         public bool InsertOne(T item)
         {
-            _data.Value.Add(_insertConvert(item));
-            _commit(_path, _data.Value, false);
-            return true;
+            var insertOne = new Func<List<T>, bool>(data =>
+             {
+                 data.Add(_insertConvert(item));
+                 return true;
+             });
+
+            insertOne(_data.Value);
+
+            return _commit(_path, insertOne, false).Result;
         }
 
         public async Task<bool> InsertOneAsync(T item)
         {
-            _data.Value.Add(_insertConvert(item));
-            await _commit(_path, _data.Value, true);
-            return true;
+            var insertOne = new Func<List<T>, bool>(data =>
+            {
+                 data.Add(_insertConvert(item));
+                 return true;
+            });
+
+            insertOne(_data.Value);
+
+            return await _commit(_path, insertOne, true);
         }
 
         public bool InsertMany(IEnumerable<T> items)
         {
-            foreach (var item in items)
-            {
-                _data.Value.Add(_insertConvert(item));
-            }
+            var insertMany = new Func<List<T>, bool>(data =>
+             {
+                 foreach (var item in items)
+                 {
+                     data.Add(_insertConvert(item));
+                 }
 
-            _commit(_path, _data.Value, false);
-            return true;
+                 return true;
+             });
+
+            insertMany(_data.Value);
+
+            return _commit(_path, insertMany, false).Result;
         }
 
         public async Task<bool> InsertManyAsync(IEnumerable<T> items)
         {
-            foreach (var item in items)
-            {
-                _data.Value.Add(_insertConvert(item));
-            }
+            var updateAction = new Func<List<T>, bool>(data =>
+             {
+                 foreach (var item in items)
+                 {
+                     data.Add(_insertConvert(item));
+                 }
 
-            await _commit(_path, _data.Value, true);
-            return true;
+                 return true;
+             });
+
+            updateAction(_data.Value);
+
+            return await _commit(_path, updateAction, true);
         }
 
         public bool ReplaceOne(Predicate<T> filter, T item)
         {
-            var matches = Find(filter);
+            var updateAction = new Func<List<T>, bool>(data =>
+             {
+                 var matches = data.Where(e => filter(e));
 
-            if (!matches.Any())
+                 if (!matches.Any())
+                     return false;
+
+                 var index = data.IndexOf(matches.First());
+                 data[index] = item;
+
+                 return true;
+             });
+
+            if (!updateAction(_data.Value))
                 return false;
 
-            var index = _data.Value.IndexOf(matches.First());
-            _data.Value[index] = item;
-            _commit(_path, _data.Value, false);
-            return true;
+            return _commit(_path, updateAction, false).Result;
         }
 
         public bool ReplaceMany(Predicate<T> filter, T item)
         {
-            var matches = Find(filter);
+            var updateAction = new Func<List<T>, bool>(data =>
+             {
+                 var matches = data.Where(e => filter(e));
 
-            if (!matches.Any())
+                 if (!matches.Any())
+                     return false;
+
+                 foreach (var match in matches.ToList())
+                 {
+                     var index = data.IndexOf(match);
+                     data[index] = item;
+                 }
+
+                 return true;
+             });
+
+            if (!updateAction(_data.Value))
                 return false;
 
-            foreach (var match in matches.ToList())
-            {
-                var index = _data.Value.IndexOf(match);
-                _data.Value[index] = item;
-            }
-
-            _commit(_path, _data.Value, false);
-            return true;
+            return _commit(_path, updateAction, false).Result;
         }
 
         public async Task<bool> ReplaceOneAsync(Predicate<T> filter, T item)
         {
-            var matches = Find(filter);
+            var updateAction = new Func<List<T>, bool>(data =>
+             {
+                 var matches = data.Where(e => filter(e));
 
-            if (!matches.Any())
+                 if (!matches.Any())
+                     return false;
+
+                 var index = data.IndexOf(matches.First());
+                 data[index] = item;
+
+                 return true;
+             });
+
+            if (!updateAction(_data.Value))
                 return false;
 
-            var index = _data.Value.IndexOf(matches.First());
-            _data.Value[index] = item;
-            await _commit(_path, _data.Value, true);
-            return true;
+            return await _commit(_path, updateAction, true);
         }
 
         public async Task<bool> ReplaceManyAsync(Predicate<T> filter, T item)
         {
-            var matches = Find(filter);
+            var updateAction = new Func<List<T>, bool>(data =>
+             {
+                 var matches = data.Where(e => filter(e));
 
-            if (!matches.Any())
+                 if (!matches.Any())
+                     return false;
+
+                 foreach (var match in matches.ToList())
+                 {
+                     var index = data.IndexOf(match);
+                     data[index] = item;
+                 }
+
+                 return true;
+             });
+
+            if (!updateAction(_data.Value))
                 return false;
 
-            foreach (var match in matches.ToList())
-            {
-                var index = _data.Value.IndexOf(match);
-                _data.Value[index] = item;
-            }
-
-            await _commit(_path, _data.Value, true);
-            return true;
+            return await _commit(_path, updateAction, true);
         }
 
         public bool UpdateOne(Predicate<T> filter, dynamic item)
         {
-            var matches = Find(filter);
+            var updateAction = new Func<List<T>, bool>(data =>
+             {
+                 var matches = data.Where(e => filter(e));
 
-            if (!matches.Any())
+                 if (!matches.Any())
+                     return false;
+
+                 var toUpdate = matches.First();
+                 ObjectExtensions.CopyProperties(item, toUpdate);
+
+                 return true;
+             });
+
+            if (!updateAction(_data.Value))
                 return false;
 
-            var toUpdate = matches.First();
-            ObjectExtensions.CopyProperties(item, toUpdate);
-            _commit(_path, _data.Value, false);
-            return true;
+            return _commit(_path, updateAction, false).Result;
         }
 
         public async Task<bool> UpdateOneAsync(Predicate<T> filter, dynamic item)
         {
-            var matches = Find(filter);
+            var updateAction = new Func<List<T>, bool>(data =>
+             {
+                 var matches = data.Where(e => filter(e));
 
-            if (!matches.Any())
+                 if (!matches.Any())
+                     return false;
+
+                 var toUpdate = matches.First();
+                 ObjectExtensions.CopyProperties(item, toUpdate);
+
+                 return true;
+             });
+
+            if (!updateAction(_data.Value))
                 return false;
 
-            var toUpdate = matches.First();
-            ObjectExtensions.CopyProperties(item, toUpdate);
-            await _commit(_path, _data.Value, true);
-            return true;
+            return await _commit(_path, updateAction, true);
         }
 
         public bool UpdateMany(Predicate<T> filter, dynamic item)
         {
-            var matches = Find(filter);
+            var updateAction = new Func<List<T>, bool>(data =>
+             {
+                 var matches = data.Where(e => filter(e));
 
-            if (!matches.Any())
+                 if (!matches.Any())
+                     return false;
+
+                 foreach (var toUpdate in matches)
+                 {
+                     ObjectExtensions.CopyProperties(item, toUpdate);
+                 }
+
+                 return true;
+             });
+
+            if (!updateAction(_data.Value))
                 return false;
 
-            foreach (var toUpdate in matches)
-            {
-                ObjectExtensions.CopyProperties(item, toUpdate);
-            }
-
-            _commit(_path, _data.Value, false);
-            return true;
+            return _commit(_path, updateAction, false).Result;
         }
 
         public async Task<bool> UpdateManyAsync(Predicate<T> filter, dynamic item)
         {
-            var matches = Find(filter);
+            var updateAction = new Func<List<T>, bool>(data =>
+             {
+                 var matches = data.Where(e => filter(e));
 
-            if (!matches.Any())
+                 if (!matches.Any())
+                     return false;
+
+                 foreach (var toUpdate in matches)
+                 {
+                     ObjectExtensions.CopyProperties(item, toUpdate);
+                 }
+
+                 return true;
+             });
+
+            if (!updateAction(_data.Value))
                 return false;
 
-            foreach (var toUpdate in matches)
-            {
-                ObjectExtensions.CopyProperties(item, toUpdate);
-            }
-
-            await _commit(_path, _data.Value, true);
-            return true;
+            return await _commit(_path, updateAction, true);
         }
 
         public bool DeleteOne(Predicate<T> filter)
         {
-            var matches = Find(filter);
+            var updateAction = new Func<List<T>, bool>(data =>
+             {
+                 var remove = data.FirstOrDefault(e => filter(e));
 
-            if (!matches.Any())
+                 if (remove == null)
+                     return false;
+
+                 return data.Remove(remove);
+             });
+
+            if (!updateAction(_data.Value))
                 return false;
 
-            _data.Value.Remove(matches.First());
-            _commit(_path, _data.Value, false);
-            return true;
+            return _commit(_path, updateAction, false).Result;
         }
 
         public async Task<bool> DeleteOneAsync(Predicate<T> filter)
         {
-            var matches = Find(filter);
+            var updateAction = new Func<List<T>, bool>(data =>
+             {
+                 var remove = data.FirstOrDefault(e => filter(e));
 
-            if (!matches.Any())
+                 if (remove == null)
+                     return false;
+
+                 return data.Remove(remove);
+             });
+
+            if (!updateAction(_data.Value))
                 return false;
 
-            _data.Value.Remove(Find(filter).First());
-            await _commit(_path, _data.Value, true);
-            return true;
+            return await _commit(_path, updateAction, true);
         }
 
         public bool DeleteMany(Predicate<T> filter)
         {
-            var removed = _data.Value.RemoveAll(filter);
+            var updateAction = new Func<List<T>, bool>(data =>
+             {
+                 int removed = data.RemoveAll(filter);
+                 return removed > 0;
+             });
 
-            if (removed == 0)
+            if (!updateAction(_data.Value))
                 return false;
 
-            _commit(_path, _data.Value, false);
-            return true;
+            return _commit(_path, updateAction, false).Result;
         }
 
         public async Task<bool> DeleteManyAsync(Predicate<T> filter)
         {
-            var removed = _data.Value.RemoveAll(filter);
+            var updateAction = new Func<List<T>, bool>(data =>
+             {
+                 int removed = data.RemoveAll(filter);
+                 return removed > 0;
+             });
 
-            if (removed == 0)
+            if (!updateAction(_data.Value))
                 return false;
 
-            await _commit(_path, _data.Value, true);
-            return true;
+            return await _commit(_path, updateAction, true);
         }
     }
 }

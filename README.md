@@ -5,13 +5,19 @@ JSON Flat File Datastore
 
 Simple flat file JSON datastore.
 
-* No relations. No indexes. No bells. No whistles. Just basics.
+* Small API with basic functionality that is needed for handling data.
 * Works with dynamic and typed data.
 * Synchronous and asynchronous methods.
-* Data is stored in a JSON file. It is easy to initialize and easy to edit.
+* Data is stored in a JSON file. 
+  * Easy to initialize.
+  * Easy to edit.
 * [.NET Standard 1.4](https://github.com/dotnet/standard/blob/master/docs/versions.md)
   * .NET Core 1.0
   * .NET 4.6.1
+
+###### Who should use this?
+
+Anyone who needs to store data and wants to edit it easily with any text editor.
 
 ##### Example project
 
@@ -218,7 +224,7 @@ await collection.DeleteOneAsync(e => e.id == 3);
 await collection.DeleteOneAsync(e => e.Id == 3);
 ```
 
-`DeleteMany` and `DeleteManyAsyn` will delete all items that match the filter. Method returns true if item(s) found with the filter.
+`DeleteMany` and `DeleteManyAsync` will delete all items that match the filter. Method returns true if item(s) found with the filter.
 
 ```csharp
 // Dynamic
@@ -251,6 +257,34 @@ collection.InsertOne(new { myId = "hello3" });
 var nextId = collection.GetNextIdValue();
 ``` 
 
+## DataStore and Collection lifecycle
+
+When datastore is created, it serializes the JSON file to the memory. When collection is created it has a lazy reference to the data and it will read the data when it is needed for the first time.
+
+All write operations in collections are executed immediately internally and then the same operation is queued on DataStore's BlockingCollection. Operations are executed on backgound thread to DataStore's internal collection and saved to file.
+
+```csharp
+// Data is loaded from the file
+var store = new DataStore(newFilePath);
+
+// Lazy reference to the data is created 
+var collection1st = store.GetCollection("hello");
+var collection2nd = store.GetCollection("hello");
+
+// Data is loaded from the store to the collection and new item is inserted
+collection1st.InsertOne(new { id = "hello" });
+
+// Data is loaded from the store to the collection and new item is inserted
+// This collection will also have item with id hello2
+collection2nd.InsertOne(new { id = "hello2" });
+
+// collection1st won't have item with id hello
+```
+
+If multiple DataStores are initialized and used simultaneously, each DataStore will have own internal state. They might become out of sync with the state in the JSON file, as data is only loaded from the file when DataStore is initialized.
+
+If JSON Flat File Datastore is used with e.g. Web API, add DataStore to the DI container as a singleton. This way DataStore's internal state is correct and application does not have to rely on the state on the file.
+
 ### Collection naming
 
 Collection name must be always defined when dynamic collections are used. If collection name is not defined with a typed collection, class-name is converted to lower camel case. E.g. User is user, UserFamily is userfamily etc.
@@ -279,11 +313,6 @@ var store = new DataStore(newFilePath);
 var store = new DataStore(newFilePath, false);
 ```
 
-Changes are committed immediately from cthe ollection to the DataStore's internal collection. Each update creates a write updates to a blocking collection, which is processed on background. 
-
-On commit, the datastore always writes whole collection to the file, even when only one item is changed.
-
-If this is used with e.g. Web API, add DataStore to the DI container as a singleton. This way DataStore's internal state is correct and application does not have to rely on the state on the file.
 
 ### Dynamic and error CS1977
 

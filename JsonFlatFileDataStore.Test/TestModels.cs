@@ -23,7 +23,7 @@ namespace JsonFlatFileDataStore.Test
         public string Location { get; set; }
     }
 
-    internal class Movie
+    public class Movie
     {
         public string Name { get; set; }
     }
