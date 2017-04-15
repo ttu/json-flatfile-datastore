@@ -261,7 +261,7 @@ var nextId = collection.GetNextIdValue();
 
 When datastore is created, it serializes the JSON file to the memory. When collection is created it has a lazy reference to the data and it will read the data when it is needed for the first time.
 
-All write operations in collections are executed immediately internally and then the same operation is queued on DataStore's BlockingCollection. Operations are executed on backgound thread to DataStore's internal collection and saved to file.
+All write operations in collections are executed immediately internally and then the same operation is queued on DataStore's BlockingCollection. Operations are executed on backgound thread to DataStore's internal collection and saved to file. DataStore's internal collection is also updated during the save operation. NOTE: Already initialiezd collections may still have old data.
 
 ```csharp
 // Data is loaded from the file
@@ -281,7 +281,7 @@ collection2nd.InsertOne(new { id = "hello2" });
 // collection1st won't have item with id hello
 ```
 
-If multiple DataStores are initialized and used simultaneously, each DataStore will have own internal state. They might become out of sync with the state in the JSON file, as data is only loaded from the file when DataStore is initialized.
+If multiple DataStores are initialized and used simultaneously, each DataStore will have own internal state. They might become out of sync with the state in the JSON file, as data is only loaded from the file when DataStore is initialized and after each commit.
 
 If JSON Flat File Datastore is used with e.g. Web API, add DataStore to the DI container as a singleton. This way DataStore's internal state is correct and application does not have to rely on the state on the file.
 

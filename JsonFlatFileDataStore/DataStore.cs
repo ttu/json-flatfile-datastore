@@ -16,7 +16,7 @@ namespace JsonFlatFileDataStore
 {
     public class DataStore : IDataStore
     {
-        private readonly JObject _jsonData;
+        private JObject _jsonData;
         private readonly string _filePath;
         private readonly string _keyProperty;
 
@@ -38,11 +38,11 @@ namespace JsonFlatFileDataStore
             _filePath = path;
 
             _toJsonFunc = useLowerCamelCase
-                        ? new Func<JObject, string>(s =>
+                        ? new Func<JObject, string>(data =>
                         {
                             // Serializing JObject ignores SerializerSettings, so we have to first deserialize to ExpandoObject and then serialize
                             // http://json.codeplex.com/workitem/23853
-                            var jObject = JsonConvert.DeserializeObject<ExpandoObject>(_jsonData.ToString());
+                            var jObject = JsonConvert.DeserializeObject<ExpandoObject>(data.ToString());
                             return JsonConvert.SerializeObject(jObject, Formatting.Indented, _serializerSettings);
                         })
                         : new Func<JObject, string>(s => s.ToString());
@@ -54,9 +54,7 @@ namespace JsonFlatFileDataStore
             // Default key property is id or Id
             _keyProperty = keyProperty ?? (useLowerCamelCase ? "id" : "Id");
 
-            string json = ReadJsonFromFile(path);
-
-            _jsonData = JObject.Parse(json);
+            _jsonData = ReadJsonFromFile(path);
 
             // Run updates on background thread and use BlockingCollection to prevent multiple updates running at the same time
             Task.Run(() =>
@@ -77,8 +75,13 @@ namespace JsonFlatFileDataStore
         {
             _updates.Add(new Action(() =>
             {
-                _jsonData.ReplaceAll(JObject.Parse(jsonData));
-                WriteJsonToFile(_filePath, _jsonData.ToString());
+                lock (_jsonData)
+                {
+                    _jsonData.ReplaceAll(JObject.Parse(jsonData));
+                }
+
+                WriteJsonToFile(_filePath, jsonData);
+
             }));
         }
 
@@ -104,23 +107,31 @@ namespace JsonFlatFileDataStore
         /// <returns>List of collection names</returns>
         public IEnumerable<string> ListCollections()
         {
-            return _jsonData.Children().Select(c => c.Path);
+            lock (_jsonData)
+            {
+                return _jsonData.Children().Select(c => c.Path);
+            }
         }
 
         private IDocumentCollection<T> GetCollection<T>(string path, Func<JToken, T> readConvert, Func<T, T> insertConvert)
         {
             var data = new Lazy<List<T>>(() =>
-                               _jsonData[path]?
-                                   .Children()
-                                   .Select(e => readConvert(e))
-                                   .ToList()
-                               ?? new List<T>());
+            {
+                lock (_jsonData)
+                {
+                    return _jsonData[path]?
+                                       .Children()
+                                       .Select(e => readConvert(e))
+                                       .ToList()
+                                       ?? new List<T>();
+                }
+            });
 
             return new DocumentCollection<T>(
-                (sender, dataToUpdate, isOperationAsync) => Commit(sender, dataToUpdate, isOperationAsync, readConvert), 
-                data, 
-                path, 
-                _keyProperty, 
+                (sender, dataToUpdate, isOperationAsync) => Commit(sender, dataToUpdate, isOperationAsync, readConvert),
+                data,
+                path,
+                _keyProperty,
                 insertConvert);
         }
 
@@ -132,7 +143,9 @@ namespace JsonFlatFileDataStore
 
             _updates.Add(new Action(() =>
             {
-                var selectedData = _jsonData[dataPath]?
+                var jsonData = ReadJsonFromFile(_filePath);
+
+                var selectedData = jsonData[dataPath]?
                                    .Children()
                                    .Select(e => readConvert(e))
                                    .ToList()
@@ -140,12 +153,17 @@ namespace JsonFlatFileDataStore
 
                 if (commitOperation(selectedData))
                 {
-                    _jsonData[dataPath] = JArray.FromObject(selectedData);
-                    string json = _toJsonFunc(_jsonData);
+                    jsonData[dataPath] = JArray.FromObject(selectedData);
+                    string json = _toJsonFunc(jsonData);
 
                     try
                     {
                         result = WriteJsonToFile(_filePath, json);
+                        // All success, update own collection
+                        lock (_jsonData)
+                        {
+                            _jsonData = jsonData;
+                        }
                     }
                     catch (Exception e)
                     {
@@ -170,20 +188,23 @@ namespace JsonFlatFileDataStore
             return result;
         }
 
-        private string ReadJsonFromFile(string path)
+        private JObject ReadJsonFromFile(string path)
         {
             Stopwatch sw = null;
+
+            string json = "{}";
 
             while (true)
             {
                 try
                 {
-                    return File.ReadAllText(path);
+                    json = File.ReadAllText(path);
+                    break;
                 }
                 catch (FileNotFoundException)
                 {
-                    File.WriteAllText(path, "{}");
-                    return "{}";
+                    File.WriteAllText(path, json);
+                    break;
                 }
                 catch (IOException e) when (e.Message.Contains("because it is being used by another process"))
                 {
@@ -193,6 +214,8 @@ namespace JsonFlatFileDataStore
                         throw;
                 }
             }
+
+            return JObject.Parse(json);
         }
 
         private bool WriteJsonToFile(string path, string content)
