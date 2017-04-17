@@ -1,6 +1,9 @@
 ## Changelog
 
 ### [Unreleased]
+*
+
+### [1.3.0] - 2017-04-17
 * DataStore will commit only changed item(s) to the JSON file
 * DataStore will save changes in batches
 
