@@ -71,10 +71,10 @@ namespace JsonFlatFileDataStore
         public bool InsertOne(T item)
         {
             var insertOne = new Func<List<T>, bool>(data =>
-             {
-                 data.Add(_insertConvert(item));
-                 return true;
-             });
+            {
+                data.Add(_insertConvert(item));
+                return true;
+            });
 
             insertOne(_data.Value);
 
@@ -85,8 +85,8 @@ namespace JsonFlatFileDataStore
         {
             var insertOne = new Func<List<T>, bool>(data =>
             {
-                 data.Add(_insertConvert(item));
-                 return true;
+                data.Add(_insertConvert(item));
+                return true;
             });
 
             insertOne(_data.Value);
@@ -97,14 +97,14 @@ namespace JsonFlatFileDataStore
         public bool InsertMany(IEnumerable<T> items)
         {
             var insertMany = new Func<List<T>, bool>(data =>
-             {
-                 foreach (var item in items)
-                 {
-                     data.Add(_insertConvert(item));
-                 }
+            {
+                foreach (var item in items)
+                {
+                    data.Add(_insertConvert(item));
+                }
 
-                 return true;
-             });
+                return true;
+            });
 
             insertMany(_data.Value);
 
@@ -114,14 +114,14 @@ namespace JsonFlatFileDataStore
         public async Task<bool> InsertManyAsync(IEnumerable<T> items)
         {
             var updateAction = new Func<List<T>, bool>(data =>
-             {
-                 foreach (var item in items)
-                 {
-                     data.Add(_insertConvert(item));
-                 }
+            {
+                foreach (var item in items)
+                {
+                    data.Add(_insertConvert(item));
+                }
 
-                 return true;
-             });
+                return true;
+            });
 
             updateAction(_data.Value);
 
@@ -131,17 +131,17 @@ namespace JsonFlatFileDataStore
         public bool ReplaceOne(Predicate<T> filter, T item)
         {
             var updateAction = new Func<List<T>, bool>(data =>
-             {
-                 var matches = data.Where(e => filter(e));
+            {
+                var matches = data.Where(e => filter(e));
 
-                 if (!matches.Any())
-                     return false;
+                if (!matches.Any())
+                    return false;
 
-                 var index = data.IndexOf(matches.First());
-                 data[index] = item;
+                var index = data.IndexOf(matches.First());
+                data[index] = item;
 
-                 return true;
-             });
+                return true;
+            });
 
             if (!updateAction(_data.Value))
                 return false;
@@ -152,20 +152,20 @@ namespace JsonFlatFileDataStore
         public bool ReplaceMany(Predicate<T> filter, T item)
         {
             var updateAction = new Func<List<T>, bool>(data =>
-             {
-                 var matches = data.Where(e => filter(e));
+            {
+                var matches = data.Where(e => filter(e));
 
-                 if (!matches.Any())
-                     return false;
+                if (!matches.Any())
+                    return false;
 
-                 foreach (var match in matches.ToList())
-                 {
-                     var index = data.IndexOf(match);
-                     data[index] = item;
-                 }
+                foreach (var match in matches.ToList())
+                {
+                    var index = data.IndexOf(match);
+                    data[index] = item;
+                }
 
-                 return true;
-             });
+                return true;
+            });
 
             if (!updateAction(_data.Value))
                 return false;
@@ -176,17 +176,17 @@ namespace JsonFlatFileDataStore
         public async Task<bool> ReplaceOneAsync(Predicate<T> filter, T item)
         {
             var updateAction = new Func<List<T>, bool>(data =>
-             {
-                 var matches = data.Where(e => filter(e));
+            {
+                var matches = data.Where(e => filter(e));
 
-                 if (!matches.Any())
-                     return false;
+                if (!matches.Any())
+                    return false;
 
-                 var index = data.IndexOf(matches.First());
-                 data[index] = item;
+                var index = data.IndexOf(matches.First());
+                data[index] = item;
 
-                 return true;
-             });
+                return true;
+            });
 
             if (!updateAction(_data.Value))
                 return false;
@@ -197,20 +197,20 @@ namespace JsonFlatFileDataStore
         public async Task<bool> ReplaceManyAsync(Predicate<T> filter, T item)
         {
             var updateAction = new Func<List<T>, bool>(data =>
-             {
-                 var matches = data.Where(e => filter(e));
+            {
+                var matches = data.Where(e => filter(e));
 
-                 if (!matches.Any())
-                     return false;
+                if (!matches.Any())
+                    return false;
 
-                 foreach (var match in matches.ToList())
-                 {
-                     var index = data.IndexOf(match);
-                     data[index] = item;
-                 }
+                foreach (var match in matches.ToList())
+                {
+                    var index = data.IndexOf(match);
+                    data[index] = item;
+                }
 
-                 return true;
-             });
+                return true;
+            });
 
             if (!updateAction(_data.Value))
                 return false;
@@ -221,17 +221,17 @@ namespace JsonFlatFileDataStore
         public bool UpdateOne(Predicate<T> filter, dynamic item)
         {
             var updateAction = new Func<List<T>, bool>(data =>
-             {
-                 var matches = data.Where(e => filter(e));
+            {
+                var matches = data.Where(e => filter(e));
 
-                 if (!matches.Any())
-                     return false;
+                if (!matches.Any())
+                    return false;
 
-                 var toUpdate = matches.First();
-                 ObjectExtensions.CopyProperties(item, toUpdate);
+                var toUpdate = matches.First();
+                ObjectExtensions.CopyProperties(item, toUpdate);
 
-                 return true;
-             });
+                return true;
+            });
 
             if (!updateAction(_data.Value))
                 return false;
@@ -242,17 +242,17 @@ namespace JsonFlatFileDataStore
         public async Task<bool> UpdateOneAsync(Predicate<T> filter, dynamic item)
         {
             var updateAction = new Func<List<T>, bool>(data =>
-             {
-                 var matches = data.Where(e => filter(e));
+            {
+                var matches = data.Where(e => filter(e));
 
-                 if (!matches.Any())
-                     return false;
+                if (!matches.Any())
+                    return false;
 
-                 var toUpdate = matches.First();
-                 ObjectExtensions.CopyProperties(item, toUpdate);
+                var toUpdate = matches.First();
+                ObjectExtensions.CopyProperties(item, toUpdate);
 
-                 return true;
-             });
+                return true;
+            });
 
             if (!updateAction(_data.Value))
                 return false;
@@ -263,19 +263,19 @@ namespace JsonFlatFileDataStore
         public bool UpdateMany(Predicate<T> filter, dynamic item)
         {
             var updateAction = new Func<List<T>, bool>(data =>
-             {
-                 var matches = data.Where(e => filter(e));
+            {
+                var matches = data.Where(e => filter(e));
 
-                 if (!matches.Any())
-                     return false;
+                if (!matches.Any())
+                    return false;
 
-                 foreach (var toUpdate in matches)
-                 {
-                     ObjectExtensions.CopyProperties(item, toUpdate);
-                 }
+                foreach (var toUpdate in matches)
+                {
+                    ObjectExtensions.CopyProperties(item, toUpdate);
+                }
 
-                 return true;
-             });
+                return true;
+            });
 
             if (!updateAction(_data.Value))
                 return false;
@@ -286,19 +286,19 @@ namespace JsonFlatFileDataStore
         public async Task<bool> UpdateManyAsync(Predicate<T> filter, dynamic item)
         {
             var updateAction = new Func<List<T>, bool>(data =>
-             {
-                 var matches = data.Where(e => filter(e));
+            {
+                var matches = data.Where(e => filter(e));
 
-                 if (!matches.Any())
-                     return false;
+                if (!matches.Any())
+                    return false;
 
-                 foreach (var toUpdate in matches)
-                 {
-                     ObjectExtensions.CopyProperties(item, toUpdate);
-                 }
+                foreach (var toUpdate in matches)
+                {
+                    ObjectExtensions.CopyProperties(item, toUpdate);
+                }
 
-                 return true;
-             });
+                return true;
+            });
 
             if (!updateAction(_data.Value))
                 return false;
@@ -309,14 +309,14 @@ namespace JsonFlatFileDataStore
         public bool DeleteOne(Predicate<T> filter)
         {
             var updateAction = new Func<List<T>, bool>(data =>
-             {
-                 var remove = data.FirstOrDefault(e => filter(e));
+            {
+                var remove = data.FirstOrDefault(e => filter(e));
 
-                 if (remove == null)
-                     return false;
+                if (remove == null)
+                    return false;
 
-                 return data.Remove(remove);
-             });
+                return data.Remove(remove);
+            });
 
             if (!updateAction(_data.Value))
                 return false;
@@ -327,14 +327,14 @@ namespace JsonFlatFileDataStore
         public async Task<bool> DeleteOneAsync(Predicate<T> filter)
         {
             var updateAction = new Func<List<T>, bool>(data =>
-             {
-                 var remove = data.FirstOrDefault(e => filter(e));
+            {
+                var remove = data.FirstOrDefault(e => filter(e));
 
-                 if (remove == null)
-                     return false;
+                if (remove == null)
+                    return false;
 
-                 return data.Remove(remove);
-             });
+                return data.Remove(remove);
+            });
 
             if (!updateAction(_data.Value))
                 return false;
@@ -345,10 +345,10 @@ namespace JsonFlatFileDataStore
         public bool DeleteMany(Predicate<T> filter)
         {
             var updateAction = new Func<List<T>, bool>(data =>
-             {
-                 int removed = data.RemoveAll(filter);
-                 return removed > 0;
-             });
+            {
+                int removed = data.RemoveAll(filter);
+                return removed > 0;
+            });
 
             if (!updateAction(_data.Value))
                 return false;
@@ -359,10 +359,10 @@ namespace JsonFlatFileDataStore
         public async Task<bool> DeleteManyAsync(Predicate<T> filter)
         {
             var updateAction = new Func<List<T>, bool>(data =>
-             {
-                 int removed = data.RemoveAll(filter);
-                 return removed > 0;
-             });
+            {
+                int removed = data.RemoveAll(filter);
+                return removed > 0;
+            });
 
             if (!updateAction(_data.Value))
                 return false;
