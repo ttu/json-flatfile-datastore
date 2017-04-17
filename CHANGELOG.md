@@ -2,6 +2,7 @@
 
 ### [Unreleased]
 * DataStore will commit only changed item(s) to the JSON file
+* DataStore will save changes in batches
 
 ### [1.2.0] - 2017-04-11
 * InsertMany, UpdateMany and ReplaceMany methods to IDocumentCollection

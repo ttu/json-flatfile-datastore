@@ -16,6 +16,8 @@ namespace JsonFlatFileDataStore
 {
     public class DataStore : IDataStore
     {
+        private const int COMMIT_BATCH_MAX_SIZE = 50;
+
         private JObject _jsonData;
         private readonly string _filePath;
         private readonly string _keyProperty;
@@ -23,7 +25,7 @@ namespace JsonFlatFileDataStore
         private readonly Func<JObject, string> _toJsonFunc;
         private readonly Func<string, string> _pathToCamelCase;
 
-        private readonly BlockingCollection<Action> _updates = new BlockingCollection<Action>();
+        private readonly BlockingCollection<CommitAction> _updates = new BlockingCollection<CommitAction>();
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
 
         private readonly ExpandoObjectConverter _converter = new ExpandoObjectConverter();
@@ -54,17 +56,62 @@ namespace JsonFlatFileDataStore
             // Default key property is id or Id
             _keyProperty = keyProperty ?? (useLowerCamelCase ? "id" : "Id");
 
-            _jsonData = ReadJsonFromFile(path);
+            _jsonData = JObject.Parse(ReadJsonFromFile(path));
 
             // Run updates on background thread and use BlockingCollection to prevent multiple updates running at the same time
             Task.Run(() =>
             {
                 var token = _cts.Token;
 
-                while (token != null && !token.IsCancellationRequested)
+                var batch = new Queue<CommitAction>();
+                var callBacks = new Queue<(CommitAction action, bool success)>();
+
+                while (!token.IsCancellationRequested)
                 {
+                    batch.Clear();
+                    callBacks.Clear();
+
                     var updateAction = _updates.Take(token);
-                    updateAction();
+                    batch.Enqueue(updateAction);
+
+                    while (_updates.Count > 0 && batch.Count < COMMIT_BATCH_MAX_SIZE)
+                    {
+                        batch.Enqueue(_updates.Take(token));
+                    }
+
+                    var jsonText = ReadJsonFromFile(_filePath);
+
+                    foreach (var action in batch)
+                    {
+                        var operationResult = action.HandleOperation(JObject.Parse(jsonText));
+
+                        callBacks.Enqueue((action, operationResult.success));
+
+                        if (operationResult.success)
+                            jsonText = operationResult.json;
+                    }
+
+                    var result = false;
+                    Exception actionException = null;
+
+                    try
+                    {
+                        result = WriteJsonToFile(_filePath, jsonText);
+
+                        lock (_jsonData)
+                        {
+                            _jsonData = JObject.Parse(jsonText);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        actionException = e;
+                    }
+
+                    foreach (var cb in callBacks)
+                    {
+                        cb.action.Ready(result == false ? false : cb.success, actionException);
+                    }
                 }
             });
         }
@@ -73,16 +120,12 @@ namespace JsonFlatFileDataStore
 
         public void UpdateAll(string jsonData)
         {
-            _updates.Add(new Action(() =>
+            lock (_jsonData)
             {
-                lock (_jsonData)
-                {
-                    _jsonData.ReplaceAll(JObject.Parse(jsonData));
-                }
+                _jsonData = JObject.Parse(jsonData);
+            }
 
-                WriteJsonToFile(_filePath, jsonData);
-
-            }));
+            WriteJsonToFile(_filePath, jsonData);
         }
 
         public IDocumentCollection<T> GetCollection<T>(string name = null) where T : class
@@ -137,13 +180,11 @@ namespace JsonFlatFileDataStore
 
         private async Task<bool> Commit<T>(string dataPath, Func<List<T>, bool> commitOperation, bool isOperationAsync, Func<JToken, T> readConvert)
         {
-            bool waitFlag = true;
-            bool result = false;
-            Exception actionException = null;
+            var ca = new CommitAction();
 
-            _updates.Add(new Action(() =>
+            ca.HandleOperation = new Func<JObject, (bool success, string json)>(jsonData =>
             {
-                var jsonData = ReadJsonFromFile(_filePath);
+                var jsonText = string.Empty;
 
                 var selectedData = jsonData[dataPath]?
                                    .Children()
@@ -151,35 +192,36 @@ namespace JsonFlatFileDataStore
                                    .ToList()
                                    ?? new List<T>();
 
-                if (commitOperation(selectedData))
+                var success = commitOperation(selectedData);
+
+                if (success)
                 {
                     jsonData[dataPath] = JArray.FromObject(selectedData);
-                    string json = _toJsonFunc(jsonData);
-
-                    try
-                    {
-                        result = WriteJsonToFile(_filePath, json);
-                        // All success, update own collection
-                        lock (_jsonData)
-                        {
-                            _jsonData = jsonData;
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        actionException = e;
-                    }
+                    jsonText = _toJsonFunc(jsonData);
                 }
 
+                return (success, jsonText);
+            });
+
+            bool waitFlag = true;
+            bool result = false;
+            Exception actionException = null;
+
+            ca.Ready = new Action<bool, Exception>((isSuccess, exception) =>
+            {
+                result = isSuccess;
+                actionException = exception;
                 waitFlag = false;
-            }));
+            });
+
+            _updates.Add(ca);
 
             while (waitFlag)
             {
                 if (isOperationAsync)
-                    await Task.Delay(1);
+                    await Task.Delay(5);
                 else
-                    Task.Delay(1).Wait();
+                    Task.Delay(5).Wait();
             }
 
             if (actionException != null)
@@ -188,10 +230,9 @@ namespace JsonFlatFileDataStore
             return result;
         }
 
-        private JObject ReadJsonFromFile(string path)
+        private string ReadJsonFromFile(string path)
         {
             Stopwatch sw = null;
-
             string json = "{}";
 
             while (true)
@@ -215,7 +256,7 @@ namespace JsonFlatFileDataStore
                 }
             }
 
-            return JObject.Parse(json);
+            return json;
         }
 
         private bool WriteJsonToFile(string path, string content)
@@ -238,10 +279,16 @@ namespace JsonFlatFileDataStore
                 }
                 catch (Exception)
                 {
-                    // Bad this now is that there is no logging here
                     return false;
                 }
             }
+        }
+
+        private class CommitAction
+        {
+            public Action<bool, Exception> Ready { get; set; }
+
+            public Func<JObject, (bool success, string json)> HandleOperation { get; set; }
         }
     }
 }
