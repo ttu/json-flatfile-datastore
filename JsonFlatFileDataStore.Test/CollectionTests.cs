@@ -305,7 +305,55 @@ namespace JsonFlatFileDataStore.Test
 
             var store3 = new DataStore(newFilePath);
             var collection3 = store3.GetCollection("user");
-            var updated2 = collection2.Find(e => e.age == 98);
+            var updated2 = collection3.Find(e => e.age == 98);
+            Assert.Equal(0, updated2.Count());
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public async Task UpdateMany_JsonUser()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection("user");
+            Assert.Equal(3, collection.Count);
+
+            var newUsersJson = @"
+            [
+                { 'id': 20, 'name': 'A1', 'age': 55 },
+                { 'id': 21, 'name': 'A2', 'age': 55 },
+                { 'id': 22, 'name': 'A3', 'age': 55 }
+            ]
+            ";
+
+            var newUsers = JToken.Parse(newUsersJson);
+
+            await collection.InsertManyAsync(newUsers);
+
+            var newUserJson = "{ 'id': 23, 'name': 'A4', 'age': 22 }";
+            var newUser = JToken.Parse(newUserJson);
+
+            await collection.InsertOneAsync(newUser);
+
+            dynamic source = new ExpandoObject();
+            source.age = 98;
+            var updateResult = await collection.UpdateManyAsync(e => e.age == 55, source as object);
+            Assert.True(updateResult);
+
+            var store2 = new DataStore(newFilePath);
+            var collection2 = store2.GetCollection("user");
+            Assert.Equal(7, collection2.Count);
+            var updated = collection2.Find(e => e.age == 98);
+            Assert.Equal(3, updated.Count());
+
+            await collection2.DeleteManyAsync(e => e.age == 98);
+
+            var store3 = new DataStore(newFilePath);
+            var collection3 = store3.GetCollection("user");
+            var updated2 = collection3.Find(e => e.age == 98);
             Assert.Equal(0, updated2.Count());
 
             UTHelpers.Down(newFilePath);
@@ -344,7 +392,7 @@ namespace JsonFlatFileDataStore.Test
 
             var store3 = new DataStore(newFilePath);
             var collection3 = store3.GetCollection<User>();
-            var updated2 = collection2.Find(e => e.Age == 98);
+            var updated2 = collection3.Find(e => e.Age == 98);
             Assert.Equal(0, updated2.Count());
 
             UTHelpers.Down(newFilePath);

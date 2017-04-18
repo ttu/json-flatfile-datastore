@@ -17,11 +17,74 @@ Simple flat file JSON datastore.
 
 ###### Who should use this?
 
-Anyone who needs to store data and wants to edit it easily with any text editor.
+Anyone who needs to store data and wants to edit it easily with any text editor. And for people too lazy to create classes for every type.
 
 ##### Example project
 
 [Fake JSON Server](https://github.com/ttu/dotnet-fake-json-server) is a .NET Core Web API which uses JSON Flat File Datastore with dynamic data.
+
+## Example
+
+##### Typed data
+
+```csharp
+public class Employee
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public int Age { get; set; }
+}
+
+// Open database (create new if file doesn't exist)
+var store = new DataStore("data.json");
+
+ // Get employee collection
+var collection = store.GetCollection<Employee>();
+
+// Create new employee instance
+var employee = new Employee { Id = 1, Name = "John", Age = 46 };
+
+// Insert new employee
+await collection.InsertOneAsync(employee);
+
+// Update user
+employee.Name = "John Doe";
+
+await collection.UpdateOneAsync(e => e.Id == employee.Id, employee);
+
+// Use LINQ to query items
+var results = collection.AsQueryable().Where(e => e.Age > 30);
+```
+
+##### Dynamically typed data
+
+Dynamic data can be anonymous types, ExpandoObjects or JSON objects (JToken, JObject, JArray)
+
+```csharp
+// Open database (create new if file doesn't exist)
+var store = new DataStore(pathToJson);
+
+// Get customer collection
+var collection = store.GetCollection("employee");
+
+// Create new user
+var employee = new { id = 1, name = "John", age = 46 };
+
+// Create new user from JSON
+var employeeJson = JToken.Parse("{ 'id': 2, 'name': 'Raymond', 'age': 32 }");
+
+// Insert new user
+await collection.InsertOneAsync(employee);
+await collection.InsertOneAsync(employeeJson);
+
+// As anonymous types property is read only we can use new anonymous type to update data
+var updateData = new { name = "John Doe" };
+
+await collection.UpdateOneAsync(e => e.id == employee.id, updateData);
+
+// Use LINQ to query items
+var results = collection.AsQueryable().Where(x => x.age > 30);
+```
 
 ## Functionality
 
@@ -78,6 +141,10 @@ var userTyped = collection
 // Before update : { }
 // After update  : { "id": 3, "name": "Raymond", "age": 32, "city" = "NY" }
 await collection.InsertOneAsync(new { id = 3, name = "Raymond", age = 32, city = "NY" });
+
+// Dynamic item can also be JSON object
+var user = JToken.Parse("{ 'id': 3, 'name': 'Raymond', 'age': 32, 'city': 'NY' }");
+await collection.InsertOneAsync(user);
 
 // Synchronous method and typed data
 // Before update : { }
