@@ -12,6 +12,24 @@ namespace JsonFlatFileDataStore.Test
     public class DataStoreTests
     {
         [Fact]
+        public void UpdateAll()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            store.UpdateAll("{ 'tasks': [ { 'id': 0, 'task': 'Commit'} ] }");
+
+            var collection = store.GetCollection("tasks");
+            Assert.Equal(1, collection.Count);
+
+            var item = collection.AsQueryable().First();
+            Assert.Equal("Commit", item.task);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
         public void ListCollections()
         {
             var newFilePath = UTHelpers.Up();
@@ -187,9 +205,18 @@ namespace JsonFlatFileDataStore.Test
             // Example with JSON object
             var employeeJson = JToken.Parse("{ 'id': 2, 'name': 'Raymond', 'age': 32 }");
 
+            // Example with JSON object
+            var employeeDict = new Dictionary<string, object>
+            {
+                ["id"] = 3,
+                ["name"] = "Andy",
+                ["age"] = 32
+            };
+
             // Insert new user
             await collection.InsertOneAsync(employee);
             await collection.InsertOneAsync(employeeJson);
+            await collection.InsertOneAsync(employeeDict);
 
             // As anonymous types property is read only we can use new anonymous type to update data
             var updateData = new { name = "John Doe" };
@@ -199,18 +226,10 @@ namespace JsonFlatFileDataStore.Test
             // Use LINQ to query items
             var results = collection.AsQueryable().Where(x => x.age > 30);
 
+            Assert.True(results.Count() == 3);
             Assert.True(results.Count(e => e.name == "John Doe") == 1);
 
             UTHelpers.Down(pathToJson);
-        }
-
-        public class Employee
-        {
-            public int Id { get; set; }
-
-            public string Name { get; set; }
-
-            public int Age { get; set; }
         }
 
         [Fact]
@@ -248,6 +267,15 @@ namespace JsonFlatFileDataStore.Test
             Assert.True(results.Count(e => e.Name == "John Doe") == 1);
 
             UTHelpers.Down(pathToJson);
+        }
+
+        public class Employee
+        {
+            public int Id { get; set; }
+
+            public string Name { get; set; }
+
+            public int Age { get; set; }
         }
     }
 }

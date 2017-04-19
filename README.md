@@ -58,7 +58,7 @@ var results = collection.AsQueryable().Where(e => e.Age > 30);
 
 ##### Dynamically typed data
 
-Dynamic data can be anonymous types, ExpandoObjects or JSON objects (JToken, JObject, JArray)
+Dynamic data can be anonymous types, ExpandoObjects, JSON objects (JToken, JObject, JArray) or `Dictionary<string, object>`. Internally dynamic data is serialized to ExpandoObject.
 
 ```csharp
 // Open database (create new if file doesn't exist)
@@ -73,9 +73,18 @@ var employee = new { id = 1, name = "John", age = 46 };
 // Create new user from JSON
 var employeeJson = JToken.Parse("{ 'id': 2, 'name': 'Raymond', 'age': 32 }");
 
+// Create new user from dictionary
+var employeeDict = new Dictionary<string, object>
+{
+    ["id"] = 3,
+    ["name"] = "Andy",
+    ["age"] = 32
+};
+
 // Insert new user
 await collection.InsertOneAsync(employee);
 await collection.InsertOneAsync(employeeJson);
+await collection.InsertOneAsync(employeeDict);
 
 // As anonymous types property is read only we can use new anonymous type to update data
 var updateData = new { name = "John Doe" };

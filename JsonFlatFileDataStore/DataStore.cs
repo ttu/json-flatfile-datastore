@@ -18,22 +18,16 @@ namespace JsonFlatFileDataStore
     {
         private const int COMMIT_BATCH_MAX_SIZE = 50;
 
-        private JObject _jsonData;
         private readonly string _filePath;
         private readonly string _keyProperty;
-
         private readonly Func<JObject, string> _toJsonFunc;
         private readonly Func<string, string> _pathToCamelCase;
-
         private readonly BlockingCollection<CommitAction> _updates = new BlockingCollection<CommitAction>();
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
-
         private readonly ExpandoObjectConverter _converter = new ExpandoObjectConverter();
+        private readonly JsonSerializerSettings _serializerSettings = new JsonSerializerSettings() { ContractResolver = new CamelCasePropertyNamesContractResolver() };
 
-        private readonly JsonSerializerSettings _serializerSettings = new JsonSerializerSettings()
-        {
-            ContractResolver = new CamelCasePropertyNamesContractResolver()
-        };
+        private JObject _jsonData;
 
         public DataStore(string path, bool useLowerCamelCase = true, string keyProperty = null)
         {
@@ -83,12 +77,12 @@ namespace JsonFlatFileDataStore
 
                     foreach (var action in batch)
                     {
-                        var operationResult = action.HandleOperation(JObject.Parse(jsonText));
+                        var actionResult = action.HandleAction(JObject.Parse(jsonText));
 
-                        callBacks.Enqueue((action, operationResult.success));
+                        callBacks.Enqueue((action, actionResult.success));
 
-                        if (operationResult.success)
-                            jsonText = operationResult.json;
+                        if (actionResult.success)
+                            jsonText = actionResult.json;
                     }
 
                     var result = false;
@@ -132,7 +126,8 @@ namespace JsonFlatFileDataStore
         {
             var readConvert = new Func<JToken, T>(e => JsonConvert.DeserializeObject<T>(e.ToString()));
             var insertConvert = new Func<T, T>(e => e);
-            return GetCollection<T>(name ?? _pathToCamelCase(typeof(T).Name), readConvert, insertConvert);
+
+            return GetCollection(name ?? _pathToCamelCase(typeof(T).Name), readConvert, insertConvert);
         }
 
         public IDocumentCollection<dynamic> GetCollection(string name)
@@ -141,7 +136,7 @@ namespace JsonFlatFileDataStore
             var readConvert = new Func<JToken, dynamic>(e => JsonConvert.DeserializeObject<ExpandoObject>(e.ToString(), _converter) as dynamic);
             var insertConvert = new Func<dynamic, dynamic>(e => JsonConvert.DeserializeObject<ExpandoObject>(JsonConvert.SerializeObject(e), _converter));
 
-            return GetCollection<dynamic>(name, readConvert, insertConvert);
+            return GetCollection(name, readConvert, insertConvert);
         }
 
         /// <summary>
@@ -163,10 +158,10 @@ namespace JsonFlatFileDataStore
                 lock (_jsonData)
                 {
                     return _jsonData[path]?
-                                       .Children()
-                                       .Select(e => readConvert(e))
-                                       .ToList()
-                                       ?? new List<T>();
+                                .Children()
+                                .Select(e => readConvert(e))
+                                .ToList()
+                                ?? new List<T>();
                 }
             });
 
@@ -180,17 +175,17 @@ namespace JsonFlatFileDataStore
 
         private async Task<bool> Commit<T>(string dataPath, Func<List<T>, bool> commitOperation, bool isOperationAsync, Func<JToken, T> readConvert)
         {
-            var ca = new CommitAction();
+            var commitAction = new CommitAction();
 
-            ca.HandleOperation = new Func<JObject, (bool success, string json)>(jsonData =>
+            commitAction.HandleAction = new Func<JObject, (bool success, string json)>(jsonData =>
             {
                 var jsonText = string.Empty;
 
                 var selectedData = jsonData[dataPath]?
-                                   .Children()
-                                   .Select(e => readConvert(e))
-                                   .ToList()
-                                   ?? new List<T>();
+                                       .Children()
+                                       .Select(e => readConvert(e))
+                                       .ToList()
+                                       ?? new List<T>();
 
                 var success = commitOperation(selectedData);
 
@@ -204,17 +199,17 @@ namespace JsonFlatFileDataStore
             });
 
             bool waitFlag = true;
-            bool result = false;
+            bool actionSuccess = false;
             Exception actionException = null;
 
-            ca.Ready = new Action<bool, Exception>((isSuccess, exception) =>
+            commitAction.Ready = new Action<bool, Exception>((isSuccess, exception) =>
             {
-                result = isSuccess;
+                actionSuccess = isSuccess;
                 actionException = exception;
                 waitFlag = false;
             });
 
-            _updates.Add(ca);
+            _updates.Add(commitAction);
 
             while (waitFlag)
             {
@@ -227,7 +222,7 @@ namespace JsonFlatFileDataStore
             if (actionException != null)
                 throw actionException;
 
-            return result;
+            return actionSuccess;
         }
 
         private string ReadJsonFromFile(string path)
@@ -288,7 +283,7 @@ namespace JsonFlatFileDataStore
         {
             public Action<bool, Exception> Ready { get; set; }
 
-            public Func<JObject, (bool success, string json)> HandleOperation { get; set; }
+            public Func<JObject, (bool success, string json)> HandleAction { get; set; }
         }
     }
 }
