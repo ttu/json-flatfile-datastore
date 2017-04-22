@@ -204,7 +204,7 @@ collection.ReplaceMany(e => e.City == "NY", new { City = "New York" });
 // After update  : { "id": 1, "name": "Barry", "age": 42 }
 dynamic source = new ExpandoObject();
 source.age = 42;
-await collection.UpdateOneAsync(e => e.id == 3, source as object);
+await collection.UpdateOneAsync(e => e.id == 1, source as object);
 
 // Typed
 // Before update : { "id": 1, "name": "Phil", "age": 40, "city": "NY" }
