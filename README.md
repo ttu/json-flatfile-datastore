@@ -47,7 +47,7 @@ var employee = new Employee { Id = 1, Name = "John", Age = 46 };
 // Insert new employee
 await collection.InsertOneAsync(employee);
 
-// Update user
+// Update employee
 employee.Name = "John Doe";
 
 await collection.UpdateOneAsync(e => e.Id == employee.Id, employee);
@@ -64,16 +64,16 @@ Dynamic data can be anonymous types, ExpandoObjects, JSON objects (JToken, JObje
 // Open database (create new if file doesn't exist)
 var store = new DataStore(pathToJson);
 
-// Get customer collection
+// Get employee collection
 var collection = store.GetCollection("employee");
 
-// Create new user
+// Create new employee
 var employee = new { id = 1, name = "John", age = 46 };
 
-// Create new user from JSON
+// Create new employee from JSON
 var employeeJson = JToken.Parse("{ 'id': 2, 'name': 'Raymond', 'age': 32 }");
 
-// Create new user from dictionary
+// Create new employee from dictionary
 var employeeDict = new Dictionary<string, object>
 {
     ["id"] = 3,
@@ -81,15 +81,23 @@ var employeeDict = new Dictionary<string, object>
     ["age"] = 32
 };
 
-// Insert new user
+// Insert new employee
 await collection.InsertOneAsync(employee);
 await collection.InsertOneAsync(employeeJson);
 await collection.InsertOneAsync(employeeDict);
 
-// As anonymous types property is read only we can use new anonymous type to update data
+// Update data from anonymous type
 var updateData = new { name = "John Doe" };
 
-await collection.UpdateOneAsync(e => e.id == employee.id, updateData);
+// Update data from JSON
+var updateJson = JToken.Parse("{ 'name': 'Raymond Doe' }");
+
+// Update data from dictionary
+var updateDict = new Dictionary<string, object> { ["name"] = "Andy Doe" };
+
+await collection.UpdateOneAsync(e => e.id == 1, updateData);
+await collection.UpdateOneAsync(e => e.id == 2, updateJson);
+await collection.UpdateOneAsync(e => e.id == 3, updateDict);
 
 // Use LINQ to query items
 var results = collection.AsQueryable().Where(x => x.age > 30);

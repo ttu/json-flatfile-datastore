@@ -1,7 +1,7 @@
 ## Changelog
 
 ### [Unreleased]
-*
+* IDocumentCollection Update-methods support JSON object and Dictionary as update object
 
 ### [1.3.0] - 2017-04-17
 * DataStore will commit only changed item(s) to the JSON file

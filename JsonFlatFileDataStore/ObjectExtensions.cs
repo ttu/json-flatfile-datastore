@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -17,6 +20,9 @@ public static class ObjectExtensions
     {
         if (source == null || destination == null)
             throw new Exception("source or/and destination objects are null");
+
+        if (source is JToken || IsDictionary(source.GetType()))
+            source = JsonConvert.DeserializeObject<ExpandoObject>(JsonConvert.SerializeObject(source), new ExpandoObjectConverter());
 
         if (destination.GetType() == typeof(ExpandoObject))
             HandleExpando(source, destination);

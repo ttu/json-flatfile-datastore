@@ -191,10 +191,10 @@ namespace JsonFlatFileDataStore.Test
             // Open database (create new if file doesn't exist)
             var store = new DataStore(pathToJson);
 
-            // Get customer collection
+            // Get employee collection
             var collection = store.GetCollection("employee");
 
-            // Create new user instance
+            // Create new employee instance
             var employee = new
             {
                 id = collection.GetNextIdValue(),
@@ -213,21 +213,28 @@ namespace JsonFlatFileDataStore.Test
                 ["age"] = 32
             };
 
-            // Insert new user
+            // Insert new employee
             await collection.InsertOneAsync(employee);
             await collection.InsertOneAsync(employeeJson);
             await collection.InsertOneAsync(employeeDict);
 
             // As anonymous types property is read only we can use new anonymous type to update data
             var updateData = new { name = "John Doe" };
-
             await collection.UpdateOneAsync(e => e.id == employee.id, updateData);
+
+            var updateJson = JObject.Parse("{ 'name': 'Raymond Doe' }");
+            await collection.UpdateOneAsync(e => e.id == 2, updateJson);
+
+            var updateDict = new Dictionary<string, object> { ["name"] = "Andy Doe" };
+            await collection.UpdateOneAsync(e => e.id == 3, updateDict);
 
             // Use LINQ to query items
             var results = collection.AsQueryable().Where(x => x.age > 30);
 
             Assert.True(results.Count() == 3);
-            Assert.True(results.Count(e => e.name == "John Doe") == 1);
+            Assert.NotNull(results.Single(e => e.name == "John Doe"));
+            Assert.NotNull(results.Single(e => e.name == "Raymond Doe"));
+            Assert.NotNull(results.Single(e => e.name == "Andy Doe"));
 
             UTHelpers.Down(pathToJson);
         }
