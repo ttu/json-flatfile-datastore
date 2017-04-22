@@ -91,7 +91,7 @@ namespace JsonFlatFileDataStore
 
             insertOne(_data.Value);
 
-            return await _commit(_path, insertOne, true);
+            return await _commit(_path, insertOne, true).ConfigureAwait(false);
         }
 
         public bool InsertMany(IEnumerable<T> items)
@@ -125,7 +125,7 @@ namespace JsonFlatFileDataStore
 
             updateAction(_data.Value);
 
-            return await _commit(_path, updateAction, true);
+            return await _commit(_path, updateAction, true).ConfigureAwait(false);
         }
 
         public bool ReplaceOne(Predicate<T> filter, T item)
@@ -191,7 +191,7 @@ namespace JsonFlatFileDataStore
             if (!updateAction(_data.Value))
                 return false;
 
-            return await _commit(_path, updateAction, true);
+            return await _commit(_path, updateAction, true).ConfigureAwait(false);
         }
 
         public async Task<bool> ReplaceManyAsync(Predicate<T> filter, T item)
@@ -215,7 +215,7 @@ namespace JsonFlatFileDataStore
             if (!updateAction(_data.Value))
                 return false;
 
-            return await _commit(_path, updateAction, true);
+            return await _commit(_path, updateAction, true).ConfigureAwait(false);
         }
 
         public bool UpdateOne(Predicate<T> filter, dynamic item)
@@ -257,7 +257,7 @@ namespace JsonFlatFileDataStore
             if (!updateAction(_data.Value))
                 return false;
 
-            return await _commit(_path, updateAction, true);
+            return await _commit(_path, updateAction, true).ConfigureAwait(false);
         }
 
         public bool UpdateMany(Predicate<T> filter, dynamic item)
@@ -303,7 +303,7 @@ namespace JsonFlatFileDataStore
             if (!updateAction(_data.Value))
                 return false;
 
-            return await _commit(_path, updateAction, true);
+            return await _commit(_path, updateAction, true).ConfigureAwait(false);
         }
 
         public bool DeleteOne(Predicate<T> filter)
@@ -339,7 +339,7 @@ namespace JsonFlatFileDataStore
             if (!updateAction(_data.Value))
                 return false;
 
-            return await _commit(_path, updateAction, true);
+            return await _commit(_path, updateAction, true).ConfigureAwait(false);
         }
 
         public bool DeleteMany(Predicate<T> filter)
@@ -367,7 +367,7 @@ namespace JsonFlatFileDataStore
             if (!updateAction(_data.Value))
                 return false;
 
-            return await _commit(_path, updateAction, true);
+            return await _commit(_path, updateAction, true).ConfigureAwait(false);
         }
     }
 }

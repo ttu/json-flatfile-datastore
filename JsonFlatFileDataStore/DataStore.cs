@@ -214,7 +214,7 @@ namespace JsonFlatFileDataStore
             while (waitFlag)
             {
                 if (isOperationAsync)
-                    await Task.Delay(5);
+                    await Task.Delay(5).ConfigureAwait(false);
                 else
                     Task.Delay(5).Wait();
             }
