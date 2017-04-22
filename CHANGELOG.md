@@ -1,6 +1,9 @@
 ## Changelog
 
 ### [Unreleased]
+*
+
+### [1.3.1] - 2017-04-23
 * IDocumentCollection Update-methods support JSON object and Dictionary as update object
 
 ### [1.3.0] - 2017-04-17
