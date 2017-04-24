@@ -30,6 +30,33 @@ public static class ObjectExtensions
             HandleTyped(source, destination);
     }
 
+    public static void AddDataToField(object item, string fieldName, dynamic data)
+    {
+        if (item is JToken)
+        {
+            dynamic jTokenItem = item;
+            jTokenItem[fieldName] = data;
+        }
+        else if (item is ExpandoObject)
+        {
+            dynamic expandoItem = item;
+            var expandoDict = expandoItem as IDictionary<string, object>;
+            expandoDict[fieldName] = data;
+        }
+        else if (IsDictionary(item.GetType()))
+        {
+            dynamic dictionaryItem = item;
+            dictionaryItem[fieldName] = data;
+        }
+        else
+        {
+            var idProperty = item.GetType().GetProperties().FirstOrDefault(p => string.Equals(p.Name, fieldName, StringComparison.OrdinalIgnoreCase));
+
+            if (idProperty != null && idProperty.CanWrite)
+                idProperty.SetValue(item, data);
+        }
+    }
+
     private static void HandleTyped(object source, object destination)
     {
         foreach (var srcProp in GetProperties(source))

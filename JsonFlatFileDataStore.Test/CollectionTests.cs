@@ -223,7 +223,8 @@ namespace JsonFlatFileDataStore.Test
             var collection = store.GetCollection<User>("user");
             Assert.Equal(3, collection.Count);
 
-            var insertResult = collection.InsertOne(new User { Id = 11, Name = "Teddy", Age = 21 });
+            var newUser = new User { Id = 11, Name = "Teddy", Age = 21 };
+            var insertResult = collection.InsertOne(newUser);
             Assert.True(insertResult);
             Assert.Equal(4, collection.Count);
 
@@ -231,11 +232,11 @@ namespace JsonFlatFileDataStore.Test
             var collection2 = store2.GetCollection<User>("user");
             Assert.Equal(4, collection2.Count);
 
-            await collection2.UpdateOneAsync(e => e.Id == 11, new { Age = 22 });
+            await collection2.UpdateOneAsync(e => e.Id == newUser.Id, new { Age = 22 });
 
             var store3 = new DataStore(newFilePath);
             var collection3 = store3.GetCollection<User>("user");
-            var updated = collection3.Find(e => e.Id == 11).First();
+            var updated = collection3.Find(e => e.Id == newUser.Id).First();
             Assert.Equal(22, updated.Age);
             Assert.Equal("Teddy", updated.Name);
 
@@ -408,7 +409,8 @@ namespace JsonFlatFileDataStore.Test
             var collection = store.GetCollection<User>("user");
             Assert.Equal(3, collection.Count);
 
-            collection.InsertOne(new User { Id = 11, Name = "Teddy" });
+            var newUser = new User { Id = 11, Name = "Teddy" };
+            collection.InsertOne(newUser);
             Assert.Equal(4, collection.Count);
 
             var store2 = new DataStore(newFilePath);
@@ -416,11 +418,11 @@ namespace JsonFlatFileDataStore.Test
             var collection2 = store2.GetCollection<User>("user");
             Assert.Equal(4, collection2.Count);
 
-            collection2.ReplaceOne(e => e.Id == 11, new User { Id = 11, Name = "Theodor" });
+            collection2.ReplaceOne(e => e.Id == newUser.Id, new User { Id = newUser.Id, Name = "Theodor" });
 
             var store3 = new DataStore(newFilePath);
             var collection3 = store3.GetCollection<User>("user");
-            var updated = collection3.Find(e => e.Id == 11).First();
+            var updated = collection3.Find(e => e.Id == newUser.Id).First();
             Assert.Equal("Theodor", updated.Name);
 
             UTHelpers.Down(newFilePath);
@@ -436,8 +438,10 @@ namespace JsonFlatFileDataStore.Test
             var collection = store.GetCollection<User>("user");
             Assert.Equal(3, collection.Count);
 
-            collection.InsertOne(new User { Id = 11, Name = "Teddy" });
-            collection.InsertOne(new User { Id = 11, Name = "Teddy2" });
+            var newUser1 = new User { Id = 11, Name = "Teddy" };
+            var newUser2 = new User { Id = 11, Name = "Teddy2" };
+            collection.InsertOne(newUser1);
+            collection.InsertOne(newUser2);
             Assert.Equal(5, collection.Count);
 
             var store2 = new DataStore(newFilePath);
@@ -445,7 +449,7 @@ namespace JsonFlatFileDataStore.Test
             var collection2 = store2.GetCollection<User>("user");
             Assert.Equal(5, collection2.Count);
 
-            collection2.ReplaceMany(e => e.Id == 11, new User { Id = 11, Name = "Theodor" });
+            collection2.ReplaceMany(e => e.Name.Contains("Teddy"), new User { Id = 11, Name = "Theodor" });
 
             var store3 = new DataStore(newFilePath);
             var collection3 = store3.GetCollection<User>("user");
@@ -503,13 +507,14 @@ namespace JsonFlatFileDataStore.Test
             var collection = store.GetCollection<User>("user");
             Assert.Equal(3, collection.Count);
 
-            collection.InsertOne(new User { Id = 11, Name = "Teddy" });
+            var newUser = new User { Id = 11, Name = "Teddy" };
+            collection.InsertOne(newUser);
             Assert.Equal(4, collection.Count);
 
             var store2 = new DataStore(newFilePath);
 
             var collection2 = store2.GetCollection<User>("user");
-            collection2.DeleteOne(e => e.Id == 11);
+            collection2.DeleteOne(e => e.Id == newUser.Id);
             Assert.Equal(3, collection2.Count);
 
             var store3 = new DataStore(newFilePath);
@@ -625,7 +630,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void UpdateOne_InnetExpandos()
+        public void UpdateOne_InnerExpandos()
         {
             var newFilePath = UTHelpers.Up();
 

@@ -1,7 +1,7 @@
 ## Changelog
 
 ### [Unreleased]
-*
+* IDocumentCollection Insert-methods automatically add correct value to id-field
 
 ### [1.3.1] - 2017-04-23
 * IDocumentCollection Update-methods support JSON object and Dictionary as update object

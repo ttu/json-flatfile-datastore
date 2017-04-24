@@ -11,13 +11,10 @@ Simple flat file JSON datastore.
 * Data is stored in a JSON file. 
   * Easy to initialize.
   * Easy to edit.
+  * Perfect for small apps and prototyping.
 * [.NET Standard 1.4](https://github.com/dotnet/standard/blob/master/docs/versions.md)
   * .NET Core 1.0
   * .NET 4.6.1
-
-###### Who should use this?
-
-Anyone who needs to store data and wants to edit it easily with any text editor. And for people too lazy to create classes for every type.
 
 ##### Example project
 
@@ -45,6 +42,7 @@ var collection = store.GetCollection<Employee>();
 var employee = new Employee { Id = 1, Name = "John", Age = 46 };
 
 // Insert new employee
+// Id is updated automatically to correct next value
 await collection.InsertOneAsync(employee);
 
 // Update employee
@@ -82,6 +80,7 @@ var employeeDict = new Dictionary<string, object>
 };
 
 // Insert new employee
+// Id is updated automatically if object is updatable
 await collection.InsertOneAsync(employee);
 await collection.InsertOneAsync(employeeJson);
 await collection.InsertOneAsync(employeeDict);
@@ -178,6 +177,22 @@ var newItems = new[]
 };
 
 collection.InsertMany(newItems);
+```
+
+Insert-methods will update inserted object's Id-field if it has field with that name and it is writable. If id-field is missing from dynamic object, field is added with correct value.
+
+If id-field is number, value is incremented by one. If id-field is string incremented value is added to the end of the initial text.
+
+```csharp
+// Lates id in collection is 5
+var user = JToken.Parse("{ 'id': 3, 'name': 'Raymond', 'age': 32, 'city': 'NY' }");
+await collection.InsertOneAsync(user);
+// After addition user["id"] == 6
+
+// User data doesn't have id field
+var userNoId = JToken.Parse("{ 'name': 'Raymond', 'age': 32, 'city': 'NY' }");
+await collection.InsertOneAsync(userNoId);
+// After addition userNoId["id"] == 7
 ```
 
 #### Replace

@@ -1,9 +1,11 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace JsonFlatFileDataStore
@@ -51,15 +53,21 @@ namespace JsonFlatFileDataStore
             return $"{input}{nextInt}";
         }
 
-        public dynamic GetNextIdValue()
+        public dynamic GetNextIdValue() => GetNextIdValue(_data.Value);
+
+        private dynamic GetNextIdValue(List<T> data)
         {
-            if (!_data.Value.Any())
+            if (!data.Any())
                 return 0;
 
-            var lastItem = _data.Value.Last();
+            var lastItem = data.Last();
             var expando = JsonConvert.DeserializeObject<ExpandoObject>(JsonConvert.SerializeObject(lastItem), new ExpandoObjectConverter());
             // Problem here is if we have typed data with upper camel case properties but lower camel case in JSON, so need to use OrdinalIgnoreCase string comparer
             var expandoAsIgnoreCase = new Dictionary<string, dynamic>(expando, StringComparer.OrdinalIgnoreCase);
+
+            if (!expandoAsIgnoreCase.ContainsKey(_idField))
+                return null;
+
             dynamic keyValue = expandoAsIgnoreCase[_idField];
 
             if (keyValue is Int64)
@@ -72,6 +80,7 @@ namespace JsonFlatFileDataStore
         {
             var insertOne = new Func<List<T>, bool>(data =>
             {
+                TryUpdateId(data, item);
                 data.Add(_insertConvert(item));
                 return true;
             });
@@ -85,6 +94,7 @@ namespace JsonFlatFileDataStore
         {
             var insertOne = new Func<List<T>, bool>(data =>
             {
+                TryUpdateId(data, item);
                 data.Add(_insertConvert(item));
                 return true;
             });
@@ -94,12 +104,23 @@ namespace JsonFlatFileDataStore
             return await _commit(_path, insertOne, true).ConfigureAwait(false);
         }
 
+        private void TryUpdateId(List<T> data, T item)
+        {
+            var insertId = GetNextIdValue(data);
+
+            if (insertId == null)
+                return;
+
+            ObjectExtensions.AddDataToField(item, _idField, insertId);
+        }
+
         public bool InsertMany(IEnumerable<T> items)
         {
             var insertMany = new Func<List<T>, bool>(data =>
             {
                 foreach (var item in items)
                 {
+                    TryUpdateId(data, item);
                     data.Add(_insertConvert(item));
                 }
 
@@ -117,6 +138,7 @@ namespace JsonFlatFileDataStore
             {
                 foreach (var item in items)
                 {
+                    TryUpdateId(data, item);
                     data.Add(_insertConvert(item));
                 }
 

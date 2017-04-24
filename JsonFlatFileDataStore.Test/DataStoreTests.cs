@@ -2,6 +2,7 @@
 using NSubstitute;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -183,7 +184,6 @@ namespace JsonFlatFileDataStore.Test
             UTHelpers.Down(pathToJson);
         }
 
-        [Fact]
         public async Task Readme_Example2()
         {
             var pathToJson = UTHelpers.Up();
@@ -213,10 +213,17 @@ namespace JsonFlatFileDataStore.Test
                 ["age"] = 32
             };
 
+            var employeeExpando = new ExpandoObject();
+            var items = employeeExpando as IDictionary<string, object>;
+            items.Add("id", 3);
+            items.Add("name", "Karl");
+            items.Add("age", 34);
+
             // Insert new employee
             await collection.InsertOneAsync(employee);
             await collection.InsertOneAsync(employeeJson);
             await collection.InsertOneAsync(employeeDict);
+            await collection.InsertOneAsync(employeeExpando);
 
             // As anonymous types property is read only we can use new anonymous type to update data
             var updateData = new { name = "John Doe" };
@@ -235,6 +242,100 @@ namespace JsonFlatFileDataStore.Test
             Assert.NotNull(results.Single(e => e.name == "John Doe"));
             Assert.NotNull(results.Single(e => e.name == "Raymond Doe"));
             Assert.NotNull(results.Single(e => e.name == "Andy Doe"));
+
+            UTHelpers.Down(pathToJson);
+        }
+
+        [Fact]
+        public async Task Insert_CorrectIdWithDynamic()
+        {
+            var pathToJson = UTHelpers.Up();
+
+            var store = new DataStore(pathToJson);
+
+            var collection = store.GetCollection("employee");
+
+            // Create new employee instance
+            var employee = new
+            {
+                id = 20,
+                name = "John",
+                age = 46
+            };
+
+            // Example with JSON object
+            var employeeJson = JToken.Parse("{ 'id': 200, 'name': 'Raymond', 'age': 32 }");
+
+            // Example with JSON object
+            var employeeDict = new Dictionary<string, object>
+            {
+                ["id"] = 300,
+                ["name"] = "Andy",
+                ["age"] = 32
+            };
+
+            var employeeExpando = new ExpandoObject();
+            var items = employeeExpando as IDictionary<string, object>;
+            items.Add("id", 4000);
+            items.Add("name", "Karl");
+            items.Add("age", 34);
+
+            // Insert new employee
+            await collection.InsertOneAsync(employee);
+            await collection.InsertOneAsync(employeeJson);
+            await collection.InsertOneAsync(employeeDict);
+            await collection.InsertOneAsync(employeeExpando);
+
+            Assert.Equal(20, employee.id);
+            Assert.Equal(21, employeeJson["id"]);
+            Assert.Equal(22, employeeDict["id"]);
+            Assert.Equal(23, ((IDictionary<string, object>)employeeExpando)["id"]);
+
+            UTHelpers.Down(pathToJson);
+        }
+
+        [Fact]
+        public async Task Insert_CorrectIdWithDynamic_NoIdInitially()
+        {
+            var pathToJson = UTHelpers.Up();
+
+            var store = new DataStore(pathToJson, keyProperty: "acc");
+
+            var collection = store.GetCollection("employee");
+
+            // Create new employee instance
+            var employee = new
+            {
+                acc = "hello",
+                name = "John",
+                age = 46
+            };
+
+            // Example with JSON object
+            var employeeJson = JToken.Parse("{ 'name': 'Raymond', 'age': 32 }");
+
+            // Example with JSON object
+            var employeeDict = new Dictionary<string, object>
+            {
+                ["name"] = "Andy",
+                ["age"] = 32
+            };
+
+            var employeeExpando = new ExpandoObject();
+            var items = employeeExpando as IDictionary<string, object>;
+            items.Add("name", "Karl");
+            items.Add("age", 34);
+
+            // Insert new employee
+            await collection.InsertOneAsync(employee);
+            await collection.InsertOneAsync(employeeJson);
+            await collection.InsertOneAsync(employeeDict);
+            await collection.InsertOneAsync(employeeExpando);
+
+            Assert.Equal("hello", employee.acc);
+            Assert.Equal("hello0", employeeJson["acc"]);
+            Assert.Equal("hello1", employeeDict["acc"]);
+            Assert.Equal("hello2", ((IDictionary<string, object>)employeeExpando)["acc"]);
 
             UTHelpers.Down(pathToJson);
         }
