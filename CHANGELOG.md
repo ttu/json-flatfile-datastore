@@ -1,7 +1,7 @@
 ## Changelog
 
 ### [Unreleased]
-* 
+* Optional JSON Reload functionality to DataStore
 
 ### [1.4.0] - 2017-04-24
 * IDocumentCollection Insert-methods automatically add correct value to id-field

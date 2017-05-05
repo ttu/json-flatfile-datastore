@@ -31,5 +31,10 @@ namespace JsonFlatFileDataStore
         /// </summary>
         /// <param name="jsonData">New content</param>
         void UpdateAll(string jsonData);
+
+        /// <summary>
+        /// Reload data from the file
+        /// </summary>
+        void Reload();
     }
 }

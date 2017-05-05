@@ -13,8 +13,7 @@ Simple flat file JSON datastore.
   * Easy to edit.
   * Perfect for small apps and prototyping.
 * [.NET Standard 1.4](https://github.com/dotnet/standard/blob/master/docs/versions.md)
-  * .NET Core 1.0
-  * .NET 4.6.1
+  * .NET Core 1.0 & .NET 4.6.1
 
 ##### Example project
 
@@ -358,7 +357,9 @@ var nextId = collection.GetNextIdValue();
 
 ## DataStore and Collection lifecycle
 
-When datastore is created, it serializes the JSON file to the memory. When collection is created it has a lazy reference to the data and it will read the data when it is needed for the first time.
+When datastore is created, it reads the JSON file to the memory. 
+
+When collection is created it has a lazy reference to the data and it will serialize the data when it is needed for the first time.
 
 All write operations in collections are executed immediately internally and then the same operation is queued on DataStore's BlockingCollection. Operations are executed on backgound thread to DataStore's internal collection and saved to file. DataStore's internal collection is also updated during the save operation. NOTE: Already initialiezd collections may still have old data.
 
@@ -374,15 +375,38 @@ var collection2nd = store.GetCollection("hello");
 collection1st.InsertOne(new { id = "hello" });
 
 // Data is loaded from the store to the collection and new item is inserted
-// This collection will also have item with id hello2
+// This collection will also have item with id: hello as data is serialied when it is used for the first time 
 collection2nd.InsertOne(new { id = "hello2" });
 
-// collection1st won't have item with id hello
+// collection1st won't have item with id hello2
 ```
 
 If multiple DataStores are initialized and used simultaneously, each DataStore will have own internal state. They might become out of sync with the state in the JSON file, as data is only loaded from the file when DataStore is initialized and after each commit.
 
-If JSON Flat File Datastore is used with e.g. Web API, add DataStore to the DI container as a singleton. This way DataStore's internal state is correct and application does not have to rely on the state on the file.
+It is also possible to reload JSON data manually, by using DataStore's `Reload` method or set `reloadBeforeGetCollection` constructor parameter to `true`.
+
+```csharp
+// Data is loaded from the file
+var store = new DataStore(newFilePath);
+var store2 = new DataStore(newFilePath, reloadBeforeGetCollection: true);
+
+var collection1_1 = store.GetCollection("hello");
+collection1_1.InsertOne(new { id = "hello" });
+
+// Because of reload collection2_1 will also have item with id: hello
+var collection2_1 = store2.GetCollection("hello");
+
+collection2_1.InsertOne(new { id = "hello2" });
+
+store.Reload()
+
+// Because of reload collection1_2 will also have item with id: hello2
+var collection1_2 = store.GetCollection("hello");
+
+// collection1_1 will not have item with id: hello2 even after reload, because it was initialized before reload
+```
+
+If JSON Flat File Datastore is used with e.g. Web API, add DataStore to the DI container as a singleton. This way DataStore's internal state is correct and application does not have to rely on the state on the file as read operation is pretty slow. Reload can be triggered if needed.
 
 ### Collection naming
 

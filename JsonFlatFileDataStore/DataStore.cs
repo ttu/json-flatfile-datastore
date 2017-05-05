@@ -20,6 +20,7 @@ namespace JsonFlatFileDataStore
 
         private readonly string _filePath;
         private readonly string _keyProperty;
+        private readonly bool _reloadBeforeGetCollection;
         private readonly Func<JObject, string> _toJsonFunc;
         private readonly Func<string, string> _pathToCamelCase;
         private readonly BlockingCollection<CommitAction> _updates = new BlockingCollection<CommitAction>();
@@ -29,7 +30,7 @@ namespace JsonFlatFileDataStore
 
         private JObject _jsonData;
 
-        public DataStore(string path, bool useLowerCamelCase = true, string keyProperty = null)
+        public DataStore(string path, bool useLowerCamelCase = true, string keyProperty = null, bool reloadBeforeGetCollection = false)
         {
             _filePath = path;
 
@@ -49,6 +50,8 @@ namespace JsonFlatFileDataStore
 
             // Default key property is id or Id
             _keyProperty = keyProperty ?? (useLowerCamelCase ? "id" : "Id");
+
+            _reloadBeforeGetCollection = reloadBeforeGetCollection;
 
             _jsonData = JObject.Parse(ReadJsonFromFile(path));
 
@@ -122,6 +125,14 @@ namespace JsonFlatFileDataStore
             WriteJsonToFile(_filePath, jsonData);
         }
 
+        public void Reload()
+        {
+            lock (_jsonData)
+            {
+                _jsonData = JObject.Parse(ReadJsonFromFile(_filePath));
+            }
+        }
+
         public IDocumentCollection<T> GetCollection<T>(string name = null) where T : class
         {
             var readConvert = new Func<JToken, T>(e => JsonConvert.DeserializeObject<T>(e.ToString()));
@@ -157,6 +168,12 @@ namespace JsonFlatFileDataStore
             {
                 lock (_jsonData)
                 {
+                    if (_reloadBeforeGetCollection)
+                    {
+                        // This might be a bad idea especially if file is in use, so this can take a long time
+                        _jsonData = JObject.Parse(ReadJsonFromFile(_filePath));
+                    }
+
                     return _jsonData[path]?
                                 .Children()
                                 .Select(e => readConvert(e))
@@ -177,11 +194,11 @@ namespace JsonFlatFileDataStore
         {
             var commitAction = new CommitAction();
 
-            commitAction.HandleAction = new Func<JObject, (bool success, string json)>(jsonData =>
+            commitAction.HandleAction = new Func<JObject, (bool success, string json)>(currentJson =>
             {
-                var jsonText = string.Empty;
+                var updatedJson = string.Empty;
 
-                var selectedData = jsonData[dataPath]?
+                var selectedData = currentJson[dataPath]?
                                        .Children()
                                        .Select(e => readConvert(e))
                                        .ToList()
@@ -191,11 +208,11 @@ namespace JsonFlatFileDataStore
 
                 if (success)
                 {
-                    jsonData[dataPath] = JArray.FromObject(selectedData);
-                    jsonText = _toJsonFunc(jsonData);
+                    currentJson[dataPath] = JArray.FromObject(selectedData);
+                    updatedJson = _toJsonFunc(currentJson);
                 }
 
-                return (success, jsonText);
+                return (success, updatedJson);
             });
 
             bool waitFlag = true;
