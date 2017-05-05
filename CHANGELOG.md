@@ -1,6 +1,9 @@
 ## Changelog
 
 ### [Unreleased]
+*
+
+### [1.5.0] - 2017-05-05
 * Optional JSON Reload functionality to DataStore
 
 ### [1.4.0] - 2017-04-24
