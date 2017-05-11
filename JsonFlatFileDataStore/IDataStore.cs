@@ -9,6 +9,11 @@ namespace JsonFlatFileDataStore
         /// </summary>
         bool IsUpdating { get; }
 
+        /// <summary>
+        /// Get dynamic collection
+        /// </summary>
+        /// <param name="name">Collection name</param>
+        /// <returns>Dynamic IDocumentCollection</returns>
         IDocumentCollection<dynamic> GetCollection(string name);
 
         /// <summary>
@@ -20,10 +25,9 @@ namespace JsonFlatFileDataStore
         IDocumentCollection<T> GetCollection<T>(string name = null) where T : class;
 
         /// <summary>
-        /// Get dynamic collection
+        /// List collections
         /// </summary>
-        /// <param name="name">Collection name</param>
-        /// <returns>Dynamic IDocumentCollection</returns>
+        /// <returns>List of collection names</returns>
         IEnumerable<string> ListCollections();
 
         /// <summary>

@@ -1,7 +1,7 @@
 ## Changelog
 
 ### [Unreleased]
-*
+* Include xml documentation file and fix IDataStore method summaries
 
 ### [1.5.0] - 2017-05-05
 * Optional JSON Reload functionality to DataStore
