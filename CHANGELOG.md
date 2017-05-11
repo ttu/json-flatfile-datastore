@@ -1,6 +1,9 @@
 ## Changelog
 
 ### [Unreleased]
+* 
+
+### [1.5.1] - 2017-05-11
 * Include xml documentation file and fix IDataStore method summaries
 
 ### [1.5.0] - 2017-05-05
