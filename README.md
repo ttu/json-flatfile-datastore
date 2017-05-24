@@ -55,7 +55,7 @@ var results = collection.AsQueryable().Where(e => e.Age > 30);
 
 ##### Dynamically typed data
 
-Dynamic data can be anonymous types, ExpandoObjects, JSON objects (JToken, JObject, JArray) or `Dictionary<string, object>`. Internally dynamic data is serialized to ExpandoObject.
+Dynamic data can be __Anonymous type__, __ExpandoObject__, JSON objects (__JToken__, __JObject__, __JArray__) or __Dictionary<string, object>__. Internally dynamic data is serialized to __ExpandoObject__.
 
 ```csharp
 // Open database (create new if file doesn't exist)
@@ -118,7 +118,7 @@ Example user collection in JSON:
 
 Collection can be queried with LINQ by getting queryable from the collection with `AsQueryable` method.
 
-NOTE: AsQueryable will return IEnumerable, insted of IQueryable, because IQueryable doesn't support dynamic's in LINQ queries. With this datastore it won't matter as all data is already loaded into memory.
+NOTE: `AsQueryable` will return __IEnumerable__, insted of IQueryable, because IQueryable doesn't support Dynamic types in LINQ queries. With this datastore it won't matter as all data is already loaded into memory.
 
 `AsQueryable` LINQ query with dynamic data:
 
@@ -178,9 +178,9 @@ var newItems = new[]
 collection.InsertMany(newItems);
 ```
 
-Insert-methods will update inserted object's Id-field if it has field with that name and it is writable. If id-field is missing from dynamic object, field is added with correct value.
+Insert-methods will update inserted object's Id-field if it has field with that name and it is writable. If Id-field is missing from dynamic object, field is added with correct value.
 
-If id-field is number, value is incremented by one. If id-field is string incremented value is added to the end of the initial text.
+If Id-field is number, value is incremented by one. If Id-field is string incremented value is added to the end of the initial text.
 
 ```csharp
 // Lates id in collection is 5
@@ -218,7 +218,7 @@ collection.ReplaceMany(e => e.City == "NY", new { City = "New York" });
 
 #### Update
 
-`UpdateOne` and `UpdateOneAsync` will update the first item that matches the filter with passed properties from dynamic object. Dynamic object can be an Anonymous type or an ExpandoObject. Method will return true if item(s) found with the filter.
+`UpdateOne` and `UpdateOneAsync` will update the first item that matches the filter with passed properties from dynamic object. Dynamic object can be an __Anonymous type__ or an __ExpandoObject__. Method will return true if item(s) found with the filter.
 
 ```csharp
 // Dynamic
@@ -263,7 +263,7 @@ await collection.UpdateOneAsync(e => e.Id == 12, new { Parents = new[] { null, n
 await collection.UpdateOneAsync(e => e.Id == 12, new { Parents = new[] { new { age = 42 } } });
 ```
 
-Easy way to create a patch ExpandoObject on runtime is to crete a dictionary and then to serialize it to a JSON and deserialize to an ExpandoObject.
+Easy way to create a patch __ExpandoObject__ on runtime is to create a __Dictionary__ and then to serialize it to a JSON and deserialize to an __ExpandoObject__.
 
 ```csharp
 var user = new User
@@ -289,9 +289,10 @@ await collection.UpdateOneAsync(e => e.Id == 12, patchExpando);
 
 ##### Limitations
 
-Dictionaries won't work when serializing JSON or data to ExpandoObjects. This is becauses dictionaries and objects are similiar when serialized to JSON, so serialization creates an ExpandoObject from Dictionary. Update's are mainly meant to be used with HTTP PATCH, so normally Replace is easier and better way to update data. 
+Dictionaries won't work when serializing JSON or data to __ExpandoObjects__. This is becauses dictionaries and objects are similiar when serialized to JSON, so serialization creates an ExpandoObject from Dictionary. Update's are mainly meant to be used with HTTP PATCH, so normally Replace is easier and better way to update data. 
 
-If the update Expando is created manually then Dictionaries content can be updated. Unlike List, Dictionary's whole content is replaced with the update data's content.
+If the update ExpandoObject is created manually then Dictionaries content can be updated. Unlike List, Dictionary's whole content is replaced with the update data's content.
+
 ```csharp
 var player = new Player
 {
@@ -335,7 +336,7 @@ await collection.DeleteManyAsync(e => e.City == "NY");
 ### Id-field value
 
 
-If incrementing id-field values is used, `GetNextIdValue` returns next id-field value. If id-property is integer, last item's value is incremented by one. If field is not an integer, it is converted to a string and number is parsed from the end of the string and incremented by one.
+If incrementing Id-field values is used, `GetNextIdValue` returns next Id-field value. If Id-property is integer, last item's value is incremented by one. If field is not an integer, it is converted to a string and number is parsed from the end of the string and incremented by one.
 
 ```csharp
 var store = new DataStore(newFilePath, keyProperty: "myId");
@@ -439,11 +440,12 @@ var store = new DataStore(newFilePath, false);
 
 ### Dynamic and error CS1977
 
-This is the message you will see if you try to use dynamic types with lambdas:
+When __Dynamic type__ is used with lambdas, compiler will give you error __CS1977__:
 
 > CS1977: Cannot use a lambda expression as an argument to a dynamically dispatched operation without first casting it to a delegate or expression tree type
 
 A lambda needs to know the data type of the parameter at compile time. Cast dynamic to an object and compiler will happily accept it, as it believes you know what you are doing and leaves validation to Dynamic Language Runtime.  
+
 ```csharp
 dynamic dynamicUser = new { id = 11, name = "Theodor" };
 
