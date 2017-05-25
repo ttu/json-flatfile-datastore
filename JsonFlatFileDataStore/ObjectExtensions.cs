@@ -130,7 +130,13 @@ public static class ObjectExtensions
 
             if (IsReferenceType(srcProp) && IsReferenceType(targetProperty))
             {
-                CopyProperties(GetValue(source, srcProp), targetProperty.GetValue(destination, null));
+                var target = targetProperty.GetValue(destination, null);
+                var sourcePropertyValue = GetValue(source, srcProp);
+
+                if (target == null || sourcePropertyValue == null)
+                    targetProperty.SetValue(destination, sourcePropertyValue);
+                else
+                    CopyProperties(sourcePropertyValue, target);
                 continue;
             }
 

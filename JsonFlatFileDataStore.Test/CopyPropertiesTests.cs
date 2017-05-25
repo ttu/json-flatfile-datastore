@@ -10,6 +10,53 @@ namespace JsonFlatFileDataStore.Test
     public class CopyPropertiesTests
     {
         [Fact]
+        public void CopyProperties_NullChilds()
+        {
+            var source = new User() { Id = 2, Name = "Tim" };
+            var destination = new User() { Id = 2 };
+
+            ObjectExtensions.CopyProperties(source, destination);
+
+            Assert.Equal(source.Name, destination.Name);
+        }
+
+        [Fact]
+        public void CopyProperties_NullDestination()
+        {
+            var source = new User() { Id = 2, Name = "Tim", Work = new WorkPlace {  Name = "ACME" } };
+            var destination = new User() { Id = 2 };
+
+            ObjectExtensions.CopyProperties(source, destination);
+
+            Assert.Equal(source.Name, destination.Name);
+            Assert.Equal(source.Work.Name, destination.Work.Name);
+        }
+
+        [Fact]
+        public void CopyProperties_NullSource()
+        {
+            var source = new User() { Id = 2, Name = "Tim" };
+            var destination = new User() { Id = 2, Work = new WorkPlace { Name = "ACME" } };
+
+            ObjectExtensions.CopyProperties(source, destination);
+
+            Assert.Equal(source.Name, destination.Name);
+            Assert.Null(destination.Work);
+        }
+
+        [Fact]
+        public void CopyProperties_DynamicNullSource()
+        {
+            var source = new { Name = "Tim" };
+            var destination = new User() { Id = 2, Work = new WorkPlace { Name = "ACME" } };
+
+            ObjectExtensions.CopyProperties(source, destination);
+
+            Assert.Equal(source.Name, destination.Name);
+            Assert.Equal("ACME", destination.Work.Name);
+        }
+
+        [Fact]
         public void CopyProperties_TypedAndDynamicAddressCity()
         {
             var family = new Family { Address = new Address { City = "Helsinki" } };
