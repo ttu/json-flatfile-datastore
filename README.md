@@ -216,6 +216,13 @@ await collection.ReplaceOneAsync(e => e.Id == 3, new User { Id = 3, Name = "Barr
 collection.ReplaceMany(e => e.City == "NY", new { City = "New York" });
 ```
 
+`ReplaceOne` and `ReplaceOneAsync` have an upsert option. If item to replace doesn't exists in the datastore, item will be inserted. Upsert won't update id, so item will be inserted with id that it has.
+
+```csharp
+// New item will be inserted with id 11
+collection.ReplaceOne(e => e.id == 11, new { id = 11, name = "Theodor" }, true);
+```
+
 #### Update
 
 `UpdateOne` and `UpdateOneAsync` will update the first item that matches the filter with passed properties from dynamic object. Dynamic object can be an __Anonymous type__ or an __ExpandoObject__. Method will return true if item(s) found with the filter.
@@ -289,9 +296,9 @@ await collection.UpdateOneAsync(e => e.Id == 12, patchExpando);
 
 ##### Limitations
 
-Dictionaries won't work when serializing JSON or data to __ExpandoObjects__. This is becauses dictionaries and objects are similiar when serialized to JSON, so serialization creates an ExpandoObject from Dictionary. Update's are mainly meant to be used with HTTP PATCH, so normally Replace is easier and better way to update data. 
+__Dictionaries__ won't work when serializing JSON or data to __ExpandoObjects__. This is becauses dictionaries and objects are similiar when serialized to JSON, so serialization creates an __ExpandoObject__ from __Dictionary__. Update's are mainly meant to be used with `HTTP PATCH`, so normally `Replace` is easier and better way to update data. 
 
-If the update ExpandoObject is created manually then Dictionaries content can be updated. Unlike List, Dictionary's whole content is replaced with the update data's content.
+If the update __ExpandoObject__ is created manually then Dictionaries content can be updated. Unlike List, Dictionary's whole content is replaced with the update data's content.
 
 ```csharp
 var player = new Player
@@ -461,7 +468,7 @@ collection2.ReplaceOne((Predicate<dynamic>)(e => e.id == 11), dynamicUser);
 
 ### API
 
-API is almost identical to the MongoDB's C# API, so switching to the MongoDB or [DocumentDB](https://docs.microsoft.com/en-us/azure/documentdb/documentdb-protocol-mongodb) might be easy. Use type inference as types are not interchangable.
+API is heavily infulenced by MongoDB's C# API, so switching to the MongoDB or [DocumentDB](https://docs.microsoft.com/en-us/azure/documentdb/documentdb-protocol-mongodb) might be easy. Methods are named same way, but some parameters do not match and types are not interchangable.
 
 * [MongoDB-C#-linq](http://mongodb.github.io/mongo-csharp-driver/2.4/reference/driver/crud/linq/#queryable)
 * [MongoDB-C#-crud](http://mongodb.github.io/mongo-csharp-driver/2.4/reference/driver/crud/writing/)

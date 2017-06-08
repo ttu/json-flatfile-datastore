@@ -429,6 +429,62 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
+        public void ReplaceOne_Upsert_TypedUser()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection<User>("user");
+            Assert.Equal(3, collection.Count);
+
+            var success = collection.ReplaceOne(e => e.Id == 11, new User { Id = 11, Name = "Theodor" });
+            Assert.False(success);
+
+            success = collection.ReplaceOne(e => e.Id == 11, new User { Id = 11, Name = "Theodor" }, true);
+            Assert.True(success);
+            Assert.Equal(4, collection.Count);
+
+            success = collection.ReplaceOne(e => e.Id == 11, new User { Id = 11, Name = "Jimmy" }, true);
+            Assert.True(success);
+            Assert.Equal(4, collection.Count);
+
+            var fromDb = collection.AsQueryable().SingleOrDefault(e => e.Id == 11);
+            Assert.NotNull(fromDb);
+            Assert.Equal("Jimmy", fromDb.Name);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public void ReplaceOne_Upsert_DynamicUser()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection("user");
+            Assert.Equal(3, collection.Count);
+
+            var success = collection.ReplaceOne(e => e.id == 11, new { id = 11, name = "Theodor" });
+            Assert.False(success);
+
+            success = collection.ReplaceOne(e => e.id == 11, new { id = 11, name = "Theodor" }, true);
+            Assert.True(success);
+            Assert.Equal(4, collection.Count);
+
+            success = collection.ReplaceOne(e => e.id == 11, new { id = 11, name = "Jimmy" }, true);
+            Assert.True(success);
+            Assert.Equal(4, collection.Count);
+
+            var fromDb = collection.AsQueryable().SingleOrDefault(e => e.id == 11);
+            Assert.NotNull(fromDb);
+            Assert.Equal("Jimmy", fromDb.name);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
         public void ReplaceMany_TypedUser()
         {
             var newFilePath = UTHelpers.Up();

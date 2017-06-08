@@ -137,8 +137,9 @@ namespace JsonFlatFileDataStore
         {
             var readConvert = new Func<JToken, T>(e => JsonConvert.DeserializeObject<T>(e.ToString()));
             var insertConvert = new Func<T, T>(e => e);
+            var createNewInstance = new Func<T>(() => Activator.CreateInstance<T>());
 
-            return GetCollection(name ?? _pathToCamelCase(typeof(T).Name), readConvert, insertConvert);
+            return GetCollection(name ?? _pathToCamelCase(typeof(T).Name), readConvert, insertConvert, createNewInstance);
         }
 
         public IDocumentCollection<dynamic> GetCollection(string name)
@@ -146,14 +147,11 @@ namespace JsonFlatFileDataStore
             // As we don't want to return JObjects when using dynamic, JObjects will be converted to ExpandoObjects
             var readConvert = new Func<JToken, dynamic>(e => JsonConvert.DeserializeObject<ExpandoObject>(e.ToString(), _converter) as dynamic);
             var insertConvert = new Func<dynamic, dynamic>(e => JsonConvert.DeserializeObject<ExpandoObject>(JsonConvert.SerializeObject(e), _converter));
+            var createNewInstance = new Func<dynamic>(() => new ExpandoObject());
 
-            return GetCollection(name, readConvert, insertConvert);
+            return GetCollection(name, readConvert, insertConvert, createNewInstance);
         }
-
-        /// <summary>
-        /// Get all collections
-        /// </summary>
-        /// <returns>List of collection names</returns>
+        
         public IEnumerable<string> ListCollections()
         {
             lock (_jsonData)
@@ -162,7 +160,7 @@ namespace JsonFlatFileDataStore
             }
         }
 
-        private IDocumentCollection<T> GetCollection<T>(string path, Func<JToken, T> readConvert, Func<T, T> insertConvert)
+        private IDocumentCollection<T> GetCollection<T>(string path, Func<JToken, T> readConvert, Func<T, T> insertConvert, Func<T> createNewInstance)
         {
             var data = new Lazy<List<T>>(() =>
             {
@@ -187,7 +185,8 @@ namespace JsonFlatFileDataStore
                 data,
                 path,
                 _keyProperty,
-                insertConvert);
+                insertConvert,
+                createNewInstance);
         }
 
         private async Task<bool> Commit<T>(string dataPath, Func<List<T>, bool> commitOperation, bool isOperationAsync, Func<JToken, T> readConvert)

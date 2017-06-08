@@ -118,7 +118,8 @@ namespace JsonFlatFileDataStore.Test
                 new Lazy<List<Movie>>(() => new List<Movie> { new Movie { Name = "Commando" } }),
                 @"/path/to/file",
                 "id",
-                new Func<Movie, Movie>(m => m));
+                new Func<Movie, Movie>(m => m),
+                new Func<Movie>(() => new Movie()));
 
             var store = Substitute.For<IDataStore>();
             store.GetCollection<Movie>().Returns(innerCollection);
@@ -140,7 +141,8 @@ namespace JsonFlatFileDataStore.Test
                 new Lazy<List<Movie>>(() => new List<Movie> { new Movie { Name = "Commando" } }),
                 @"/path/to/file",
                 "id",
-                new Func<Movie, Movie>(m => m));
+                new Func<Movie, Movie>(m => m),
+                new Func<Movie>(() => new Movie()));
 
             var store = Substitute.For<IDataStore>();
             store.GetCollection<Movie>().Returns(innerCollection);

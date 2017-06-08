@@ -61,16 +61,18 @@ namespace JsonFlatFileDataStore
         /// </summary>
         /// <param name="filter"></param>
         /// <param name="item"></param>
+        /// <param name="upsert"></param>
         /// <returns>true if items found for replacement</returns>
-        bool ReplaceOne(Predicate<T> filter, T item);
+        bool ReplaceOne(Predicate<T> filter, T item, bool upsert = false);
 
         /// <summary>
         /// Replace the first item that matches the filter
         /// </summary>
         /// <param name="filter"></param>
         /// <param name="item"></param>
+        /// <param name="upsert"></param>
         /// <returns>true if items found for replacement</returns>
-        Task<bool> ReplaceOneAsync(Predicate<T> filter, T item);
+        Task<bool> ReplaceOneAsync(Predicate<T> filter, T item, bool upsert = false);
 
         /// <summary>
         /// Replace all items that match the filter

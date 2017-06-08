@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace JsonFlatFileDataStore.Test
 {
-    internal class User
+    public class User
     {
         public int Id { get; set; }
 
@@ -16,7 +16,7 @@ namespace JsonFlatFileDataStore.Test
         public WorkPlace Work { get; set; }
     }
 
-    internal class WorkPlace
+    public class WorkPlace
     {
         public string Name { get; set; }
 
@@ -28,7 +28,7 @@ namespace JsonFlatFileDataStore.Test
         public string Name { get; set; }
     }
 
-    internal class PrivateOwner
+    public class PrivateOwner
     {
         public string FirstName { get; set; }
 
@@ -41,7 +41,7 @@ namespace JsonFlatFileDataStore.Test
         public Dictionary<int, int> MyIntegers { get; set; }
     }
 
-    internal class Family
+    public class Family
     {
         public int Id { get; set; }
 
@@ -58,7 +58,7 @@ namespace JsonFlatFileDataStore.Test
         public string Notes { get; set; }
     }
 
-    internal class Parent
+    public class Parent
     {
         public int Id { get; set; }
 
@@ -83,14 +83,14 @@ namespace JsonFlatFileDataStore.Test
         Female
     }
 
-    internal class Work
+    public class Work
     {
         public string CompanyName { get; set; }
 
         public string Address { get; set; }
     }
 
-    internal class Child
+    public class Child
     {
         public string Name { get; set; }
 
@@ -101,14 +101,14 @@ namespace JsonFlatFileDataStore.Test
         public List<Friend> Friends { get; set; }
     }
 
-    internal class Friend
+    public class Friend
     {
         public string Name { get; set; }
 
         public int Age { get; set; }
     }
 
-    internal class Address
+    public class Address
     {
         public string Street { get; set; }
 
@@ -121,14 +121,14 @@ namespace JsonFlatFileDataStore.Test
         public Country Country { get; set; }
     }
 
-    internal class Country
+    public class Country
     {
         public string Name { get; set; }
 
         public int Code { get; set; }
     }
 
-    internal class BankAccount
+    public class BankAccount
     {
         public DateTime Opened { get; set; }
 

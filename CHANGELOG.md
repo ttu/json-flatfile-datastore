@@ -1,7 +1,7 @@
-## Changelog
+# Changelog
 
 ### [Unreleased]
-*
+* Upsert option for IDocumentCollection ReplaceOne-methods
 
 ### [1.5.2] - 2017-05-27
 * Fix for Update when object has null values

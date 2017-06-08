@@ -1,11 +1,9 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 
 namespace JsonFlatFileDataStore
@@ -17,14 +15,16 @@ namespace JsonFlatFileDataStore
         private readonly Lazy<List<T>> _data;
         private readonly Func<string, Func<List<T>, bool>, bool, Task<bool>> _commit;
         private readonly Func<T, T> _insertConvert;
+        private readonly Func<T> _createNewInstance;
 
-        public DocumentCollection(Func<string, Func<List<T>, bool>, bool, Task<bool>> commit, Lazy<List<T>> data, string path, string idField, Func<T, T> insertConvert)
+        public DocumentCollection(Func<string, Func<List<T>, bool>, bool, Task<bool>> commit, Lazy<List<T>> data, string path, string idField, Func<T, T> insertConvert, Func<T> createNewInstance)
         {
             _path = path;
             _idField = idField;
             _commit = commit;
             _data = data;
             _insertConvert = insertConvert;
+            _createNewInstance = createNewInstance;
         }
 
         public int Count => _data.Value.Count;
@@ -150,14 +150,22 @@ namespace JsonFlatFileDataStore
             return await _commit(_path, updateAction, true).ConfigureAwait(false);
         }
 
-        public bool ReplaceOne(Predicate<T> filter, T item)
+        public bool ReplaceOne(Predicate<T> filter, T item, bool upsert = false)
         {
             var updateAction = new Func<List<T>, bool>(data =>
             {
                 var matches = data.Where(e => filter(e));
 
                 if (!matches.Any())
-                    return false;
+                {
+                    if (!upsert)
+                        return false;
+
+                    var newItem = _createNewInstance();
+                    ObjectExtensions.CopyProperties(item, newItem);
+                    data.Add(_insertConvert(newItem));
+                    return true;
+                }
 
                 var index = data.IndexOf(matches.First());
                 data[index] = item;
@@ -195,14 +203,22 @@ namespace JsonFlatFileDataStore
             return _commit(_path, updateAction, false).Result;
         }
 
-        public async Task<bool> ReplaceOneAsync(Predicate<T> filter, T item)
+        public async Task<bool> ReplaceOneAsync(Predicate<T> filter, T item, bool upsert = false)
         {
             var updateAction = new Func<List<T>, bool>(data =>
             {
                 var matches = data.Where(e => filter(e));
 
                 if (!matches.Any())
-                    return false;
+                {
+                    if (!upsert)
+                        return false;
+
+                    var newItem = _createNewInstance();
+                    ObjectExtensions.CopyProperties(item, newItem);
+                    data.Add(_insertConvert(newItem));
+                    return true;
+                }
 
                 var index = data.IndexOf(matches.First());
                 data[index] = item;
