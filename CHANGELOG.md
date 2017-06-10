@@ -1,6 +1,9 @@
 # Changelog
 
 ### [Unreleased]
+* 
+
+### [1.6.0] - 2017-06-10
 * Upsert option for IDocumentCollection ReplaceOne-methods
 
 ### [1.5.2] - 2017-05-27
