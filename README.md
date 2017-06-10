@@ -118,7 +118,7 @@ Example user collection in JSON:
 
 Collection can be queried with LINQ by getting queryable from the collection with `AsQueryable` method.
 
-NOTE: `AsQueryable` will return __IEnumerable__, insted of IQueryable, because IQueryable doesn't support Dynamic types in LINQ queries. With this datastore it won't matter as all data is already loaded into memory.
+NOTE: `AsQueryable` returns __IEnumerable__, instead of IQueryable, because IQueryable doesn't support Dynamic types in LINQ queries. With this datastore it won't matter as all data is already loaded into memory.
 
 `AsQueryable` LINQ query with dynamic data:
 
@@ -149,7 +149,7 @@ var userTyped = collection
 
 #### Insert
 
-`InsertOne` and `InsertOneAsync` will insert a new item to the collection. Method returns true if insert was succesful.
+`InsertOne` and `InsertOneAsync` will insert a new item to the collection. Method returns true if insert was successful.
 
 ```csharp
 // Asynchronous method and dynamic data
@@ -296,7 +296,7 @@ await collection.UpdateOneAsync(e => e.Id == 12, patchExpando);
 
 ##### Limitations
 
-__Dictionaries__ won't work when serializing JSON or data to __ExpandoObjects__. This is becauses dictionaries and objects are similiar when serialized to JSON, so serialization creates an __ExpandoObject__ from __Dictionary__. Update's are mainly meant to be used with `HTTP PATCH`, so normally `Replace` is easier and better way to update data. 
+__Dictionaries__ won't work when serializing JSON or data to __ExpandoObjects__. This is becauses dictionaries and objects are similar when serialized to JSON, so serialization creates an __ExpandoObject__ from __Dictionary__. Update's are mainly meant to be used with `HTTP PATCH`, so normally `Replace` is easier and better way to update data. 
 
 If the update __ExpandoObject__ is created manually then Dictionaries content can be updated. Unlike List, Dictionary's whole content is replaced with the update data's content.
 
@@ -369,7 +369,7 @@ When datastore is created, it reads the JSON file to the memory.
 
 When collection is created it has a lazy reference to the data and it will serialize the data when it is needed for the first time.
 
-All write operations in collections are executed immediately internally and then the same operation is queued on DataStore's BlockingCollection. Operations are executed on backgound thread to DataStore's internal collection and saved to file. DataStore's internal collection is also updated during the save operation. NOTE: Already initialiezd collections may still have old data.
+All write operations in collections are executed immediately internally and then the same operation is queued on DataStore's BlockingCollection. Operations are executed on background thread to DataStore's internal collection and saved to file. DataStore's internal collection is also updated during the save operation. NOTE: Already initialized collections may still have old data.
 
 ```csharp
 // Data is loaded from the file
@@ -383,7 +383,7 @@ var collection2nd = store.GetCollection("hello");
 collection1st.InsertOne(new { id = "hello" });
 
 // Data is loaded from the store to the collection and new item is inserted
-// This collection will also have item with id: hello as data is serialied when it is used for the first time 
+// This collection will also have item with id: hello as data is serialized when it is used for the first time 
 collection2nd.InsertOne(new { id = "hello2" });
 
 // collection1st won't have item with id hello2
@@ -432,7 +432,7 @@ var collection = store.GetCollection<Movie>("movies");
 
 ### Writing to file
 
-By default JSON is written in lower camel case. This can be changed with useLowerCamelCase parameter in DataStore's constructor.
+By default JSON is written in lower camel case. This can be changed with `useLowerCamelCase` parameter in DataStore's constructor.
 
 ```csharp
 // This will write JSON in lower camel case
@@ -468,7 +468,7 @@ collection2.ReplaceOne((Predicate<dynamic>)(e => e.id == 11), dynamicUser);
 
 ### API
 
-API is heavily infulenced by MongoDB's C# API, so switching to the MongoDB or [DocumentDB](https://docs.microsoft.com/en-us/azure/documentdb/documentdb-protocol-mongodb) might be easy. Methods are named same way, but some parameters do not match and types are not interchangable.
+API is heavily influenced by MongoDB's C# API, so switching to the MongoDB or [DocumentDB](https://docs.microsoft.com/en-us/azure/documentdb/documentdb-protocol-mongodb) might be easy. Methods are named same way, but some parameters do not match and types are not interchangeable.
 
 * [MongoDB-C#-linq](http://mongodb.github.io/mongo-csharp-driver/2.4/reference/driver/crud/linq/#queryable)
 * [MongoDB-C#-crud](http://mongodb.github.io/mongo-csharp-driver/2.4/reference/driver/crud/writing/)

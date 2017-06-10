@@ -164,10 +164,11 @@ namespace JsonFlatFileDataStore.Test
         [Fact]
         public void CopyProperties_TypedArrayValueTypes()
         {
-            var item = new PrivateOwner();
-            item.FirstName = "Theodor";
-            item.MyValues = new List<int> { 1, 2, 3 };
-
+            var item = new PrivateOwner
+            {
+                FirstName = "Theodor",
+                MyValues = new List<int> { 1, 2, 3 }
+            };
             ObjectExtensions.CopyProperties(new { MyValues = new List<int> { 4, 5, 6, 7 } }, item);
             Assert.Equal(4, item.MyValues[0]);
             Assert.Equal(7, item.MyValues[3]);
@@ -250,11 +251,12 @@ namespace JsonFlatFileDataStore.Test
             user.age = 30;
             user.work = work;
 
-            var patchData = new Dictionary<string, object>();
-            patchData.Add("age", 41);
-            patchData.Add("name", "James");
-            patchData.Add("work", new Dictionary<string, object> { { "name", "ACME" } });
-
+            var patchData = new Dictionary<string, object>
+            {
+                { "age", 41 },
+                { "name", "James" },
+                { "work", new Dictionary<string, object> { { "name", "ACME" } } }
+            };
             var jobject = JObject.FromObject(patchData);
             dynamic patchExpando = JsonConvert.DeserializeObject<ExpandoObject>(jobject.ToString());
 
@@ -273,11 +275,12 @@ namespace JsonFlatFileDataStore.Test
                 Work = new WorkPlace { Name = "EMACS" }
             };
 
-            var patchData = new Dictionary<string, object>();
-            patchData.Add("Age", 41);
-            patchData.Add("Name", "James");
-            patchData.Add("Work", new Dictionary<string, object> { { "Name", "ACME" } });
-
+            var patchData = new Dictionary<string, object>
+            {
+                { "Age", 41 },
+                { "Name", "James" },
+                { "Work", new Dictionary<string, object> { { "Name", "ACME" } } }
+            };
             var jobject = JObject.FromObject(patchData);
             dynamic patchExpando = JsonConvert.DeserializeObject<ExpandoObject>(jobject.ToString());
 

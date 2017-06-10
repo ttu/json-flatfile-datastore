@@ -704,11 +704,12 @@ namespace JsonFlatFileDataStore.Test
 
             collection.InsertOne(user);
 
-            var patchData = new Dictionary<string, object>();
-            patchData.Add("Age", 41);
-            patchData.Add("Name", "James");
-            patchData.Add("Work", new Dictionary<string, object> { { "Name", "ACME" } });
-
+            var patchData = new Dictionary<string, object>
+            {
+                { "Age", 41 },
+                { "Name", "James" },
+                { "Work", new Dictionary<string, object> { { "Name", "ACME" } } }
+            };
             var jobject = JObject.FromObject(patchData);
             dynamic patchExpando = JsonConvert.DeserializeObject<ExpandoObject>(jobject.ToString());
 

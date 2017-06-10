@@ -5,7 +5,7 @@ namespace JsonFlatFileDataStore
     public interface IDataStore
     {
         /// <summary>
-        /// Is backgound thread executing writes from queue
+        /// Has background thread has actions to update in the queue
         /// </summary>
         bool IsUpdating { get; }
 

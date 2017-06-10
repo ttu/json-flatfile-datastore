@@ -16,13 +16,13 @@ namespace JsonFlatFileDataStore
 {
     public class DataStore : IDataStore
     {
-        private const int COMMIT_BATCH_MAX_SIZE = 50;
+        private const int CommitBatchMaxSize = 50;
 
         private readonly string _filePath;
         private readonly string _keyProperty;
         private readonly bool _reloadBeforeGetCollection;
         private readonly Func<JObject, string> _toJsonFunc;
-        private readonly Func<string, string> _pathToCamelCase;
+        private readonly Func<string, string> _convertPathToCorrectCamelCase;
         private readonly BlockingCollection<CommitAction> _updates = new BlockingCollection<CommitAction>();
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly ExpandoObjectConverter _converter = new ExpandoObjectConverter();
@@ -44,7 +44,7 @@ namespace JsonFlatFileDataStore
                         })
                         : new Func<JObject, string>(s => s.ToString());
 
-            _pathToCamelCase = useLowerCamelCase
+            _convertPathToCorrectCamelCase = useLowerCamelCase
                                 ? new Func<string, string>(s => string.Concat(s.Select((x, i) => i == 0 ? char.ToLower(x).ToString() : x.ToString())))
                                 : new Func<string, string>(s => s);
 
@@ -71,7 +71,7 @@ namespace JsonFlatFileDataStore
                     var updateAction = _updates.Take(token);
                     batch.Enqueue(updateAction);
 
-                    while (_updates.Count > 0 && batch.Count < COMMIT_BATCH_MAX_SIZE)
+                    while (_updates.Count > 0 && batch.Count < CommitBatchMaxSize)
                     {
                         batch.Enqueue(_updates.Take(token));
                     }
@@ -139,7 +139,7 @@ namespace JsonFlatFileDataStore
             var insertConvert = new Func<T, T>(e => e);
             var createNewInstance = new Func<T>(() => Activator.CreateInstance<T>());
 
-            return GetCollection(name ?? _pathToCamelCase(typeof(T).Name), readConvert, insertConvert, createNewInstance);
+            return GetCollection(name ?? _convertPathToCorrectCamelCase(typeof(T).Name), readConvert, insertConvert, createNewInstance);
         }
 
         public IDocumentCollection<dynamic> GetCollection(string name)
@@ -151,7 +151,7 @@ namespace JsonFlatFileDataStore
 
             return GetCollection(name, readConvert, insertConvert, createNewInstance);
         }
-        
+
         public IEnumerable<string> ListCollections()
         {
             lock (_jsonData)
@@ -198,10 +198,10 @@ namespace JsonFlatFileDataStore
                 var updatedJson = string.Empty;
 
                 var selectedData = currentJson[dataPath]?
-                                       .Children()
-                                       .Select(e => readConvert(e))
-                                       .ToList()
-                                       ?? new List<T>();
+                                        .Children()
+                                        .Select(e => readConvert(e))
+                                        .ToList()
+                                        ?? new List<T>();
 
                 var success = commitOperation(selectedData);
 

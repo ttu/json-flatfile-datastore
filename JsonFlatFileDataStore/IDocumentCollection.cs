@@ -32,28 +32,28 @@ namespace JsonFlatFileDataStore
         /// Insert a single item
         /// </summary>
         /// <param name="item"></param>
-        /// <returns>true if operation succesful</returns>
+        /// <returns>true if operation successful</returns>
         bool InsertOne(T item);
 
         /// <summary>
         /// Insert a single item
         /// </summary>
         /// <param name="item"></param>
-        /// <returns>true if operation succesful</returns>
+        /// <returns>true if operation successful</returns>
         Task<bool> InsertOneAsync(T item);
 
         /// <summary>
         /// Insert items
         /// </summary>
         /// <param name="items"></param>
-        /// <returns>true if operation succesful</returns>
+        /// <returns>true if operation successful</returns>
         bool InsertMany(IEnumerable<T> items);
 
         /// <summary>
         /// Insert a single item
         /// </summary>
         /// <param name="items"></param>
-        /// <returns>true if operation succesful</returns>
+        /// <returns>true if operation successful</returns>
         Task<bool> InsertManyAsync(IEnumerable<T> items);
 
         /// <summary>

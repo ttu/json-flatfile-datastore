@@ -80,6 +80,7 @@ public static class ObjectExtensions
                 var sourceDict = (IDictionary)GetValue(source, srcProp);
 
                 targetDict.Clear();
+
                 foreach (var item in sourceDict)
                 {
                     var kvp = (DictionaryEntry)item;
@@ -137,6 +138,7 @@ public static class ObjectExtensions
                     targetProperty.SetValue(destination, sourcePropertyValue);
                 else
                     CopyProperties(sourcePropertyValue, target);
+
                 continue;
             }
 
@@ -169,6 +171,7 @@ public static class ObjectExtensions
                 var sourceDict = (IDictionary)GetValue(source, srcProp);
 
                 targetDict.Clear();
+
                 foreach (var item in sourceDict)
                 {
                     var kvp = (DictionaryEntry)item;
