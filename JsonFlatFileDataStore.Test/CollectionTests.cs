@@ -485,6 +485,21 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
+        public void ReplaceOne_Upsert_DynamicWithInnerData()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection("sensor");
+
+            var success = collection.ReplaceOne(e => e.id == 11, JToken.Parse("{ 'id': 11, 'mac': 'F4:A5:74:89:16:57', 'data': { 'temperature': 20.5 } }"), true);
+            Assert.True(success);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
         public void ReplaceMany_TypedUser()
         {
             var newFilePath = UTHelpers.Up();

@@ -161,13 +161,22 @@ public static class ObjectExtensions
         {
             if (srcProp.PropertyType == typeof(ExpandoObject))
             {
-                var destinationValue = ((IDictionary<string, object>)destination)[srcProp.Name];
+                var destExpandoDict = ((IDictionary<string, object>)destination);
+
+                if (!destExpandoDict.ContainsKey(srcProp.Name))
+                    destExpandoDict.Add(srcProp.Name, Activator.CreateInstance(srcProp.PropertyType));
+
                 var sourceValue = GetValue(source, srcProp);
-                HandleExpando(sourceValue, destinationValue);
+                HandleExpando(sourceValue, destExpandoDict[srcProp.Name]);
             }
             else if (IsDictionary(srcProp.PropertyType))
             {
-                var targetDict = (IDictionary)((IDictionary<string, object>)destination)[srcProp.Name];
+                var destExpandoDict = ((IDictionary<string, object>)destination);
+
+                if (!destExpandoDict.ContainsKey(srcProp.Name))
+                    destExpandoDict.Add(srcProp.Name, Activator.CreateInstance(srcProp.PropertyType));
+
+                var targetDict = (IDictionary)destExpandoDict[srcProp.Name];
                 var sourceDict = (IDictionary)GetValue(source, srcProp);
 
                 targetDict.Clear();
@@ -182,11 +191,15 @@ public static class ObjectExtensions
             }
             else if (IsEnumerable(srcProp.PropertyType))
             {
-                var arrayType = srcProp.PropertyType.GetElementType();
+                var destExpandoDict = ((IDictionary<string, object>)destination);
 
+                if (!destExpandoDict.ContainsKey(srcProp.Name))
+                    destExpandoDict.Add(srcProp.Name, Activator.CreateInstance(srcProp.PropertyType));
+
+                var targetArray = (IList)destExpandoDict[srcProp.Name];
                 var sourceArray = (IList)GetValue(source, srcProp);
-                var targetArray = (IList)((IDictionary<string, object>)destination)[srcProp.Name];
 
+                var arrayType = srcProp.PropertyType.GetElementType();
                 var type = targetArray.GetType();
 
                 if (IsGenericListOrColletion(type))

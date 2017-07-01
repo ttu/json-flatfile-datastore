@@ -23,7 +23,7 @@ namespace JsonFlatFileDataStore.Test
         [Fact]
         public void CopyProperties_NullDestination()
         {
-            var source = new User() { Id = 2, Name = "Tim", Work = new WorkPlace {  Name = "ACME" } };
+            var source = new User() { Id = 2, Name = "Tim", Work = new WorkPlace { Name = "ACME" } };
             var destination = new User() { Id = 2 };
 
             ObjectExtensions.CopyProperties(source, destination);
@@ -263,6 +263,35 @@ namespace JsonFlatFileDataStore.Test
             ObjectExtensions.CopyProperties(patchExpando, user);
             Assert.Equal("James", user.name);
             Assert.Equal("ACME", user.work.name);
+        }
+
+        [Fact]
+        public void CopyProperties_DynamicEmptyWithInnerExpandos()
+        {
+            var destination = new ExpandoObject();
+
+            dynamic data = new ExpandoObject();
+            data.temperature = 20.5;
+
+            dynamic sensor = new ExpandoObject();
+            sensor.mac = "F4:A5:74:89:16:57";
+            sensor.data = data;
+
+            ObjectExtensions.CopyProperties(sensor, destination);
+        }
+
+        [Fact]
+        public void CopyProperties_DynamicEmptyWithInnerDictionary()
+        {
+            var destination = new ExpandoObject();
+
+            dynamic sensor = new ExpandoObject();
+            sensor.mac = "F4:A5:74:89:16:57";
+            sensor.data = new Dictionary<string, object> {
+                { "temperature", 24.3 }
+            };
+
+            ObjectExtensions.CopyProperties(sensor, destination);
         }
 
         [Fact]

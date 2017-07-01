@@ -1,7 +1,7 @@
 # Changelog
 
 ### [Unreleased]
-* 
+* Fix for ReplaceOne Upsert when new item has inner Expandos or Dictionaries
 
 ### [1.6.0] - 2017-06-10
 * Upsert option for IDocumentCollection ReplaceOne-methods
