@@ -268,30 +268,42 @@ namespace JsonFlatFileDataStore.Test
         [Fact]
         public void CopyProperties_DynamicEmptyWithInnerExpandos()
         {
-            var destination = new ExpandoObject();
+            dynamic destination = new ExpandoObject();
 
             dynamic data = new ExpandoObject();
             data.temperature = 20.5;
+            data.identifier = null;
 
             dynamic sensor = new ExpandoObject();
             sensor.mac = "F4:A5:74:89:16:57";
+            sensor.timestamp = null;
             sensor.data = data;
 
             ObjectExtensions.CopyProperties(sensor, destination);
+
+            Assert.Equal(sensor.mac, destination.mac);
+            Assert.Equal(sensor.data.temperature, destination.data.temperature);
+            Assert.Equal(sensor.data.identifier, destination.data.identifier);
         }
 
         [Fact]
         public void CopyProperties_DynamicEmptyWithInnerDictionary()
         {
-            var destination = new ExpandoObject();
+            dynamic destination = new ExpandoObject();
 
             dynamic sensor = new ExpandoObject();
             sensor.mac = "F4:A5:74:89:16:57";
+            sensor.timestamp = null;
             sensor.data = new Dictionary<string, object> {
-                { "temperature", 24.3 }
+                { "temperature", 24.3 },
+                { "identifier", null }
             };
 
             ObjectExtensions.CopyProperties(sensor, destination);
+
+            Assert.Equal(sensor.mac, destination.mac);
+            Assert.Equal(sensor.data["temperature"], destination.data["temperature"]);
+            Assert.Equal(sensor.data["identifier"], destination.data["identifier"]);
         }
 
         [Fact]

@@ -261,7 +261,7 @@ public static class ObjectExtensions
         if (source.GetType() == typeof(ExpandoObject))
         {
             return ((IDictionary<string, object>)source)
-                .Select(i => new { Name = i.Key, Value = i.Value, PropertyType = i.Value.GetType() })
+                .Select(i => new { Name = i.Key, Value = i.Value, PropertyType = i.Value?.GetType() })
                 .ToList();
         }
         else
