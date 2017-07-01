@@ -1,6 +1,9 @@
 # Changelog
 
 ### [Unreleased]
+*
+
+### [1.6.2] - 2017-07-01
 * Fix for ReplaceOne Upsert with dynamic items and null values
 
 ### [1.6.1] - 2017-07-01
