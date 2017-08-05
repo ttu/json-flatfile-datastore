@@ -57,6 +57,48 @@ public static class ObjectExtensions
         }
     }
 
+    public static bool FullTextSearch(dynamic source, string text, bool caseSensitive = false)
+    {
+        var compareFunc = caseSensitive
+                       ? new Func<string, string, bool>((a, b) => a.IndexOf(b, StringComparison.Ordinal) >= 0)
+                       : new Func<string, string, bool>((a, b) => a.IndexOf(b, StringComparison.OrdinalIgnoreCase) >= 0);
+
+        bool AnyPropertyHasValue(dynamic current)
+        {
+            if (current == null)
+                return false;
+
+            if (IsValueReferenceType(current.GetType()))
+            {
+                foreach (var srcProp in GetProperties(current))
+                {
+                    if (IsEnumerable(srcProp.PropertyType) && srcProp.PropertyType != typeof(ExpandoObject))
+                    {
+                        foreach (var i in GetValue(current, srcProp) as IEnumerable)
+                        {
+                            if (AnyPropertyHasValue(i))
+                                return true;
+                        }
+                    }
+                    else
+                    {
+                        if (AnyPropertyHasValue(GetValue(current, srcProp)))
+                            return true;
+                    }
+                }
+            }
+            else
+            { 
+                if (compareFunc(current.ToString(), text))
+                    return true;
+            }
+
+            return false;
+        }
+
+        return AnyPropertyHasValue(source);
+    }
+
     private static void HandleTyped(object source, object destination)
     {
         foreach (var srcProp in GetProperties(source))
@@ -129,7 +171,7 @@ public static class ObjectExtensions
             if (!targetProperty.CanWrite)
                 continue;
 
-            if (IsReferenceType(srcProp) && IsReferenceType(targetProperty))
+            if (IsPropertyReferenceType(srcProp) && IsPropertyReferenceType(targetProperty))
             {
                 var target = targetProperty.GetValue(destination, null);
                 var sourcePropertyValue = GetValue(source, srcProp);
@@ -244,9 +286,14 @@ public static class ObjectExtensions
         }
     }
 
-    private static bool IsReferenceType(dynamic srcProp)
+    private static bool IsPropertyReferenceType(dynamic srcProp)
     {
         return srcProp.PropertyType.IsClass && srcProp.PropertyType != typeof(string);
+    }
+
+    private static bool IsValueReferenceType(dynamic type)
+    {
+        return !type.IsValueType && !type.IsPrimitive && type != typeof(string);
     }
 
     private static object GetValue(object source, dynamic srcProp)

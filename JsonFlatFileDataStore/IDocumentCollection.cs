@@ -23,6 +23,14 @@ namespace JsonFlatFileDataStore
         IEnumerable<T> Find(Predicate<T> query);
 
         /// <summary>
+        /// Full-text search
+        /// </summary>
+        /// <param name="text"></param>
+        /// <param name="caseSensitive"></param>
+        /// <returns></returns>
+        IEnumerable<T> Find(string text, bool caseSensitive = false);
+
+        /// <summary>
         /// Get next value for id field
         /// </summary>
         /// <returns></returns>

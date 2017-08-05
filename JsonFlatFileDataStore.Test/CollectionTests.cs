@@ -768,6 +768,7 @@ namespace JsonFlatFileDataStore.Test
             UTHelpers.Down(newFilePath);
         }
 
+        [Fact]
         public void ReloadAutiomatic()
         {
             var newFilePath = UTHelpers.Up();
@@ -788,6 +789,56 @@ namespace JsonFlatFileDataStore.Test
             var collection2_2 = store2.GetCollection("user");
             Assert.Equal(4, collection1_2.Count);
             Assert.Equal(4, collection2_2.Count);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public void FullTextSearch_Typed()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection<User>();
+            var matches = collection.Find("Box");
+            Assert.Equal(1, matches.Count());
+
+            var collection2 = store.GetCollection<Family>();
+
+            var matches2 = collection2.Find("Hillsboro");
+            Assert.Equal(5, matches2.Count());
+
+            var matches21 = collection2.Find("hillsboro", true);
+            Assert.Equal(0, matches21.Count());
+
+            var matches3 = collection2.Find("44").ToList();
+            Assert.Equal(9, matches3.Count());
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public void FullTextSearch_Dynamic()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection("user");
+            var matches = collection.Find("Box");
+            Assert.Equal(1, matches.Count());
+
+            var collection2 = store.GetCollection("family");
+
+            var matches2 = collection2.Find("Hillsboro");
+            Assert.Equal(5, matches2.Count());
+
+            var matches21 = collection2.Find("hillsboro", true);
+            Assert.Equal(0, matches21.Count());
+
+            var matches3 = collection2.Find("44");
+            Assert.Equal(9, matches3.Count());
 
             UTHelpers.Down(newFilePath);
         }

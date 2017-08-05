@@ -147,6 +147,23 @@ var userTyped = collection
                     .Single(p => p.Name == "Phil");
 ```
 
+#### Full-text search
+
+Full-text search can be performed with `Find` method. Full-text search does deep search on all child objects. By default the search is not case sensitive.
+
+```csharp
+var store = new DataStore(pathToJson);
+
+var collection = store.GetCollection("user");
+
+// Find all users that contain text Alabama in any of property values
+var matches = collection.Find("Alabama");
+
+// Perform case sensitive search
+var caseSensitiveMatches = collection.Find("Alabama", true);
+
+```
+
 #### Insert
 
 `InsertOne` and `InsertOneAsync` will insert a new item to the collection. Method returns true if insert was successful.
@@ -468,15 +485,14 @@ collection2.ReplaceOne((Predicate<dynamic>)(e => e.id == 11), dynamicUser);
 
 ### API
 
-API is heavily influenced by MongoDB's C# API, so switching to the MongoDB or [DocumentDB](https://docs.microsoft.com/en-us/azure/documentdb/documentdb-protocol-mongodb) might be easy. Methods are named same way, but some parameters do not match and types are not interchangeable.
-
+API is heavily influenced by MongoDB's C# API, so switching to the MongoDB or [DocumentDB](https://docs.microsoft.com/en-us/azure/documentdb/documentdb-protocol-mongodb) might be easy.
 * [MongoDB-C#-linq](http://mongodb.github.io/mongo-csharp-driver/2.4/reference/driver/crud/linq/#queryable)
 * [MongoDB-C#-crud](http://mongodb.github.io/mongo-csharp-driver/2.4/reference/driver/crud/writing/)
-
-### License
-
-Licensed under the [MIT](LICENSE) License.
 
 ### Changelog
 
 [Changelog](CHANGELOG.md)
+
+### License
+
+Licensed under the [MIT](LICENSE) License.

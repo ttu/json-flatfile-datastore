@@ -1,7 +1,7 @@
 # Changelog
 
 ### [Unreleased]
-*
+* Full-text search
 
 ### [1.6.2] - 2017-07-01
 * Fix for ReplaceOne Upsert with dynamic items and null values

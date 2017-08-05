@@ -576,7 +576,7 @@
     },
     {
       "id": 7,
-      "familyName": "Pittman",
+      "familyName": "Hillsboro",
       "parents": [
         {
           "id": 0,
@@ -841,7 +841,7 @@
           "phone": "+1 (874) 481-2304",
           "work": {
             "companyName": "PROXSOFT",
-            "address": "452 Orange Street, Windsor, Mississippi, 3731"
+            "address": "452 Orange Street, Hillsboro, Mississippi, 3731"
           },
           "favouriteMovie": "Casablanca"
         }
@@ -1233,7 +1233,7 @@
       "address": {
         "postNumber": 937,
         "street": "Riverdale Avenue",
-        "city": "Munjor",
+        "city": "Hillsboro",
         "country": {
           "name": "Namibia",
           "code": 682
@@ -1447,7 +1447,7 @@
           "phone": "+1 (912) 545-2147",
           "work": {
             "companyName": "EYEWAX",
-            "address": "832 Vine Street, Finderne, Indiana, 2543"
+            "address": "832 Vine Street, Hillsboro, Indiana, 2543"
           },
           "favouriteMovie": "Casablanca"
         },

@@ -70,9 +70,9 @@ namespace JsonFlatFileDataStore.Test
 
         public string Email { get; set; }
 
-        public string PhoneNumber { get; set; }
+        public string Phone { get; set; }
 
-        public Work Workplace { get; set; }
+        public Work Work { get; set; }
 
         public string FavouriteMovie { get; set; }
     }

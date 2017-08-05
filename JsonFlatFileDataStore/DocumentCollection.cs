@@ -33,6 +33,8 @@ namespace JsonFlatFileDataStore
 
         public IEnumerable<T> Find(Predicate<T> query) => _data.Value.Where(t => query(t));
 
+        public IEnumerable<T> Find(string text, bool caseSensitive = false) => _data.Value.Where(t => ObjectExtensions.FullTextSearch(t, text, caseSensitive));
+
         private string ParseNextIntegertToKeyValue(string input)
         {
             int nextInt = 0;
