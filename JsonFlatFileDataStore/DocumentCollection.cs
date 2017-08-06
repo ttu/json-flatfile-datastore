@@ -35,48 +35,7 @@ namespace JsonFlatFileDataStore
 
         public IEnumerable<T> Find(string text, bool caseSensitive = false) => _data.Value.Where(t => ObjectExtensions.FullTextSearch(t, text, caseSensitive));
 
-        private string ParseNextIntegertToKeyValue(string input)
-        {
-            int nextInt = 0;
-
-            if (input == null)
-                return $"{nextInt}";
-
-            var chars = input.ToArray().Reverse().TakeWhile(char.IsNumber).Reverse().ToArray();
-
-            if (chars.Count() == 0)
-                return $"{input}{nextInt}";
-
-            input = input.Substring(0, input.Length - chars.Count());
-
-            if (int.TryParse(new string(chars), out nextInt))
-                nextInt += 1;
-
-            return $"{input}{nextInt}";
-        }
-
         public dynamic GetNextIdValue() => GetNextIdValue(_data.Value);
-
-        private dynamic GetNextIdValue(List<T> data)
-        {
-            if (!data.Any())
-                return 0;
-
-            var lastItem = data.Last();
-            var expando = JsonConvert.DeserializeObject<ExpandoObject>(JsonConvert.SerializeObject(lastItem), new ExpandoObjectConverter());
-            // Problem here is if we have typed data with upper camel case properties but lower camel case in JSON, so need to use OrdinalIgnoreCase string comparer
-            var expandoAsIgnoreCase = new Dictionary<string, dynamic>(expando, StringComparer.OrdinalIgnoreCase);
-
-            if (!expandoAsIgnoreCase.ContainsKey(_idField))
-                return null;
-
-            dynamic keyValue = expandoAsIgnoreCase[_idField];
-
-            if (keyValue is Int64)
-                return (int)keyValue + 1;
-
-            return ParseNextIntegertToKeyValue(keyValue.ToString());
-        }
 
         public bool InsertOne(T item)
         {
@@ -104,16 +63,6 @@ namespace JsonFlatFileDataStore
             insertOne(_data.Value);
 
             return await _commit(_path, insertOne, true).ConfigureAwait(false);
-        }
-
-        private void TryUpdateId(List<T> data, T item)
-        {
-            var insertId = GetNextIdValue(data);
-
-            if (insertId == null)
-                return;
-
-            ObjectExtensions.AddDataToField(item, _idField, insertId);
         }
 
         public bool InsertMany(IEnumerable<T> items)
@@ -408,6 +357,57 @@ namespace JsonFlatFileDataStore
                 return false;
 
             return await _commit(_path, updateAction, true).ConfigureAwait(false);
+        }
+
+        private dynamic GetNextIdValue(List<T> data)
+        {
+            if (!data.Any())
+                return 0;
+
+            var lastItem = data.Last();
+            var expando = JsonConvert.DeserializeObject<ExpandoObject>(JsonConvert.SerializeObject(lastItem), new ExpandoObjectConverter());
+            // Problem here is if we have typed data with upper camel case properties but lower camel case in JSON, so need to use OrdinalIgnoreCase string comparer
+            var expandoAsIgnoreCase = new Dictionary<string, dynamic>(expando, StringComparer.OrdinalIgnoreCase);
+
+            if (!expandoAsIgnoreCase.ContainsKey(_idField))
+                return null;
+
+            dynamic keyValue = expandoAsIgnoreCase[_idField];
+
+            if (keyValue is Int64)
+                return (int)keyValue + 1;
+
+            return ParseNextIntegertToKeyValue(keyValue.ToString());
+        }
+
+        private string ParseNextIntegertToKeyValue(string input)
+        {
+            int nextInt = 0;
+
+            if (input == null)
+                return $"{nextInt}";
+
+            var chars = input.ToArray().Reverse().TakeWhile(char.IsNumber).Reverse().ToArray();
+
+            if (chars.Count() == 0)
+                return $"{input}{nextInt}";
+
+            input = input.Substring(0, input.Length - chars.Count());
+
+            if (int.TryParse(new string(chars), out nextInt))
+                nextInt += 1;
+
+            return $"{input}{nextInt}";
+        }
+
+        private void TryUpdateId(List<T> data, T item)
+        {
+            var insertId = GetNextIdValue(data);
+
+            if (insertId == null)
+                return;
+
+            ObjectExtensions.AddDataToField(item, _idField, insertId);
         }
     }
 }
