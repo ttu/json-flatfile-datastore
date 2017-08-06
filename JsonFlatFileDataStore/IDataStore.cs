@@ -2,10 +2,13 @@
 
 namespace JsonFlatFileDataStore
 {
+    /// <summary>
+    /// JSON data store
+    /// </summary>
     public interface IDataStore
     {
         /// <summary>
-        /// Has background thread has actions to update in the queue
+        /// Has background thread update actions in the queue
         /// </summary>
         bool IsUpdating { get; }
 
