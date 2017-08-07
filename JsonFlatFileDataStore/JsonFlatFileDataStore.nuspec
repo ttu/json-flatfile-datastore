@@ -12,6 +12,6 @@
     <description>$description$</description>
     <releaseNotes>https://raw.githubusercontent.com/ttu/json-flatfile-datastore/master/CHANGELOG.md</releaseNotes>
     <copyright>Copyright 2017</copyright>
-    <tags>json flatfile datastore database linq</tags>
+    <tags>json flat file data store database linq</tags>
   </metadata>
 </package>

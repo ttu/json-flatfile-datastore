@@ -8,9 +8,9 @@
     <RepositoryUrl>https://github.com/ttu/json-flatfile-datastore</RepositoryUrl>
     <Version>1.6.2</Version>
     <Company />
-    <Description>Simple JSON flat file datastore</Description>
+    <Description>Simple JSON flat file data store</Description>
     <PackageLicenseUrl>https://raw.githubusercontent.com/ttu/json-flatfile-datastore/master/LICENSE</PackageLicenseUrl>
-    <PackageTags>json flatfile datastore database linq</PackageTags>
+    <PackageTags>json flat file data store database linq</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <FileVersion>1.6.2.0</FileVersion>
     <Product>JsonFlatFileDataStore</Product>

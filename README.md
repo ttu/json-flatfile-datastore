@@ -1,9 +1,9 @@
-JSON Flat File Datastore
+JSON Flat File Data Store
 ----------------------------------
 
 [![Build Status](https://travis-ci.org/ttu/json-flatfile-datastore.svg?branch=master)](https://travis-ci.org/ttu/json-flatfile-datastore) [![Build status](https://ci.appveyor.com/api/projects/status/adq9as6ruraln8tn?svg=true)](https://ci.appveyor.com/project/ttu/json-flatfile-datastore) [![NuGet](https://img.shields.io/nuget/v/JsonFlatFileDataStore.svg)](https://www.nuget.org/packages/JsonFlatFileDataStore/)
 
-Simple flat file JSON datastore.
+Simple flat file JSON data store.
 
 * Small API with basic functionality that is needed for handling data.
 * Works with dynamic and typed data.
@@ -17,7 +17,7 @@ Simple flat file JSON datastore.
 
 ##### Example project
 
-[Fake JSON Server](https://github.com/ttu/dotnet-fake-json-server) is a .NET Core Web API which uses JSON Flat File Datastore with dynamic data.
+[Fake JSON Server](https://github.com/ttu/dotnet-fake-json-server) is a .NET Core Web API which uses JSON Flat File Data Store with dynamic data.
 
 ## Example
 
@@ -118,7 +118,7 @@ Example user collection in JSON:
 
 Collection can be queried with LINQ by getting queryable from the collection with `AsQueryable` method.
 
-NOTE: `AsQueryable` returns __IEnumerable__, instead of IQueryable, because IQueryable doesn't support Dynamic types in LINQ queries. With this datastore it won't matter as all data is already loaded into memory.
+NOTE: `AsQueryable` returns __IEnumerable__, instead of IQueryable, because IQueryable doesn't support Dynamic types in LINQ queries. With this data store it won't matter as all data is already loaded into memory.
 
 `AsQueryable` LINQ query with dynamic data:
 
@@ -233,7 +233,7 @@ await collection.ReplaceOneAsync(e => e.Id == 3, new User { Id = 3, Name = "Barr
 collection.ReplaceMany(e => e.City == "NY", new { City = "New York" });
 ```
 
-`ReplaceOne` and `ReplaceOneAsync` have an upsert option. If item to replace doesn't exists in the datastore, item will be inserted. Upsert won't update id, so item will be inserted with id that it has.
+`ReplaceOne` and `ReplaceOneAsync` have an upsert option. If the item to replace doesn't exists in the data store, new item will be inserted. Upsert won't update id, so new item will be inserted with the id that it has.
 
 ```csharp
 // New item will be inserted with id 11
@@ -382,7 +382,7 @@ var nextId = collection.GetNextIdValue();
 
 ## DataStore and Collection lifecycle
 
-When datastore is created, it reads the JSON file to the memory. 
+When data store is created, it reads the JSON file to the memory. 
 
 When collection is created it has a lazy reference to the data and it will serialize the data when it is needed for the first time.
 
@@ -431,7 +431,7 @@ var collection1_2 = store.GetCollection("hello");
 // collection1_1 will not have item with id: hello2 even after reload, because it was initialized before reload
 ```
 
-If JSON Flat File Datastore is used with e.g. Web API, add DataStore to the DI container as a singleton. This way DataStore's internal state is correct and application does not have to rely on the state on the file as read operation is pretty slow. Reload can be triggered if needed.
+If JSON Flat File Data Store is used with e.g. Web API, add DataStore to the DI container as a singleton. This way DataStore's internal state is correct and application does not have to rely on the state on the file as read operation is pretty slow. Reload can be triggered if needed.
 
 ### Collection naming
 
