@@ -15,7 +15,13 @@ Simple flat file JSON data store.
 * [.NET Standard 1.4](https://github.com/dotnet/standard/blob/master/docs/versions.md)
   * .NET Core 1.0 & .NET 4.6.1
 
-##### Example project
+## Installation
+
+You can install the latest version via [NuGet](https://www.nuget.org/packages/JsonFlatFileDataStore/).
+
+`PM> Install-Package JsonFlatFileDataStore`
+
+## Example project
 
 [Fake JSON Server](https://github.com/ttu/dotnet-fake-json-server) is a .NET Core Web API which uses JSON Flat File Data Store with dynamic data.
 
