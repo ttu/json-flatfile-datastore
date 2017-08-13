@@ -1,6 +1,9 @@
 # Changelog
 
 ### [Unreleased]
+*
+
+### [1.7.0] - 2017-08-13
 * Full-text search
 
 ### [1.6.2] - 2017-07-01
