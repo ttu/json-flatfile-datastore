@@ -3,7 +3,7 @@ JSON Flat File Data Store
 
 [![Build Status](https://travis-ci.org/ttu/json-flatfile-datastore.svg?branch=master)](https://travis-ci.org/ttu/json-flatfile-datastore) [![Build status](https://ci.appveyor.com/api/projects/status/adq9as6ruraln8tn?svg=true)](https://ci.appveyor.com/project/ttu/json-flatfile-datastore) [![NuGet](https://img.shields.io/nuget/v/JsonFlatFileDataStore.svg)](https://www.nuget.org/packages/JsonFlatFileDataStore/)
 
-Simple flat file JSON data store.
+Simple data store that saves the data in JSON format to a single file.
 
 * Small API with basic functionality that is needed for handling data.
 * Works with dynamic and typed data.
@@ -12,8 +12,8 @@ Simple flat file JSON data store.
   * Easy to initialize.
   * Easy to edit.
   * Perfect for small apps and prototyping.
-* [.NET Standard 1.4](https://github.com/dotnet/standard/blob/master/docs/versions.md)
-  * .NET Core 1.0 & .NET 4.6.1
+* [.NET Standard 1.4](https://github.com/dotnet/standard/blob/master/docs/versions/netstandard1.4.md)
+  * .NET Core 1.0 & .NET Framework 4.6.1
 
 ## Installation
 
@@ -40,7 +40,7 @@ public class Employee
 // Open database (create new if file doesn't exist)
 var store = new DataStore("data.json");
 
- // Get employee collection
+// Get employee collection
 var collection = store.GetCollection<Employee>();
 
 // Create new employee instance
@@ -388,11 +388,11 @@ var nextId = collection.GetNextIdValue();
 
 ## DataStore and Collection lifecycle
 
-When data store is created, it reads the JSON file to the memory. 
+When the data store is created, it reads the JSON file to the memory. 
 
-When collection is created it has a lazy reference to the data and it will serialize the data when it is needed for the first time.
+When the collection is created it has a lazy reference to the data and it will deserialize the JSON to objects when it is accessed for the first time.
 
-All write operations in collections are executed immediately internally and then the same operation is queued on DataStore's BlockingCollection. Operations are executed on background thread to DataStore's internal collection and saved to file. DataStore's internal collection is also updated during the save operation. NOTE: Already initialized collections may still have old data.
+All write operations in collections are executed immediately internally in the collection and then the same operation is queued on DataStore's BlockingCollection. Operations from the BlockingCollection are executed on background thread to DataStore's internal collection and saved to file. 
 
 ```csharp
 // Data is loaded from the file
@@ -437,7 +437,7 @@ var collection1_2 = store.GetCollection("hello");
 // collection1_1 will not have item with id: hello2 even after reload, because it was initialized before reload
 ```
 
-If JSON Flat File Data Store is used with e.g. Web API, add DataStore to the DI container as a singleton. This way DataStore's internal state is correct and application does not have to rely on the state on the file as read operation is pretty slow. Reload can be triggered if needed.
+If JSON Flat File Data Store is used with e.g. `ASP.NET Web API`, add the `DataStore` to the DI container as a singleton. This way DataStore's internal state is correct and application does not have to rely on the state on the file as read operation is pretty slow. Reload can be triggered if needed.
 
 ### Collection naming
 
@@ -498,6 +498,10 @@ API is heavily influenced by MongoDB's C# API, so switching to the MongoDB or [D
 ### Changelog
 
 [Changelog](CHANGELOG.md)
+
+### Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 ### License
 
