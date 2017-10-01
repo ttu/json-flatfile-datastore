@@ -1,17 +1,22 @@
 JSON Flat File Data Store
 ----------------------------------
 
-[![Build Status](https://travis-ci.org/ttu/json-flatfile-datastore.svg?branch=master)](https://travis-ci.org/ttu/json-flatfile-datastore) [![Build status](https://ci.appveyor.com/api/projects/status/adq9as6ruraln8tn?svg=true)](https://ci.appveyor.com/project/ttu/json-flatfile-datastore) [![NuGet](https://img.shields.io/nuget/v/JsonFlatFileDataStore.svg)](https://www.nuget.org/packages/JsonFlatFileDataStore/)
+[![NuGet](https://img.shields.io/nuget/v/JsonFlatFileDataStore.svg)](https://www.nuget.org/packages/JsonFlatFileDataStore/)
+
+| Build server| Platform       | Build status      |
+|-------------|----------------|-------------|
+| AppVeyor    | Windows        |[![Build Status](https://travis-ci.org/ttu/json-flatfile-datastore.svg?branch=master)](https://travis-ci.org/ttu/json-flatfile-datastore)|
+| Travis      | Linux / macOS  |[![Build status](https://ci.appveyor.com/api/projects/status/adq9as6ruraln8tn?svg=true)](https://ci.appveyor.com/project/ttu/json-flatfile-datastore)|
 
 Simple data store that saves the data in JSON format to a single file.
 
-* Small API with basic functionality that is needed for handling data.
-* Works with dynamic and typed data.
-* Synchronous and asynchronous methods.
-* Data is stored in a JSON file. 
-  * Easy to initialize.
-  * Easy to edit.
-  * Perfect for small apps and prototyping.
+* Small API with basic functionality that is needed for handling data
+* Works with dynamic and typed data
+* Synchronous and asynchronous methods
+* Data is stored in a JSON file
+  * Easy to initialize
+  * Easy to edit
+  * Perfect for small apps and prototyping
 * [.NET Standard 1.4](https://github.com/dotnet/standard/blob/master/docs/versions/netstandard1.4.md)
   * .NET Core 1.0 & .NET Framework 4.6.1
 
@@ -23,7 +28,7 @@ You can install the latest version via [NuGet](https://www.nuget.org/packages/Js
 
 ## Example project
 
-[Fake JSON Server](https://github.com/ttu/dotnet-fake-json-server) is a .NET Core Web API which uses JSON Flat File Data Store with dynamic data.
+[Fake JSON Server](https://github.com/ttu/dotnet-fake-json-server) is an ASP.NET Core Web App which uses JSON Flat File Data Store with dynamic data.
 
 ## Example
 
