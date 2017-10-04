@@ -24,7 +24,13 @@ Simple data store that saves the data in JSON format to a single file.
 
 You can install the latest version via [NuGet](https://www.nuget.org/packages/JsonFlatFileDataStore/).
 
-`PM> Install-Package JsonFlatFileDataStore`
+```sh
+# .NET Core CLI
+$ dotnet add package JsonFlatFileDataStore
+
+# Package Manager Console
+PM> Install-Package JsonFlatFileDataStore
+```
 
 ## Example project
 
