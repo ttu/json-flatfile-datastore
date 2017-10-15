@@ -166,6 +166,31 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
+        public void InsertOne_DynamicUser_AddLastModified()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath, addLastModified: true);
+
+            var collection = store.GetCollection("user");
+            Assert.Equal(3, collection.Count);
+
+            DateTime insertTime = DateTime.Now;
+
+            collection.InsertOne(new { id = 4, name = "Teddy" });
+            Assert.Equal(4, collection.Count);
+
+            var store2 = new DataStore(newFilePath);
+            var collection2 = store2.GetCollection("user");
+            var userWithLastModified = collection2.AsQueryable().Single(e => e.id == 4);
+
+            TimeSpan diff = DateTime.Parse(userWithLastModified._last_modified) - insertTime;
+            Assert.True(diff.TotalSeconds < 2);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
         public void InsertOne_TypedUser()
         {
             var newFilePath = UTHelpers.Up();
@@ -185,6 +210,30 @@ namespace JsonFlatFileDataStore.Test
 
             var collection3 = store2.GetCollection("user");
             Assert.Equal(4, collection3.Count);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public void InsertOne_TypedUser_AddLastModified()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath, addLastModified: true);
+            var collection = store.GetCollection<UserWithLastModified>("user");
+            Assert.Equal(3, collection.Count);
+
+            DateTime insertTime = DateTime.Now;
+
+            collection.InsertOne(new UserWithLastModified { Name = "Teddy" });
+            Assert.Equal(4, collection.Count);
+
+            var store2 = new DataStore(newFilePath);
+            var collection2 = store2.GetCollection<UserWithLastModified>("user");
+            var userWithLastModified = collection2.AsQueryable().Single(e => e.Id == 4);
+
+            TimeSpan diff = userWithLastModified._last_modified - insertTime;
+            Assert.True(diff.TotalSeconds < 2);
 
             UTHelpers.Down(newFilePath);
         }
@@ -370,7 +419,7 @@ namespace JsonFlatFileDataStore.Test
             var collection = store.GetCollection<User>();
             Assert.Equal(3, collection.Count);
 
-            var newUsers = new[] 
+            var newUsers = new[]
             {
                 new User { Id = 20, Name = "A1", Age = 55 },
                 new User { Id = 21, Name = "A2", Age = 55 },

@@ -16,6 +16,11 @@ namespace JsonFlatFileDataStore.Test
         public WorkPlace Work { get; set; }
     }
 
+    public class UserWithLastModified : User
+    {
+        public DateTime _last_modified { get; set; }
+    }
+
     public class WorkPlace
     {
         public string Name { get; set; }

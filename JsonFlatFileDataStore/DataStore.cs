@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Dynamic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,6 +22,7 @@ namespace JsonFlatFileDataStore
         private readonly string _filePath;
         private readonly string _keyProperty;
         private readonly bool _reloadBeforeGetCollection;
+        private readonly bool _addLastModified;
         private readonly Func<JObject, string> _toJsonFunc;
         private readonly Func<string, string> _convertPathToCorrectCamelCase;
         private readonly BlockingCollection<CommitAction> _updates = new BlockingCollection<CommitAction>();
@@ -30,7 +32,7 @@ namespace JsonFlatFileDataStore
 
         private JObject _jsonData;
 
-        public DataStore(string path, bool useLowerCamelCase = true, string keyProperty = null, bool reloadBeforeGetCollection = false)
+        public DataStore(string path, bool useLowerCamelCase = true, string keyProperty = null, bool reloadBeforeGetCollection = false, bool addLastModified = false)
         {
             _filePath = path;
 
@@ -52,6 +54,7 @@ namespace JsonFlatFileDataStore
             _keyProperty = keyProperty ?? (useLowerCamelCase ? "id" : "Id");
 
             _reloadBeforeGetCollection = reloadBeforeGetCollection;
+            _addLastModified = addLastModified;
 
             _jsonData = JObject.Parse(ReadJsonFromFile(path));
 
@@ -139,17 +142,44 @@ namespace JsonFlatFileDataStore
             var insertConvert = new Func<T, T>(e => e);
             var createNewInstance = new Func<T>(() => Activator.CreateInstance<T>());
 
-            return GetCollection(name ?? _convertPathToCorrectCamelCase(typeof(T).Name), readConvert, insertConvert, createNewInstance);
+            var insertConvertToUse = _addLastModified
+                                      ? new Func<T, T>(k =>
+                                      {
+                                          var item = insertConvert(k);
+                                          var prop = item.GetType().GetProperty("_last_modified");
+
+                                          if (prop?.PropertyType == typeof(DateTimeOffset))
+                                              prop.SetValue(item, DateTimeOffset.Now);
+                                          else if (prop?.PropertyType == typeof(DateTime))
+                                              prop.SetValue(item, DateTime.Now);
+                                          else if (prop?.PropertyType == typeof(string))
+                                              prop.SetValue(item, DateTimeOffset.Now.ToString());
+
+                                          return item;
+                                      })
+                                      : insertConvert;
+
+            return GetCollection(name ?? _convertPathToCorrectCamelCase(typeof(T).Name), readConvert, insertConvertToUse, createNewInstance);
         }
 
         public IDocumentCollection<dynamic> GetCollection(string name)
         {
-            // As we don't want to return JObjects when using dynamic, JObjects will be converted to ExpandoObjects
+            // As we don't want to return JObjects when using dynamic, JObjects need to be converted to ExpandoObjects
             var readConvert = new Func<JToken, dynamic>(e => JsonConvert.DeserializeObject<ExpandoObject>(e.ToString(), _converter) as dynamic);
             var insertConvert = new Func<dynamic, dynamic>(e => JsonConvert.DeserializeObject<ExpandoObject>(JsonConvert.SerializeObject(e), _converter));
+
+            var insertConvertToUse = _addLastModified
+                                        ? new Func<dynamic, dynamic>(k =>
+                                            {
+                                                var item = insertConvert(k);
+                                                item._last_modified = DateTimeOffset.Now.ToString();
+                                                return item;
+                                            })
+                                        : insertConvert;
+
             var createNewInstance = new Func<dynamic>(() => new ExpandoObject());
 
-            return GetCollection(name, readConvert, insertConvert, createNewInstance);
+            return GetCollection(name, readConvert, insertConvertToUse, createNewInstance);
         }
 
         public IEnumerable<string> ListCollections()
