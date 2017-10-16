@@ -307,7 +307,7 @@ namespace JsonFlatFileDataStore.Test
             var store3 = new DataStore(newFilePath);
             var collection3 = store3.GetCollection("user");
             var updated2 = collection3.Find(e => e.age == 98);
-            Assert.Equal(0, updated2.Count());
+            Assert.Empty(updated2);
 
             UTHelpers.Down(newFilePath);
         }
@@ -355,7 +355,7 @@ namespace JsonFlatFileDataStore.Test
             var store3 = new DataStore(newFilePath);
             var collection3 = store3.GetCollection("user");
             var updated2 = collection3.Find(e => e.age == 98);
-            Assert.Equal(0, updated2.Count());
+            Assert.Empty(updated2);
 
             UTHelpers.Down(newFilePath);
         }
@@ -394,7 +394,7 @@ namespace JsonFlatFileDataStore.Test
             var store3 = new DataStore(newFilePath);
             var collection3 = store3.GetCollection<User>();
             var updated2 = collection3.Find(e => e.Age == 98);
-            Assert.Equal(0, updated2.Count());
+            Assert.Empty(updated2);
 
             UTHelpers.Down(newFilePath);
         }
@@ -802,7 +802,7 @@ namespace JsonFlatFileDataStore.Test
 
             var collection = store.GetCollection<User>();
             var matches = collection.Find("Box");
-            Assert.Equal(1, matches.Count());
+            Assert.Single(matches);
 
             var collection2 = store.GetCollection<Family>();
 
@@ -810,7 +810,7 @@ namespace JsonFlatFileDataStore.Test
             Assert.Equal(5, matches2.Count());
 
             var matches21 = collection2.Find("hillsboro", true);
-            Assert.Equal(0, matches21.Count());
+            Assert.Empty(matches21);
 
             var matches3 = collection2.Find("44").ToList();
             Assert.Equal(9, matches3.Count());
@@ -827,7 +827,7 @@ namespace JsonFlatFileDataStore.Test
 
             var collection = store.GetCollection("user");
             var matches = collection.Find("Box");
-            Assert.Equal(1, matches.Count());
+            Assert.Single(matches);
 
             var collection2 = store.GetCollection("family");
 
@@ -835,7 +835,7 @@ namespace JsonFlatFileDataStore.Test
             Assert.Equal(5, matches2.Count());
 
             var matches21 = collection2.Find("hillsboro", true);
-            Assert.Equal(0, matches21.Count());
+            Assert.Empty(matches21);
 
             var matches3 = collection2.Find("44");
             Assert.Equal(9, matches3.Count());

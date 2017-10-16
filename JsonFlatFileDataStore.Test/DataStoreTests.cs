@@ -59,8 +59,8 @@ namespace JsonFlatFileDataStore.Test
 
             var json = File.ReadAllText(newFilePath);
 
-            Assert.True(json.Contains("privateOwner"));
-            Assert.True(json.Contains("ownerLongTestProperty"));
+            Assert.Contains("privateOwner", json);
+            Assert.Contains("ownerLongTestProperty", json);
 
             var store2 = new DataStore(newFilePath);
 
@@ -91,7 +91,7 @@ namespace JsonFlatFileDataStore.Test
 
             var json = File.ReadAllText(newFilePath);
 
-            Assert.True(json.Contains("OwnerLongTestProperty"));
+            Assert.Contains("OwnerLongTestProperty", json);
 
             UTHelpers.Down(newFilePath);
         }
@@ -186,6 +186,7 @@ namespace JsonFlatFileDataStore.Test
             UTHelpers.Down(pathToJson);
         }
 
+        [Fact]
         public async Task Readme_Example2()
         {
             var pathToJson = UTHelpers.Up();
@@ -219,7 +220,7 @@ namespace JsonFlatFileDataStore.Test
             var items = employeeExpando as IDictionary<string, object>;
             items.Add("id", 3);
             items.Add("name", "Karl");
-            items.Add("age", 34);
+            items.Add("age", 29);
 
             // Insert new employee
             await collection.InsertOneAsync(employee);
@@ -232,18 +233,18 @@ namespace JsonFlatFileDataStore.Test
             await collection.UpdateOneAsync(e => e.id == employee.id, updateData);
 
             var updateJson = JObject.Parse("{ 'name': 'Raymond Doe' }");
-            await collection.UpdateOneAsync(e => e.id == 2, updateJson);
+            await collection.UpdateOneAsync(e => e.id == 1, updateJson);
 
             var updateDict = new Dictionary<string, object> { ["name"] = "Andy Doe" };
-            await collection.UpdateOneAsync(e => e.id == 3, updateDict);
+            await collection.UpdateOneAsync(e => e.id == 2, updateDict);
 
             // Use LINQ to query items
-            var results = collection.AsQueryable().Where(x => x.age > 30);
+            var results = collection.AsQueryable().Where(x => x.age < 40);
 
             Assert.True(results.Count() == 3);
-            Assert.NotNull(results.Single(e => e.name == "John Doe"));
             Assert.NotNull(results.Single(e => e.name == "Raymond Doe"));
             Assert.NotNull(results.Single(e => e.name == "Andy Doe"));
+            Assert.NotNull(results.Single(e => e.name == "Karl"));
 
             UTHelpers.Down(pathToJson);
         }

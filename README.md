@@ -212,20 +212,20 @@ var newItems = new[]
 collection.InsertMany(newItems);
 ```
 
-Insert-methods will update inserted object's Id-field if it has field with that name and it is writable. If Id-field is missing from dynamic object, field is added with correct value.
+Insert-methods will update inserted object's Id-field if it has a field with that name and it is writable. If Id-field is missing from dynamic object, field is added with correct value.
 
-If Id-field is number, value is incremented by one. If Id-field is string incremented value is added to the end of the initial text.
+If the Id-field 's type is a number, value is incremented by one. If the type is a string, incremented value number is added to the end of the initial text.
 
 ```csharp
-// Lates id in collection is 5
+// Latest id in the collection is 5
 var user = JToken.Parse("{ 'id': 3, 'name': 'Raymond', 'age': 32, 'city': 'NY' }");
 await collection.InsertOneAsync(user);
-// After addition user["id"] == 6
+// After addition: user["id"] == 6
 
-// User data doesn't have id field
+// User data doesn't have an id field
 var userNoId = JToken.Parse("{ 'name': 'Raymond', 'age': 32, 'city': 'NY' }");
 await collection.InsertOneAsync(userNoId);
-// After addition userNoId["id"] == 7
+// After addition: userNoId["id"] == 7
 ```
 
 #### Replace
