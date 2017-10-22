@@ -212,20 +212,33 @@ var newItems = new[]
 collection.InsertMany(newItems);
 ```
 
-Insert-methods will update inserted object's Id-field if it has a field with that name and it is writable. If Id-field is missing from dynamic object, field is added with correct value.
+Insert-methods will update the inserted object's Id-field, if it has a field with that name and the field is writable. If the Id-field is missing from the dynamic object, a field is added with the correct value. If an anonymous type is used for insert, id will be added to the persisted object if the id-field is missing. If the id is present, then that value will be used.
+
+```csharp
+var newItems = new[]
+{
+    new { id = 14, name = "Raymond", age = 32, city = "NY" },
+    new { id = 68, name = "Ted", age = 43, city = "NY" },
+    new { name = "Bud", age = 43, city = "NY" }
+};
+
+// Last user will have id 69
+collection.InsertMany(newItems);
+// Item in newItems collection won't have id property as anonymous types are read only
+```
 
 If the Id-field 's type is a number, value is incremented by one. If the type is a string, incremented value number is added to the end of the initial text.
 
 ```csharp
-// Latest id in the collection is 5
-var user = JToken.Parse("{ 'id': 3, 'name': 'Raymond', 'age': 32, 'city': 'NY' }");
+// Latest id in the collection is hello5
+var user = JToken.Parse("{ 'id': 'wrongValue', 'name': 'Raymond', 'age': 32, 'city': 'NY' }");
 await collection.InsertOneAsync(user);
-// After addition: user["id"] == 6
+// After addition: user["id"] == "hello6"
 
 // User data doesn't have an id field
 var userNoId = JToken.Parse("{ 'name': 'Raymond', 'age': 32, 'city': 'NY' }");
 await collection.InsertOneAsync(userNoId);
-// After addition: userNoId["id"] == 7
+// After addition: userNoId["id"] == "hello7"
 ```
 
 #### Replace

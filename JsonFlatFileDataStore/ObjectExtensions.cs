@@ -57,6 +57,24 @@ public static class ObjectExtensions
         }
     }
 
+    public static bool IsAnonymousType(object o)
+    {
+        var name = o.GetType().Name;
+        return name.Length >= 3 &&
+               name[0] == '<' &&
+               name[1] == '>' &&
+               name.IndexOf("AnonymousType", StringComparison.Ordinal) > 0;
+    }
+
+    public static bool HasField<T>(T item, string idField)
+    {
+        var idProperty = item.GetType()
+                             .GetProperties()
+                             .FirstOrDefault(p => string.Equals(p.Name, idField, StringComparison.OrdinalIgnoreCase));
+
+        return idProperty != null;
+    }
+
     public static bool FullTextSearch(dynamic source, string text, bool caseSensitive = false)
     {
         var compareFunc = caseSensitive
@@ -88,7 +106,7 @@ public static class ObjectExtensions
                 }
             }
             else
-            { 
+            {
                 if (compareFunc(current.ToString(), text))
                     return true;
             }

@@ -41,8 +41,8 @@ namespace JsonFlatFileDataStore
         {
             var insertOne = new Func<List<T>, bool>(data =>
             {
-                TryUpdateId(data, item);
-                data.Add(_insertConvert(item));
+                var itemToInsert = GetItemToInsert(GetNextIdValue(data), item, _insertConvert);
+                data.Add(itemToInsert);
                 return true;
             });
 
@@ -55,8 +55,8 @@ namespace JsonFlatFileDataStore
         {
             var insertOne = new Func<List<T>, bool>(data =>
             {
-                TryUpdateId(data, item);
-                data.Add(_insertConvert(item));
+                var itemToInsert = GetItemToInsert(GetNextIdValue(data), item, _insertConvert);
+                data.Add(itemToInsert);
                 return true;
             });
 
@@ -71,8 +71,8 @@ namespace JsonFlatFileDataStore
             {
                 foreach (var item in items)
                 {
-                    TryUpdateId(data, item);
-                    data.Add(_insertConvert(item));
+                    var itemToInsert = GetItemToInsert(GetNextIdValue(data), item, _insertConvert);
+                    data.Add(itemToInsert);
                 }
 
                 return true;
@@ -89,8 +89,8 @@ namespace JsonFlatFileDataStore
             {
                 foreach (var item in items)
                 {
-                    TryUpdateId(data, item);
-                    data.Add(_insertConvert(item));
+                    var itemToInsert = GetItemToInsert(GetNextIdValue(data), item, _insertConvert);
+                    data.Add(itemToInsert);
                 }
 
                 return true;
@@ -400,14 +400,38 @@ namespace JsonFlatFileDataStore
             return $"{input}{nextInt}";
         }
 
-        private void TryUpdateId(List<T> data, T item)
+        private T GetItemToInsert(dynamic insertId, T item, Func<T, T> insertConvert)
+        {
+            if (insertId == null)
+                return insertConvert(item);
+
+            // If item to be inserted is an anonymous type and it is missing the id-field, then add new id-field
+            // If it has an id-field, then we trust that user know what value he wants to insert
+            if (ObjectExtensions.IsAnonymousType(item) && ObjectExtensions.HasField(item, _idField) == false)
+            {
+                var toReturn = insertConvert(item);
+                ObjectExtensions.AddDataToField(toReturn, _idField, insertId);
+                return toReturn;
+            }
+            else
+            {
+                ObjectExtensions.AddDataToField(item, _idField, insertId);
+                return insertConvert(item);
+            }
+        }
+
+        private T HandleIdUpdate(List<T> data, T item)
         {
             var insertId = GetNextIdValue(data);
 
             if (insertId == null)
-                return;
+                return item;
 
             ObjectExtensions.AddDataToField(item, _idField, insertId);
+
+            // If item doesn't have _idField...
+
+            return item;
         }
     }
 }
