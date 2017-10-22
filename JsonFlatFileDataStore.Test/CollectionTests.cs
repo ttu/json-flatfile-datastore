@@ -87,7 +87,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void GetNextIdValue_StringTypeEmpty()
+        public void GetNextIdValue_StringType_AnonymousType()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -95,17 +95,69 @@ namespace JsonFlatFileDataStore.Test
 
             var collection = store.GetCollection("collectionWithStringId");
 
-            collection.InsertOne(new { myId = "" });
+            collection.InsertOne(new { myId = "hello2" });
 
             var inserted = collection.AsQueryable().First();
+            Assert.Equal("hello2", inserted.myId);
 
             var nextId = collection.GetNextIdValue();
-            Assert.Equal("0", nextId);
+            Assert.Equal("hello3", nextId);
 
             collection.InsertOne(new { myId = nextId });
+            var item3 = collection.AsQueryable().FirstOrDefault(e => e.myId == nextId);
+            Assert.Equal("hello3", item3.myId);
 
             nextId = collection.GetNextIdValue();
-            Assert.Equal("1", nextId);
+            Assert.Equal("hello4", nextId);
+
+            collection.InsertOne(new { text = "myId missing" });
+
+            var item4 = collection.AsQueryable().FirstOrDefault(e => e.myId == nextId);
+            Assert.Equal("hello4", item4.myId);
+            Assert.Equal("myId missing", item4.text);
+
+            nextId = collection.GetNextIdValue();
+            Assert.Equal("hello5", nextId);
+
+            // This will insert item with hello2 as latest
+            collection.InsertOne(new { myId = "hello2" });
+
+            nextId = collection.GetNextIdValue();
+            Assert.Equal("hello3", nextId);
+
+            var same = collection.AsQueryable().Where(e => e.myId == "hello2");
+            Assert.Equal(2, same.Count());
+        }
+
+        [Fact]
+        public void GetNextIdValue_StringType_JToken()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath, keyProperty: "myId");
+
+            var collection = store.GetCollection("collectionWithStringId");
+
+            // Insert seed value with upsert
+            collection.ReplaceOne(e => e, JToken.Parse("{ 'myId': 'test1' }"), true);
+
+            var nextId = collection.GetNextIdValue();
+            Assert.Equal("test2", nextId);
+
+            var nextUpdate = JToken.Parse("{ 'myId': 'somethingWrong2' }");
+            collection.InsertOne(nextUpdate);
+            Assert.Equal(nextId, nextUpdate["myId"]);
+
+            nextId = collection.GetNextIdValue();
+            Assert.Equal("test3", nextId);
+
+            nextUpdate = JToken.Parse("{ 'xxx': 111 }");
+            collection.InsertOne(nextUpdate);
+            Assert.Equal(nextId, nextUpdate["myId"]);
+            Assert.Equal(111, nextUpdate["xxx"]);
+
+            nextId = collection.GetNextIdValue();
+            Assert.Equal("test4", nextId);
         }
 
         [Fact]
@@ -161,6 +213,26 @@ namespace JsonFlatFileDataStore.Test
 
             var collection3 = store2.GetCollection("user");
             Assert.Equal(4, collection3.Count);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public void InsertOne_DynamicUser_UpdateId()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection("user");
+            Assert.Equal(3, collection.Count);
+
+            collection.InsertOne(new { name = "Teddy" });
+            Assert.Equal(4, collection.Count);
+
+            var item = collection.AsQueryable().Single(e => e.name == "Teddy");
+
+            Assert.Equal(4, item.id);
 
             UTHelpers.Down(newFilePath);
         }
@@ -724,6 +796,8 @@ namespace JsonFlatFileDataStore.Test
             Assert.Equal(50, collection_0.Count);
             var collection_1 = store2.GetCollection<User>("user_1");
             Assert.Equal(50, collection_1.Count);
+            var distinct = collection_1.AsQueryable().GroupBy(e => e.Id).Select(g => g.First());
+            Assert.Equal(50, distinct.Count());
 
             UTHelpers.Down(newFilePath);
         }
@@ -745,6 +819,8 @@ namespace JsonFlatFileDataStore.Test
             var store2 = new DataStore(newFilePath);
             var collection2 = store2.GetCollection<User>("user");
             Assert.Equal(103, collection2.Count);
+            var distinct = collection2.AsQueryable().GroupBy(e => e.Id).Select(g => g.First());
+            Assert.Equal(103, distinct.Count());
 
             UTHelpers.Down(newFilePath);
         }
