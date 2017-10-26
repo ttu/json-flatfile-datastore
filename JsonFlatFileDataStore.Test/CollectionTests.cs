@@ -442,7 +442,7 @@ namespace JsonFlatFileDataStore.Test
             var collection = store.GetCollection<User>();
             Assert.Equal(3, collection.Count);
 
-            var newUsers = new[] 
+            var newUsers = new[]
             {
                 new User { Id = 20, Name = "A1", Age = 55 },
                 new User { Id = 21, Name = "A2", Age = 55 },
@@ -763,7 +763,10 @@ namespace JsonFlatFileDataStore.Test
             var collection = store.GetCollection<User>("user");
             Assert.Equal(3, collection.Count);
 
-            var tasks = Enumerable.Range(0, 100).Select(i => collection.InsertOneAsync(new User { Id = i, Name = "Teddy" }));
+            var tasks = Enumerable.Range(0, 100)
+                .AsParallel()
+                .Select(i => collection.InsertOneAsync(new User { Id = i, Name = "Teddy" }))
+                .ToList();
 
             await Task.WhenAll(tasks);
 

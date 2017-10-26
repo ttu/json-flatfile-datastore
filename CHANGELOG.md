@@ -2,6 +2,8 @@
 
 ### [Unreleased]
 * Fix for Insert-methods when using an anonymous type without id
+* Fix for DataStore IsUpdating
+* Make DocumentCollection Thread-Safe
 
 ### [1.7.0] - 2017-08-13
 * Full-text search

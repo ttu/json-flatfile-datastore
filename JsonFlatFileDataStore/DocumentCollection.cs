@@ -39,35 +39,35 @@ namespace JsonFlatFileDataStore
 
         public bool InsertOne(T item)
         {
-            var insertOne = new Func<List<T>, bool>(data =>
+            var updateAction = new Func<List<T>, bool>(data =>
             {
                 var itemToInsert = GetItemToInsert(GetNextIdValue(data), item, _insertConvert);
                 data.Add(itemToInsert);
                 return true;
             });
 
-            insertOne(_data.Value);
+            ExecuteLocked(updateAction, _data.Value);
 
-            return _commit(_path, insertOne, false).Result;
+            return _commit(_path, updateAction, false).Result;
         }
 
         public async Task<bool> InsertOneAsync(T item)
         {
-            var insertOne = new Func<List<T>, bool>(data =>
+            var updateAction = new Func<List<T>, bool>(data =>
             {
                 var itemToInsert = GetItemToInsert(GetNextIdValue(data), item, _insertConvert);
                 data.Add(itemToInsert);
                 return true;
             });
 
-            insertOne(_data.Value);
+            ExecuteLocked(updateAction, _data.Value);
 
-            return await _commit(_path, insertOne, true).ConfigureAwait(false);
+            return await _commit(_path, updateAction, true).ConfigureAwait(false);
         }
 
         public bool InsertMany(IEnumerable<T> items)
         {
-            var insertMany = new Func<List<T>, bool>(data =>
+            var updateAction = new Func<List<T>, bool>(data =>
             {
                 foreach (var item in items)
                 {
@@ -78,9 +78,9 @@ namespace JsonFlatFileDataStore
                 return true;
             });
 
-            insertMany(_data.Value);
+            ExecuteLocked(updateAction, _data.Value);
 
-            return _commit(_path, insertMany, false).Result;
+            return _commit(_path, updateAction, false).Result;
         }
 
         public async Task<bool> InsertManyAsync(IEnumerable<T> items)
@@ -96,7 +96,7 @@ namespace JsonFlatFileDataStore
                 return true;
             });
 
-            updateAction(_data.Value);
+            ExecuteLocked(updateAction, _data.Value);
 
             return await _commit(_path, updateAction, true).ConfigureAwait(false);
         }
@@ -124,7 +124,7 @@ namespace JsonFlatFileDataStore
                 return true;
             });
 
-            if (!updateAction(_data.Value))
+            if (!ExecuteLocked(updateAction, _data.Value))
                 return false;
 
             return _commit(_path, updateAction, false).Result;
@@ -148,7 +148,7 @@ namespace JsonFlatFileDataStore
                 return true;
             });
 
-            if (!updateAction(_data.Value))
+            if (!ExecuteLocked(updateAction, _data.Value))
                 return false;
 
             return _commit(_path, updateAction, false).Result;
@@ -177,7 +177,7 @@ namespace JsonFlatFileDataStore
                 return true;
             });
 
-            if (!updateAction(_data.Value))
+            if (!ExecuteLocked(updateAction, _data.Value))
                 return false;
 
             return await _commit(_path, updateAction, true).ConfigureAwait(false);
@@ -201,7 +201,7 @@ namespace JsonFlatFileDataStore
                 return true;
             });
 
-            if (!updateAction(_data.Value))
+            if (!ExecuteLocked(updateAction, _data.Value))
                 return false;
 
             return await _commit(_path, updateAction, true).ConfigureAwait(false);
@@ -222,7 +222,7 @@ namespace JsonFlatFileDataStore
                 return true;
             });
 
-            if (!updateAction(_data.Value))
+            if (!ExecuteLocked(updateAction, _data.Value))
                 return false;
 
             return _commit(_path, updateAction, false).Result;
@@ -243,7 +243,7 @@ namespace JsonFlatFileDataStore
                 return true;
             });
 
-            if (!updateAction(_data.Value))
+            if (!ExecuteLocked(updateAction, _data.Value))
                 return false;
 
             return await _commit(_path, updateAction, true).ConfigureAwait(false);
@@ -266,7 +266,7 @@ namespace JsonFlatFileDataStore
                 return true;
             });
 
-            if (!updateAction(_data.Value))
+            if (!ExecuteLocked(updateAction, _data.Value))
                 return false;
 
             return _commit(_path, updateAction, false).Result;
@@ -289,7 +289,7 @@ namespace JsonFlatFileDataStore
                 return true;
             });
 
-            if (!updateAction(_data.Value))
+            if (!ExecuteLocked(updateAction, _data.Value))
                 return false;
 
             return await _commit(_path, updateAction, true).ConfigureAwait(false);
@@ -307,7 +307,7 @@ namespace JsonFlatFileDataStore
                 return data.Remove(remove);
             });
 
-            if (!updateAction(_data.Value))
+            if (!ExecuteLocked(updateAction, _data.Value))
                 return false;
 
             return _commit(_path, updateAction, false).Result;
@@ -325,7 +325,7 @@ namespace JsonFlatFileDataStore
                 return data.Remove(remove);
             });
 
-            if (!updateAction(_data.Value))
+            if (!ExecuteLocked(updateAction, _data.Value))
                 return false;
 
             return await _commit(_path, updateAction, true).ConfigureAwait(false);
@@ -339,7 +339,7 @@ namespace JsonFlatFileDataStore
                 return removed > 0;
             });
 
-            if (!updateAction(_data.Value))
+            if (!ExecuteLocked(updateAction, _data.Value))
                 return false;
 
             return _commit(_path, updateAction, false).Result;
@@ -353,10 +353,18 @@ namespace JsonFlatFileDataStore
                 return removed > 0;
             });
 
-            if (!updateAction(_data.Value))
+            if (!ExecuteLocked(updateAction, _data.Value))
                 return false;
 
             return await _commit(_path, updateAction, true).ConfigureAwait(false);
+        }
+
+        private bool ExecuteLocked(Func<List<T>, bool> func, List<T> data)
+        {
+            lock (data)
+            {
+                return func(data);
+            }
         }
 
         private dynamic GetNextIdValue(List<T> data)
