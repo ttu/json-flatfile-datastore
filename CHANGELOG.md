@@ -3,6 +3,9 @@
 ### [Unreleased]
 *
 
+### [1.7.2] - 2017-10-29
+* Include missing xml documentation file
+
 ### [1.7.1] - 2017-10-29
 * Fix for Insert-methods when using an anonymous type without id
 * Fix for DataStore IsUpdating
