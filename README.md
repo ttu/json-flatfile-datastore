@@ -513,6 +513,14 @@ collection2.ReplaceOne(e => e.id == 11, dynamicUser as object);
 collection2.ReplaceOne((Predicate<dynamic>)(e => e.id == 11), dynamicUser);
 ```
 
+### Unit Tests & Benchmarks
+
+`JsonFlatFileDataStore.Test` and `JsonFlatFileDataStore.Benchmark` are _.NET Core 2.0_ projects.
+
+Unit Tests are executed automatically with CI build.
+
+Benchmarks are not part of automated build, but those can be used as a reference to compare execution times with making changes to funcionality.
+
 ### API
 
 API is heavily influenced by MongoDB's C# API, so switching to the MongoDB or [DocumentDB](https://docs.microsoft.com/en-us/azure/documentdb/documentdb-protocol-mongodb) might be easy.

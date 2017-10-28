@@ -1,12 +1,13 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace JsonFlatFileDataStore.Test
 {
-    internal static class UTHelpers
+    public static class UTHelpers
     {
-        internal static string Up([CallerMemberName] string name = "")
+        public static string Up([CallerMemberName] string name = "")
         {
             var dir = Path.GetDirectoryName(typeof(DataStoreTests).GetTypeInfo().Assembly.Location);
 
@@ -19,7 +20,7 @@ namespace JsonFlatFileDataStore.Test
             return newFilePath;
         }
 
-        internal static void Down(string fullPath)
+        public static void Down(string fullPath)
         {
             File.Delete(fullPath);
         }
