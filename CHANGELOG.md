@@ -1,6 +1,9 @@
 # Changelog
 
 ### [Unreleased]
+*
+
+### [1.7.1] - 2017-10-29
 * Fix for Insert-methods when using an anonymous type without id
 * Fix for DataStore IsUpdating
 * Make DocumentCollection Thread-Safe
