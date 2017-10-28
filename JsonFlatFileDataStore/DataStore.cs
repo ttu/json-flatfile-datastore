@@ -31,6 +31,7 @@ namespace JsonFlatFileDataStore
         private readonly JsonSerializerSettings _serializerSettings = new JsonSerializerSettings() { ContractResolver = new CamelCasePropertyNamesContractResolver() };
 
         private JObject _jsonData;
+        private bool _executingJsonUpdate;
 
         public DataStore(string path, bool useLowerCamelCase = true, string keyProperty = null, bool reloadBeforeGetCollection = false, bool addLastModified = false)
         {
@@ -64,14 +65,17 @@ namespace JsonFlatFileDataStore
                 var token = _cts.Token;
 
                 var batch = new Queue<CommitAction>();
-                var callBacks = new Queue<(CommitAction action, bool success)>();
+                var callbacks = new Queue<(CommitAction action, bool success)>();
 
                 while (!token.IsCancellationRequested)
                 {
                     batch.Clear();
-                    callBacks.Clear();
+                    callbacks.Clear();
 
                     var updateAction = _updates.Take(token);
+
+                    _executingJsonUpdate = true;
+
                     batch.Enqueue(updateAction);
 
                     while (_updates.Count > 0 && batch.Count < CommitBatchMaxSize)
@@ -85,7 +89,7 @@ namespace JsonFlatFileDataStore
                     {
                         var actionResult = action.HandleAction(JObject.Parse(jsonText));
 
-                        callBacks.Enqueue((action, actionResult.success));
+                        callbacks.Enqueue((action, actionResult.success));
 
                         if (actionResult.success)
                             jsonText = actionResult.json;
@@ -108,15 +112,17 @@ namespace JsonFlatFileDataStore
                         actionException = e;
                     }
 
-                    foreach (var cb in callBacks)
+                    foreach (var cb in callbacks)
                     {
                         cb.action.Ready(result == false ? false : cb.success, actionException);
                     }
+
+                    _executingJsonUpdate = false;
                 }
             });
         }
 
-        public bool IsUpdating => _updates.Count > 0;
+        public bool IsUpdating => _updates.Count > 0 || _executingJsonUpdate;
 
         public void UpdateAll(string jsonData)
         {

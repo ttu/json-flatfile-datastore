@@ -812,7 +812,10 @@ namespace JsonFlatFileDataStore.Test
             var collection = store.GetCollection<User>("user");
             Assert.Equal(3, collection.Count);
 
-            var tasks = Enumerable.Range(0, 100).Select(i => collection.InsertOneAsync(new User { Id = i, Name = "Teddy" }));
+            var tasks = Enumerable.Range(0, 100)
+                .AsParallel()
+                .Select(i => collection.InsertOneAsync(new User { Id = i, Name = "Teddy" }))
+                .ToList();
 
             await Task.WhenAll(tasks);
 
