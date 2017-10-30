@@ -517,9 +517,9 @@ collection2.ReplaceOne((Predicate<dynamic>)(e => e.id == 11), dynamicUser);
 
 `JsonFlatFileDataStore.Test` and `JsonFlatFileDataStore.Benchmark` are _.NET Core 2.0_ projects.
 
-Unit Tests are executed automatically with CI build.
+Unit Tests are executed automatically with CI builds.
 
-Benchmarks are not part of automated build, but those can be used as a reference to compare execution times with making changes to funcionality.
+Benchmarks are not part of automated builds. Benchmarks can be used as a reference when making changes to existing functionality by comparing execution times.
 
 ### API
 
