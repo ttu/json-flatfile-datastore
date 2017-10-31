@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26228.4
+VisualStudioVersion = 15.0.27004.2005
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JsonFlatFileDataStore", "JsonFlatFileDataStore\JsonFlatFileDataStore.csproj", "{7B0D2D93-53C2-4B72-8132-1E65B4D75943}"
 EndProject
@@ -13,6 +13,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		LICENSE = LICENSE
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JsonFlatFileDataStore.Benchmark", "JsonFlatFileDataStore.Benchmark\JsonFlatFileDataStore.Benchmark.csproj", "{31BC8A9C-A1E7-447F-BD67-66A6E607D476}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,8 +30,15 @@ Global
 		{ABCADAE4-A8A5-4824-BAEC-7FB701C0F984}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ABCADAE4-A8A5-4824-BAEC-7FB701C0F984}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ABCADAE4-A8A5-4824-BAEC-7FB701C0F984}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31BC8A9C-A1E7-447F-BD67-66A6E607D476}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31BC8A9C-A1E7-447F-BD67-66A6E607D476}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31BC8A9C-A1E7-447F-BD67-66A6E607D476}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31BC8A9C-A1E7-447F-BD67-66A6E607D476}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6AB12933-85DE-4858-89EC-9284DB5806B0}
 	EndGlobalSection
 EndGlobal

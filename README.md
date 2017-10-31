@@ -147,7 +147,7 @@ var collection = store.GetCollection("user");
 // Find item with name
 var userDynamic = collection
                     .AsQueryable()
-                    .Single(p => p.name == "Phil");
+                    .FirstOrDefault(p => p.name == "Phil");
 ```
 
 `AsQueryable` LINQ query with typed data:
@@ -161,7 +161,7 @@ var collection = store.GetCollection<User>();
 // Find item with name
 var userTyped = collection
                     .AsQueryable()
-                    .Single(p => p.Name == "Phil");
+                    .FirstOrDefault(p => p.Name == "Phil");
 ```
 
 #### Full-text search
@@ -512,6 +512,14 @@ collection2.ReplaceOne(e => e.id == 11, dynamicUser as object);
 // Compiler will also accept this
 collection2.ReplaceOne((Predicate<dynamic>)(e => e.id == 11), dynamicUser);
 ```
+
+### Unit Tests & Benchmarks
+
+`JsonFlatFileDataStore.Test` and `JsonFlatFileDataStore.Benchmark` are _.NET Core 2.0_ projects.
+
+Unit Tests are executed automatically with CI builds.
+
+Benchmarks are not part of CI builds. Benchmarks can be used as a reference when making changes to the existing functionality by comparing the execution times before and after the changes.
 
 ### API
 
