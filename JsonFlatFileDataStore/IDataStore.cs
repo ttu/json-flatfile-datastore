@@ -8,7 +8,7 @@ namespace JsonFlatFileDataStore
     public interface IDataStore
     {
         /// <summary>
-        /// Has background thread update actions in the queue
+        /// Has the background thread update actions in the queue or is the update excuting
         /// </summary>
         bool IsUpdating { get; }
 
@@ -34,7 +34,7 @@ namespace JsonFlatFileDataStore
         IEnumerable<string> ListCollections();
 
         /// <summary>
-        /// Update all content from json file
+        /// Update the content of the json file
         /// </summary>
         /// <param name="jsonData">New content</param>
         void UpdateAll(string jsonData);
