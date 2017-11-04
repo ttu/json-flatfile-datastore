@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace JsonFlatFileDataStore
 {
     /// <summary>
     /// JSON data store
     /// </summary>
-    public interface IDataStore
+    public interface IDataStore : IDisposable
     {
         /// <summary>
         /// Has the background thread update actions in the queue or is the update excuting
