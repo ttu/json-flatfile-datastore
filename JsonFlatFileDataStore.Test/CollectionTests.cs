@@ -946,6 +946,8 @@ namespace JsonFlatFileDataStore.Test
         [InlineData("datastore_dispose_true", true)]
         public async Task DataStore_Dispose(string testName, bool useDispose)
         {
+            // This test is extremely unreliable because of use GC, so if this test fails, run again
+
             // Fail the test is running time is more than maxTimeMs
             var sw = Stopwatch.StartNew();
             int maxTimeMs = 20000;
@@ -973,7 +975,6 @@ namespace JsonFlatFileDataStore.Test
                     Assert.False(true, "Timeout");
             }
 
-            // This test is extremely unreliable because of GC
             while (useDispose == storeRef.IsAlive)
             {
                 await Task.Delay(1000);
