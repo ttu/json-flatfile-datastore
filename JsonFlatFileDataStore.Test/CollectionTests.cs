@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -945,6 +946,10 @@ namespace JsonFlatFileDataStore.Test
         [InlineData("datastore_dispose_true", true)]
         public async Task DataStore_Dispose(string testName, bool useDispose)
         {
+            // Fail the test is running time is more than maxTimeMs
+            var sw = Stopwatch.StartNew();
+            int maxTimeMs = 20000;
+
             var newFilePath = UTHelpers.Up(testName);
 
             int itemCount = 200;
@@ -963,10 +968,20 @@ namespace JsonFlatFileDataStore.Test
                     break;
 
                 await Task.Delay(1000);
+
+                if (sw.ElapsedMilliseconds > maxTimeMs)
+                    Assert.False(true, "Timeout");
             }
 
-            await Task.Delay(1000);
-            GC.Collect();
+            // This test is extremely unreliable because of GC
+            while (useDispose == storeRef.IsAlive)
+            {
+                await Task.Delay(1000);
+                GC.Collect();
+
+                if (sw.ElapsedMilliseconds > maxTimeMs)
+                    Assert.False(true, "Timeout");
+            }
 
             // If DataStore is not disposed, it should still be alive
             Assert.NotEqual(useDispose, storeRef.IsAlive);
