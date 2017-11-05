@@ -412,7 +412,7 @@ var nextId = collection.GetNextIdValue();
 
 ## DataStore and Collection lifecycle
 
-When the data store is created, it reads the JSON file to the memory. 
+When the data store is created, it reads the JSON file to the memory. Data store starts a new background thread that handles the file access.
 
 When the collection is created it has a lazy reference to the data and it will deserialize the JSON to objects when it is accessed for the first time.
 
@@ -436,7 +436,7 @@ collection2nd.InsertOne(new { id = "hello2" });
 // collection1st won't have item with id hello2
 ```
 
-If multiple DataStores are initialized and used simultaneously, each DataStore will have own internal state. They might become out of sync with the state in the JSON file, as data is only loaded from the file when DataStore is initialized and after each commit.
+If multiple DataStores are initialized and used simultaneously, each DataStore will have its own internal state. They might become out of sync with the state in the JSON file, as data is only loaded from the file when DataStore is initialized and after each commit.
 
 It is also possible to reload JSON data manually, by using DataStore's `Reload` method or set `reloadBeforeGetCollection` constructor parameter to `true`.
 
@@ -461,7 +461,24 @@ var collection1_2 = store.GetCollection("hello");
 // collection1_1 will not have item with id: hello2 even after reload, because it was initialized before reload
 ```
 
-If JSON Flat File Data Store is used with e.g. `ASP.NET Web API`, add the `DataStore` to the DI container as a singleton. This way DataStore's internal state is correct and application does not have to rely on the state on the file as read operation is pretty slow. Reload can be triggered if needed.
+If JSON Flat File Data Store is used with e.g. `ASP.NET`, add the `DataStore` to the DI container as a singleton. This way DataStore's internal state is correct and application does not have to rely on the state on the file as read operation is pretty slow. Reload can be triggered if needed.
+
+#### Dispose
+
+Data store should be disposed after it is not needed anymore. Dispose will wait that all writes to the file are completed and after that it will stop the background thread. Then Garabge Collector can collect the data store that is not used anymore.
+
+```csharp
+// Call dispose method
+var store = new DataStore();
+// ...
+store.Dispose();
+
+// Call dispose automatically with using
+usig(var store = new DataStore())
+{
+    // ...
+}
+```
 
 ### Collection naming
 
@@ -490,7 +507,6 @@ var store = new DataStore(newFilePath);
 // e.g. { "MyMovies" : [ { "LongName": "xxxxx" } ] }
 var store = new DataStore(newFilePath, false);
 ```
-
 
 ### Dynamic and error CS1977
 

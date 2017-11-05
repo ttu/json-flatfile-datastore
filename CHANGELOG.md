@@ -1,7 +1,7 @@
 # Changelog
 
 ### [Unreleased]
-*
+* DataStore to implement IDisposable
 
 ### [1.7.2] - 2017-10-29
 * Include missing xml documentation file
