@@ -480,7 +480,7 @@ usig(var store = new DataStore())
 }
 ```
 
-### Collection naming
+## Collection naming
 
 Collection name must be always defined when dynamic collections are used. If collection name is not defined with a typed collection, class-name is converted to lower camel case. E.g. User is user, UserFamily is userfamily etc.
 
@@ -494,7 +494,7 @@ var collection = store.GetCollection<Movie>();
 var collection = store.GetCollection<Movie>("movies");
 ```
 
-### Writing to file
+## Writing to file
 
 By default JSON is written in lower camel case. This can be changed with `useLowerCamelCase` parameter in DataStore's constructor.
 
@@ -508,7 +508,7 @@ var store = new DataStore(newFilePath);
 var store = new DataStore(newFilePath, false);
 ```
 
-### Dynamic and error CS1977
+## Dynamic and error CS1977
 
 When __Dynamic type__ is used with lambdas, compiler will give you error __CS1977__:
 
@@ -529,7 +529,7 @@ collection2.ReplaceOne(e => e.id == 11, dynamicUser as object);
 collection2.ReplaceOne((Predicate<dynamic>)(e => e.id == 11), dynamicUser);
 ```
 
-### Unit Tests & Benchmarks
+## Unit Tests & Benchmarks
 
 `JsonFlatFileDataStore.Test` and `JsonFlatFileDataStore.Benchmark` are _.NET Core 2.0_ projects.
 
@@ -537,20 +537,20 @@ Unit Tests are executed automatically with CI builds.
 
 Benchmarks are not part of CI builds. Benchmarks can be used as a reference when making changes to the existing functionality by comparing the execution times before and after the changes.
 
-### API
+## API
 
 API is heavily influenced by MongoDB's C# API, so switching to the MongoDB or [DocumentDB](https://docs.microsoft.com/en-us/azure/documentdb/documentdb-protocol-mongodb) might be easy.
 * [MongoDB-C#-linq](http://mongodb.github.io/mongo-csharp-driver/2.4/reference/driver/crud/linq/#queryable)
 * [MongoDB-C#-crud](http://mongodb.github.io/mongo-csharp-driver/2.4/reference/driver/crud/writing/)
 
-### Changelog
+## Changelog
 
 [Changelog](CHANGELOG.md)
 
-### Contributing
+## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
-### License
+## License
 
 Licensed under the [MIT](LICENSE) License.
