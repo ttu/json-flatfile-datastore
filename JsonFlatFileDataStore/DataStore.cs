@@ -119,6 +119,19 @@ namespace JsonFlatFileDataStore
             });
         }
 
+        public void Dispose()
+        {
+            while (IsUpdating)
+            {
+                Task.Run(async () => await Task.Delay(100)).GetAwaiter().GetResult();
+            }
+
+            if (_cts.IsCancellationRequested == false)
+            {
+                _cts.Cancel();
+            }
+        }
+
         public bool IsUpdating => _updates.Count > 0 || _executingJsonUpdate;
 
         public void UpdateAll(string jsonData)
