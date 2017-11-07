@@ -105,7 +105,7 @@ namespace JsonFlatFileDataStore.Test
 
             var collection = store.GetCollection<Movie>("movies");
             Assert.Equal(2, collection.Count);
-            Assert.Equal(1, collection.AsQueryable().Count(e => e.Name == "Predator"));
+            Assert.Single(collection.AsQueryable().Where(e => e.Name == "Predator"));
 
             UTHelpers.Down(newFilePath);
         }
@@ -130,7 +130,7 @@ namespace JsonFlatFileDataStore.Test
             var result = collection.InsertOne(new Movie { Name = "Predator" });
             Assert.True(result);
             Assert.Equal(2, collection.Count);
-            Assert.Equal(1, collection.AsQueryable().Count(e => e.Name == "Predator"));
+            Assert.Single(collection.AsQueryable().Where(e => e.Name == "Predator"));
         }
 
         [Fact]
@@ -242,9 +242,9 @@ namespace JsonFlatFileDataStore.Test
             var results = collection.AsQueryable().Where(x => x.age < 40);
 
             Assert.True(results.Count() == 3);
-            Assert.NotNull(results.Single(e => e.name == "Raymond Doe"));
-            Assert.NotNull(results.Single(e => e.name == "Andy Doe"));
-            Assert.NotNull(results.Single(e => e.name == "Karl"));
+            Assert.Single(results.Where(e => e.name == "Raymond Doe"));
+            Assert.Single(results.Where(e => e.name == "Andy Doe"));
+            Assert.Single(results.Where(e => e.name == "Karl"));
 
             UTHelpers.Down(pathToJson);
         }
@@ -375,7 +375,7 @@ namespace JsonFlatFileDataStore.Test
             // Use LINQ to query items
             var results = collection.AsQueryable().Where(e => e.Age > 30);
 
-            Assert.True(results.Count(e => e.Name == "John Doe") == 1);
+            Assert.Single(results.Where(e => e.Name == "John Doe"));
 
             UTHelpers.Down(pathToJson);
         }
