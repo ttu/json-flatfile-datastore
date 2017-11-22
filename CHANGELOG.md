@@ -1,6 +1,9 @@
 # Changelog
 
 ### [Unreleased]
+*
+
+### [1.8.0] - 2017-11-22
 * DataStore to implement IDisposable
 
 ### [1.7.2] - 2017-10-29
