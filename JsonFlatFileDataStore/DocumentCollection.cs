@@ -39,35 +39,35 @@ namespace JsonFlatFileDataStore
 
         public bool InsertOne(T item)
         {
-            var updateAction = new Func<List<T>, bool>(data =>
+            bool UpdateAction(List<T> data)
             {
                 var itemToInsert = GetItemToInsert(GetNextIdValue(data), item, _insertConvert);
                 data.Add(itemToInsert);
                 return true;
-            });
+            };
 
-            ExecuteLocked(updateAction, _data.Value);
+            ExecuteLocked(UpdateAction, _data.Value);
 
-            return _commit(_path, updateAction, false).Result;
+            return _commit(_path, UpdateAction, false).Result;
         }
 
         public async Task<bool> InsertOneAsync(T item)
         {
-            var updateAction = new Func<List<T>, bool>(data =>
+            bool UpdateAction(List<T> data)
             {
                 var itemToInsert = GetItemToInsert(GetNextIdValue(data), item, _insertConvert);
                 data.Add(itemToInsert);
                 return true;
-            });
+            };
 
-            ExecuteLocked(updateAction, _data.Value);
+            ExecuteLocked(UpdateAction, _data.Value);
 
-            return await _commit(_path, updateAction, true).ConfigureAwait(false);
+            return await _commit(_path, UpdateAction, true).ConfigureAwait(false);
         }
 
         public bool InsertMany(IEnumerable<T> items)
         {
-            var updateAction = new Func<List<T>, bool>(data =>
+            bool UpdateAction(List<T> data)
             {
                 foreach (var item in items)
                 {
@@ -76,16 +76,16 @@ namespace JsonFlatFileDataStore
                 }
 
                 return true;
-            });
+            };
 
-            ExecuteLocked(updateAction, _data.Value);
+            ExecuteLocked(UpdateAction, _data.Value);
 
-            return _commit(_path, updateAction, false).Result;
+            return _commit(_path, UpdateAction, false).Result;
         }
 
         public async Task<bool> InsertManyAsync(IEnumerable<T> items)
         {
-            var updateAction = new Func<List<T>, bool>(data =>
+            bool UpdateAction(List<T> data)
             {
                 foreach (var item in items)
                 {
@@ -94,16 +94,16 @@ namespace JsonFlatFileDataStore
                 }
 
                 return true;
-            });
+            };
 
-            ExecuteLocked(updateAction, _data.Value);
+            ExecuteLocked(UpdateAction, _data.Value);
 
-            return await _commit(_path, updateAction, true).ConfigureAwait(false);
+            return await _commit(_path, UpdateAction, true).ConfigureAwait(false);
         }
 
         public bool ReplaceOne(Predicate<T> filter, T item, bool upsert = false)
         {
-            var updateAction = new Func<List<T>, bool>(data =>
+            bool UpdateAction(List<T> data)
             {
                 var matches = data.Where(e => filter(e));
 
@@ -122,17 +122,17 @@ namespace JsonFlatFileDataStore
                 data[index] = item;
 
                 return true;
-            });
+            };
 
-            if (!ExecuteLocked(updateAction, _data.Value))
+            if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
 
-            return _commit(_path, updateAction, false).Result;
+            return _commit(_path, UpdateAction, false).Result;
         }
 
         public bool ReplaceMany(Predicate<T> filter, T item)
         {
-            var updateAction = new Func<List<T>, bool>(data =>
+            bool UpdateAction(List<T> data)
             {
                 var matches = data.Where(e => filter(e));
 
@@ -146,17 +146,17 @@ namespace JsonFlatFileDataStore
                 }
 
                 return true;
-            });
+            };
 
-            if (!ExecuteLocked(updateAction, _data.Value))
+            if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
 
-            return _commit(_path, updateAction, false).Result;
+            return _commit(_path, UpdateAction, false).Result;
         }
 
         public async Task<bool> ReplaceOneAsync(Predicate<T> filter, T item, bool upsert = false)
         {
-            var updateAction = new Func<List<T>, bool>(data =>
+            bool UpdateAction(List<T> data)
             {
                 var matches = data.Where(e => filter(e));
 
@@ -175,17 +175,17 @@ namespace JsonFlatFileDataStore
                 data[index] = item;
 
                 return true;
-            });
+            };
 
-            if (!ExecuteLocked(updateAction, _data.Value))
+            if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
 
-            return await _commit(_path, updateAction, true).ConfigureAwait(false);
+            return await _commit(_path, UpdateAction, true).ConfigureAwait(false);
         }
 
         public async Task<bool> ReplaceManyAsync(Predicate<T> filter, T item)
         {
-            var updateAction = new Func<List<T>, bool>(data =>
+            bool UpdateAction(List<T> data)
             {
                 var matches = data.Where(e => filter(e));
 
@@ -199,17 +199,17 @@ namespace JsonFlatFileDataStore
                 }
 
                 return true;
-            });
+            };
 
-            if (!ExecuteLocked(updateAction, _data.Value))
+            if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
 
-            return await _commit(_path, updateAction, true).ConfigureAwait(false);
+            return await _commit(_path, UpdateAction, true).ConfigureAwait(false);
         }
 
         public bool UpdateOne(Predicate<T> filter, dynamic item)
         {
-            var updateAction = new Func<List<T>, bool>(data =>
+            bool UpdateAction(List<T> data)
             {
                 var matches = data.Where(e => filter(e));
 
@@ -220,17 +220,17 @@ namespace JsonFlatFileDataStore
                 ObjectExtensions.CopyProperties(item, toUpdate);
 
                 return true;
-            });
+            };
 
-            if (!ExecuteLocked(updateAction, _data.Value))
+            if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
 
-            return _commit(_path, updateAction, false).Result;
+            return _commit(_path, UpdateAction, false).Result;
         }
 
         public async Task<bool> UpdateOneAsync(Predicate<T> filter, dynamic item)
         {
-            var updateAction = new Func<List<T>, bool>(data =>
+            bool UpdateAction(List<T> data)
             {
                 var matches = data.Where(e => filter(e));
 
@@ -241,17 +241,17 @@ namespace JsonFlatFileDataStore
                 ObjectExtensions.CopyProperties(item, toUpdate);
 
                 return true;
-            });
+            };
 
-            if (!ExecuteLocked(updateAction, _data.Value))
+            if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
 
-            return await _commit(_path, updateAction, true).ConfigureAwait(false);
+            return await _commit(_path, UpdateAction, true).ConfigureAwait(false);
         }
 
         public bool UpdateMany(Predicate<T> filter, dynamic item)
         {
-            var updateAction = new Func<List<T>, bool>(data =>
+            bool UpdateAction(List<T> data)
             {
                 var matches = data.Where(e => filter(e));
 
@@ -264,17 +264,17 @@ namespace JsonFlatFileDataStore
                 }
 
                 return true;
-            });
+            };
 
-            if (!ExecuteLocked(updateAction, _data.Value))
+            if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
 
-            return _commit(_path, updateAction, false).Result;
+            return _commit(_path, UpdateAction, false).Result;
         }
 
         public async Task<bool> UpdateManyAsync(Predicate<T> filter, dynamic item)
         {
-            var updateAction = new Func<List<T>, bool>(data =>
+            bool UpdateAction(List<T> data)
             {
                 var matches = data.Where(e => filter(e));
 
@@ -287,17 +287,17 @@ namespace JsonFlatFileDataStore
                 }
 
                 return true;
-            });
+            };
 
-            if (!ExecuteLocked(updateAction, _data.Value))
+            if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
 
-            return await _commit(_path, updateAction, true).ConfigureAwait(false);
+            return await _commit(_path, UpdateAction, true).ConfigureAwait(false);
         }
 
         public bool DeleteOne(Predicate<T> filter)
         {
-            var updateAction = new Func<List<T>, bool>(data =>
+            bool UpdateAction(List<T> data)
             {
                 var remove = data.FirstOrDefault(e => filter(e));
 
@@ -305,17 +305,17 @@ namespace JsonFlatFileDataStore
                     return false;
 
                 return data.Remove(remove);
-            });
+            };
 
-            if (!ExecuteLocked(updateAction, _data.Value))
+            if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
 
-            return _commit(_path, updateAction, false).Result;
+            return _commit(_path, UpdateAction, false).Result;
         }
 
         public async Task<bool> DeleteOneAsync(Predicate<T> filter)
         {
-            var updateAction = new Func<List<T>, bool>(data =>
+            bool UpdateAction(List<T> data)
             {
                 var remove = data.FirstOrDefault(e => filter(e));
 
@@ -323,40 +323,40 @@ namespace JsonFlatFileDataStore
                     return false;
 
                 return data.Remove(remove);
-            });
+            };
 
-            if (!ExecuteLocked(updateAction, _data.Value))
+            if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
 
-            return await _commit(_path, updateAction, true).ConfigureAwait(false);
+            return await _commit(_path, UpdateAction, true).ConfigureAwait(false);
         }
 
         public bool DeleteMany(Predicate<T> filter)
         {
-            var updateAction = new Func<List<T>, bool>(data =>
+            bool UpdateAction(List<T> data)
             {
                 int removed = data.RemoveAll(filter);
                 return removed > 0;
-            });
+            };
 
-            if (!ExecuteLocked(updateAction, _data.Value))
+            if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
 
-            return _commit(_path, updateAction, false).Result;
+            return _commit(_path, UpdateAction, false).Result;
         }
 
         public async Task<bool> DeleteManyAsync(Predicate<T> filter)
         {
-            var updateAction = new Func<List<T>, bool>(data =>
+            bool UpdateAction(List<T> data)
             {
                 int removed = data.RemoveAll(filter);
                 return removed > 0;
-            });
+            };
 
-            if (!ExecuteLocked(updateAction, _data.Value))
+            if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
 
-            return await _commit(_path, updateAction, true).ConfigureAwait(false);
+            return await _commit(_path, UpdateAction, true).ConfigureAwait(false);
         }
 
         private bool ExecuteLocked(Func<List<T>, bool> func, List<T> data)
