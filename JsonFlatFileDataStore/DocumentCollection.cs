@@ -372,20 +372,29 @@ namespace JsonFlatFileDataStore
             if (!data.Any())
                 return 0;
 
-            var lastItem = data.Last();
-            var expando = JsonConvert.DeserializeObject<ExpandoObject>(JsonConvert.SerializeObject(lastItem), new ExpandoObjectConverter());
-            // Problem here is if we have typed data with upper camel case properties but lower camel case in JSON, so need to use OrdinalIgnoreCase string comparer
-            var expandoAsIgnoreCase = new Dictionary<string, dynamic>(expando, StringComparer.OrdinalIgnoreCase);
+            var idValues = data.Select(item =>
+            {
+                var expando = JsonConvert.DeserializeObject<ExpandoObject>(JsonConvert.SerializeObject(item), new ExpandoObjectConverter());
+                // Problem here is if we have typed data with upper camel case properties but lower camel case in JSON, so need to use OrdinalIgnoreCase string comparer
+                var expandoIgnoreCase = new Dictionary<string, dynamic>(expando, StringComparer.OrdinalIgnoreCase);
 
-            if (!expandoAsIgnoreCase.ContainsKey(_idField))
-                return null;
+                if (!expandoIgnoreCase.ContainsKey(_idField))
+                {
+                    return null;
+                }
 
-            dynamic keyValue = expandoAsIgnoreCase[_idField];
+                return expandoIgnoreCase[_idField];
+            });
 
-            if (keyValue is Int64)
-                return (int)keyValue + 1;
+            var maxIdValue = idValues.Max();
 
-            return ParseNextIntegertToKeyValue(keyValue.ToString());
+            if (maxIdValue == null)
+                return 0;
+
+            if (maxIdValue is Int64)
+                return (int)maxIdValue + 1;
+
+            return ParseNextIntegertToKeyValue(maxIdValue.ToString());
         }
 
         private string ParseNextIntegertToKeyValue(string input)
