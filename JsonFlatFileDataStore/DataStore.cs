@@ -49,14 +49,13 @@ namespace JsonFlatFileDataStore
                                 ? new Func<string, string>(s => string.Concat(s.Select((x, i) => i == 0 ? char.ToLower(x).ToString() : x.ToString())))
                                 : new Func<string, string>(s => s);
 
-            // Default key property is id or Id
             _keyProperty = keyProperty ?? (useLowerCamelCase ? "id" : "Id");
 
             _reloadBeforeGetCollection = reloadBeforeGetCollection;
 
             _jsonData = JObject.Parse(ReadJsonFromFile(path));
 
-            // Run updates on background thread and use BlockingCollection to prevent multiple updates running at the same time
+            // Run updates on a background thread and use BlockingCollection to prevent multiple updates to run simultaneously
             Task.Run(() =>
             {
                 var token = _cts.Token;
@@ -84,20 +83,20 @@ namespace JsonFlatFileDataStore
 
                     foreach (var action in batch)
                     {
-                        var actionResult = action.HandleAction(JObject.Parse(jsonText));
+                        var (actionSuccess, updatedJson) = action.HandleAction(JObject.Parse(jsonText));
 
-                        callbacks.Enqueue((action, actionResult.success));
+                        callbacks.Enqueue((action, actionSuccess));
 
-                        if (actionResult.success)
-                            jsonText = actionResult.json;
+                        if (actionSuccess)
+                            jsonText = updatedJson;
                     }
 
-                    var result = false;
+                    var writeSuccess = false;
                     Exception actionException = null;
 
                     try
                     {
-                        result = WriteJsonToFile(_filePath, jsonText);
+                        writeSuccess = WriteJsonToFile(_filePath, jsonText);
 
                         lock (_jsonData)
                         {
@@ -109,9 +108,9 @@ namespace JsonFlatFileDataStore
                         actionException = e;
                     }
 
-                    foreach (var cb in callbacks)
+                    foreach (var (cbAction, cbSuccess) in callbacks)
                     {
-                        cb.action.Ready(result == false ? false : cb.success, actionException);
+                        cbAction.Ready(writeSuccess ? cbSuccess : false, actionException);
                     }
 
                     _executingJsonUpdate = false;
@@ -163,7 +162,7 @@ namespace JsonFlatFileDataStore
 
         public IDocumentCollection<dynamic> GetCollection(string name)
         {
-            // As we don't want to return JObjects when using dynamic, JObjects will be converted to ExpandoObjects
+            // As we don't want to return JObject when using dynamic, JObject will be converted to ExpandoObject
             var readConvert = new Func<JToken, dynamic>(e => JsonConvert.DeserializeObject<ExpandoObject>(e.ToString(), _converter) as dynamic);
             var insertConvert = new Func<dynamic, dynamic>(e => JsonConvert.DeserializeObject<ExpandoObject>(JsonConvert.SerializeObject(e), _converter));
             var createNewInstance = new Func<dynamic>(() => new ExpandoObject());
@@ -187,7 +186,7 @@ namespace JsonFlatFileDataStore
                 {
                     if (_reloadBeforeGetCollection)
                     {
-                        // This might be a bad idea especially if file is in use, so this can take a long time
+                        // This might be a bad idea especially if the file is in use, as this can take a long time
                         _jsonData = JObject.Parse(ReadJsonFromFile(_filePath));
                     }
 
@@ -279,7 +278,7 @@ namespace JsonFlatFileDataStore
                 }
                 catch (IOException e) when (e.Message.Contains("because it is being used by another process"))
                 {
-                    // If some other process is using this file, try operation again unless elapsed times is greater than x
+                    // If some other process is using this file, retry operation unless elapsed times is greater than 10sec
                     sw = sw ?? Stopwatch.StartNew();
                     if (sw.ElapsedMilliseconds > 10000)
                         throw;
@@ -302,7 +301,7 @@ namespace JsonFlatFileDataStore
                 }
                 catch (IOException e) when (e.Message.Contains("because it is being used by another process"))
                 {
-                    // If some other process is using this file, try operation again unless elapsed times is greater than x
+                    // If some other process is using this file, retry operation unless elapsed times is greater than 10sec
                     sw = sw ?? Stopwatch.StartNew();
                     if (sw.ElapsedMilliseconds > 10000)
                         return false;

@@ -427,19 +427,5 @@ namespace JsonFlatFileDataStore
                 return insertConvert(item);
             }
         }
-
-        private T HandleIdUpdate(List<T> data, T item)
-        {
-            var insertId = GetNextIdValue(data);
-
-            if (insertId == null)
-                return item;
-
-            ObjectExtensions.AddDataToField(item, _idField, insertId);
-
-            // If item doesn't have _idField...
-
-            return item;
-        }
     }
 }

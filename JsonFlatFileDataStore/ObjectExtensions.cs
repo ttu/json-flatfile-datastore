@@ -12,7 +12,7 @@ using System.Reflection;
 public static class ObjectExtensions
 {
     /// <summary>
-    ///  Copy property values from the source object to the destination object
+    /// Copy property values from the source object to the destination object
     /// </summary>
     /// <param name="source">The source</param>
     /// <param name="destination">The destination</param>
