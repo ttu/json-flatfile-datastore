@@ -61,7 +61,7 @@ namespace JsonFlatFileDataStore.Test
 
             var store = new DataStore(newFilePath);
 
-            var result = store.InserItem("myUser2", new User { Id = 12, Name = "Teddy" });
+            var result = store.InsertItem("myUser2", new User { Id = 12, Name = "Teddy" });
 
             Assert.True(result);
 
@@ -83,7 +83,7 @@ namespace JsonFlatFileDataStore.Test
 
             var store = new DataStore(newFilePath);
 
-            var result = store.InserItem("myUser2", new { id = 12, name = "Teddy" });
+            var result = store.InsertItem("myUser2", new { id = 12, name = "Teddy" });
 
             Assert.True(result);
 
@@ -105,7 +105,7 @@ namespace JsonFlatFileDataStore.Test
 
             var store = new DataStore(newFilePath);
 
-            var result = await store.InserItemAsync("myUser2", new { id = 12, name = "Teddy" });
+            var result = await store.InsertItemAsync("myUser2", new { id = 12, name = "Teddy" });
 
             Assert.True(result);
 
@@ -118,6 +118,30 @@ namespace JsonFlatFileDataStore.Test
 
             var user2 = store2.GetItem("myUser2");
             Assert.Equal("Harold", user2.name);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public async Task UpdateItem_TypedUser()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var result = await store.InsertItemAsync("myUser2", new User { Id = 12, Name = "Teddy" });
+
+            Assert.True(result);
+
+            var user = store.GetItem<User>("myUser2");
+            Assert.Equal("Teddy", user.Name);
+
+            var updateResult = await store.UpdateItemAsync("myUser2", new { name = "Harold" });
+
+            var store2 = new DataStore(newFilePath);
+
+            var user2 = store2.GetItem<User>("myUser2");
+            Assert.Equal("Harold", user2.Name);
 
             UTHelpers.Down(newFilePath);
         }
@@ -153,7 +177,7 @@ namespace JsonFlatFileDataStore.Test
         {
             var newFilePath = UTHelpers.Up();
 
-            var store = new DataStore(newFilePath, reloadBeforeGetCollection: true);
+            var store = new DataStore(newFilePath);
 
             var result = await store.ReplaceItemAsync("myUser2", new { id = 2, name = "James" });
             Assert.False(result);
@@ -166,7 +190,7 @@ namespace JsonFlatFileDataStore.Test
         {
             var newFilePath = UTHelpers.Up();
 
-            var store = new DataStore(newFilePath, reloadBeforeGetCollection: true);
+            var store = new DataStore(newFilePath);
 
             var result = await store.ReplaceItemAsync("myUser2", new { id = 2, name = "James" }, true);
             Assert.True(result);
@@ -178,16 +202,51 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
+        public async Task ReplaceItem_TypedUser_Upsert()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var result = await store.ReplaceItemAsync("myUser2", new User { Id = 2, Name = "James" }, true);
+            Assert.True(result);
+
+            var user = store.GetItem<User>("myUser2");
+            Assert.Equal("James", user.Name);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
         public async Task ReplaceItem_DynamicUser()
         {
             var newFilePath = UTHelpers.Up();
 
-            var store = new DataStore(newFilePath, reloadBeforeGetCollection: true);
+            var store = new DataStore(newFilePath);
 
-            var result = store.InserItem("myUser2", new { id = 12, name = "Teddy" });
+            var result = store.InsertItem("myUser2", new { id = 12, name = "Teddy" });
             Assert.True(result);
 
-            result = await store.ReplaceItemAsync("myUser2", new { id = 2, name = "James" }, true);
+            result = await store.ReplaceItemAsync("myUser2", new { id = 2, name = "James" });
+            Assert.True(result);
+
+            var user = store.GetItem("myUser2");
+            Assert.Equal("James", user.name);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public async Task ReplaceItem_TypedUser()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var result = store.InsertItem<User>("myUser2", new User { Id = 12, Name = "Teddy" });
+            Assert.True(result);
+
+            result = await store.ReplaceItemAsync("myUser2", new User { Id = 2, Name = "James" });
             Assert.True(result);
 
             var user = store.GetItem("myUser2");
@@ -206,7 +265,7 @@ namespace JsonFlatFileDataStore.Test
             var user = store.GetItem("myUser2");
             Assert.Null(user);
 
-            var result = store.InserItem("myUser2", new { id = 12, name = "Teddy" });
+            var result = store.InsertItem("myUser2", new { id = 12, name = "Teddy" });
             Assert.True(result);
 
             user = store.GetItem("myUser2");

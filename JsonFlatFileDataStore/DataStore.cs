@@ -183,7 +183,11 @@ namespace JsonFlatFileDataStore
             return SinlgeDynamicItemReadConverter(token);
         }
 
-        public bool InserItem(string name, dynamic item)
+        public bool InsertItem<T>(string name, T item) => InsertItemPrivate(name, item);
+
+        public bool InsertItem(string name, dynamic item) => InsertItemPrivate(name, item);
+
+        private bool InsertItemPrivate<T>(string name, T item)
         {
             (bool, JObject) action()
             {
@@ -197,7 +201,11 @@ namespace JsonFlatFileDataStore
             return CommitSingle(name, action, false, SinlgeDynamicItemReadConverter).Result;
         }
 
-        public async Task<bool> InserItemAsync(string name, dynamic item)
+        public async Task<bool> InsertItemAsync<T>(string name, T item) => await InsertItemAsyncPrivate(name, item);
+
+        public async Task<bool> InsertItemAsync(string name, dynamic item) => await InsertItemAsyncPrivate(name, item);
+
+        private async Task<bool> InsertItemAsyncPrivate<T>(string name, T item)
         {
             (bool, JObject) action()
             {
@@ -211,7 +219,11 @@ namespace JsonFlatFileDataStore
             return await CommitSingle(name, action, true, SinlgeDynamicItemReadConverter);
         }
 
-        public bool ReplaceItem(string name, dynamic item, bool upsert = false)
+        public bool ReplaceItem<T>(string name, T item, bool upsert = false) => ReplaceItemPrivate(name, item, upsert);
+
+        public bool ReplaceItem(string name, dynamic item, bool upsert = false) => ReplaceItemPrivate(name, item, upsert);
+
+        private bool ReplaceItemPrivate<T>(string name, T item, bool upsert = false)
         {
             (bool, JObject) action()
             {
@@ -225,7 +237,11 @@ namespace JsonFlatFileDataStore
             return CommitSingle(name, action, false, SinlgeDynamicItemReadConverter).Result;
         }
 
-        public async Task<bool> ReplaceItemAsync(string name, dynamic item, bool upsert = false)
+        public async Task<bool> ReplaceItemAsync<T>(string name, T item, bool upsert = false) => await ReplaceItemAsyncPrivate(name, item, upsert);
+
+        public async Task<bool> ReplaceItemAsync(string name, dynamic item, bool upsert = false) => await ReplaceItemAsyncPrivate(name, item, upsert);
+
+        private async Task<bool> ReplaceItemAsyncPrivate<T>(string name, T item, bool upsert = false)
         {
             (bool, JObject) action()
             {
@@ -239,7 +255,11 @@ namespace JsonFlatFileDataStore
             return await CommitSingle(name, action, true, SinlgeDynamicItemReadConverter);
         }
 
-        public bool UpdateItem(string name, dynamic item)
+        public bool UpdateItem<T>(string name, T item) => UpdateItemPrivate(name, item);
+
+        public bool UpdateItem(string name, dynamic item) => UpdateItemPrivate(name, item);
+
+        private bool UpdateItemPrivate<T>(string name, T item)
         {
             (bool, JObject) action()
             {
