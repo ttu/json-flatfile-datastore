@@ -151,8 +151,26 @@ namespace JsonFlatFileDataStore
             }
         }
 
+        public T GetItem<T>(string name) => _jsonData[name].ToObject<T>();
+
+        public dynamic GetItem(string name)
+        {
+            var token = _jsonData[name];
+
+            try
+            {
+                // As we don't want to return JObject when using dynamic, JObject will be converted to ExpandoObject
+                return JsonConvert.DeserializeObject<ExpandoObject>(token.ToString(), _converter) as dynamic;
+            }
+            catch (Exception ex) when (ex is InvalidCastException)
+            {
+                return token.ToObject<object>();
+            }
+        }
+
         public IDocumentCollection<T> GetCollection<T>(string name = null) where T : class
         {
+            // NOTE 27.6.2017: Should this be new Func<JToken, T>(e => e.ToObject<T>())?
             var readConvert = new Func<JToken, T>(e => JsonConvert.DeserializeObject<T>(e.ToString()));
             var insertConvert = new Func<T, T>(e => e);
             var createNewInstance = new Func<T>(() => Activator.CreateInstance<T>());

@@ -39,7 +39,7 @@ namespace JsonFlatFileDataStore.Test
 
             var collections = store.ListCollections();
             Assert.Equal("user", collections.First());
-            Assert.Equal(3, collections.Count());
+            Assert.Equal(5, collections.Count());
 
             UTHelpers.Down(newFilePath);
         }
