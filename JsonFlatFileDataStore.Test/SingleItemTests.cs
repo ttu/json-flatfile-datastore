@@ -1,0 +1,229 @@
+﻿using System.Threading.Tasks;
+using Xunit;
+
+namespace JsonFlatFileDataStore.Test
+{
+    public class SingleItemTests
+    {
+        [Fact]
+        public void GetItem_DynamicAndTyped()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var itemDynamic = store.GetItem("myUser");
+            var itemTyped = store.GetItem<User>("myUser");
+
+            Assert.Equal("Hank", itemDynamic.name);
+            Assert.Equal("SF", itemDynamic.work.location);
+            Assert.Equal("Hank", itemTyped.Name);
+            Assert.Equal("SF", itemTyped.Work.Location);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public void GetItem_DynamicAndTyped_SimpleType()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var itemDynamic = store.GetItem("myValue");
+            var itemTyped = store.GetItem<double>("myValue");
+
+            Assert.Equal(2.1, itemDynamic);
+            Assert.Equal(2.1, itemTyped);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        // TODO: What should these return? Like in case of int that is not found?
+
+        //[Fact]
+        //public void NotFound_Exception()
+        //{
+        //    var newFilePath = UTHelpers.Up();
+
+        //    var store = new DataStore(newFilePath);
+
+        //    Assert.Throws<KeyNotFoundException>(() => store.GetItem("notFound"));
+        //    Assert.Throws<KeyNotFoundException>(() => store.GetItem<User>("notFound"));
+
+        //    UTHelpers.Down(newFilePath);
+        //}
+
+        [Fact]
+        public void InsertItem_TypedUser()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var result = store.InserItem("myUser2", new User { Id = 12, Name = "Teddy" });
+
+            Assert.True(result);
+
+            var user = store.GetItem<User>("myUser2");
+            Assert.Equal("Teddy", user.Name);
+
+            var store2 = new DataStore(newFilePath);
+
+            var user2 = store2.GetItem<User>("myUser2");
+            Assert.Equal("Teddy", user2.Name);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public void InsertItem_DynamicUser()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var result = store.InserItem("myUser2", new { id = 12, name = "Teddy" });
+
+            Assert.True(result);
+
+            var user = store.GetItem("myUser2");
+            Assert.Equal("Teddy", user.name);
+
+            var store2 = new DataStore(newFilePath);
+
+            var user2 = store2.GetItem("myUser2");
+            Assert.Equal("Teddy", user2.name);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public async Task UpdateItem_DynamicUser()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var result = await store.InserItemAsync("myUser2", new { id = 12, name = "Teddy" });
+
+            Assert.True(result);
+
+            var user = store.GetItem("myUser2");
+            Assert.Equal("Teddy", user.name);
+
+            var updateResult = await store.UpdateItemAsync("myUser2", new { name = "Harold" });
+
+            var store2 = new DataStore(newFilePath);
+
+            var user2 = store2.GetItem("myUser2");
+            Assert.Equal("Harold", user2.name);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public async Task DeleteItem_DynamicUser_NotFound()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath, reloadBeforeGetCollection: true);
+
+            var result = await store.DeleteItemAsync("myUser2");
+            Assert.False(result);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public async Task UpdateItem_DynamicUser_NotFound()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath, reloadBeforeGetCollection: true);
+
+            var result = await store.UpdateItemAsync("myUser2", new { name = "James" });
+            Assert.False(result);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public async Task ReplaceItem_DynamicUser_NotFound()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath, reloadBeforeGetCollection: true);
+
+            var result = await store.ReplaceItemAsync("myUser2", new { id = 2, name = "James" });
+            Assert.False(result);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public async Task ReplaceItem_DynamicUser_Upsert()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath, reloadBeforeGetCollection: true);
+
+            var result = await store.ReplaceItemAsync("myUser2", new { id = 2, name = "James" }, true);
+            Assert.True(result);
+
+            var user = store.GetItem("myUser2");
+            Assert.Equal("James", user.name);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public async Task ReplaceItem_DynamicUser()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath, reloadBeforeGetCollection: true);
+
+            var result = store.InserItem("myUser2", new { id = 12, name = "Teddy" });
+            Assert.True(result);
+
+            result = await store.ReplaceItemAsync("myUser2", new { id = 2, name = "James" }, true);
+            Assert.True(result);
+
+            var user = store.GetItem("myUser2");
+            Assert.Equal("James", user.name);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public void DeleteItem_DynamicUser()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath, reloadBeforeGetCollection: true);
+
+            var user = store.GetItem("myUser2");
+            Assert.Null(user);
+
+            var result = store.InserItem("myUser2", new { id = 12, name = "Teddy" });
+            Assert.True(result);
+
+            user = store.GetItem("myUser2");
+            Assert.Equal("Teddy", user.name);
+
+            var store2 = new DataStore(newFilePath);
+
+            var deleteResult = store2.DeleteItem("myUser2");
+            Assert.True(deleteResult);
+
+            var user2 = store2.GetItem("myUser2");
+            Assert.Null(user2);
+
+            user = store.GetItem("myUser2");
+            Assert.Null(user);
+
+            UTHelpers.Down(newFilePath);
+        }
+    }
+}

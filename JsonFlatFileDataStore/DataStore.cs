@@ -151,20 +151,160 @@ namespace JsonFlatFileDataStore
             }
         }
 
-        public T GetItem<T>(string name) => _jsonData[name].ToObject<T>();
+        public T GetItem<T>(string name)
+        {
+            if (_reloadBeforeGetCollection)
+            {
+                // This might be a bad idea especially if the file is in use, as this can take a long time
+                _jsonData = JObject.Parse(ReadJsonFromFile(_filePath));
+            }
+
+            var token = _jsonData[name];
+
+            if (token == null)
+                throw new KeyNotFoundException();
+
+            return token.ToObject<T>();
+        }
 
         public dynamic GetItem(string name)
         {
+            if (_reloadBeforeGetCollection)
+            {
+                // This might be a bad idea especially if the file is in use, as this can take a long time
+                _jsonData = JObject.Parse(ReadJsonFromFile(_filePath));
+            }
+
             var token = _jsonData[name];
 
+            if (token == null)
+                return null;
+
+            return SinlgeDynamicItemReadConverter(token);
+        }
+
+        public bool InserItem(string name, dynamic item)
+        {
+            (bool, JObject) action()
+            {
+                if (_jsonData[name] != null)
+                    return (false, _jsonData);
+
+                _jsonData[name] = JObject.FromObject(item);
+                return (true, _jsonData);
+            }
+
+            return CommitSingle(name, action, false, SinlgeDynamicItemReadConverter).Result;
+        }
+
+        public async Task<bool> InserItemAsync(string name, dynamic item)
+        {
+            (bool, JObject) action()
+            {
+                if (_jsonData[name] != null)
+                    return (false, _jsonData);
+
+                _jsonData[name] = JObject.FromObject(item);
+                return (true, _jsonData);
+            }
+
+            return await CommitSingle(name, action, true, SinlgeDynamicItemReadConverter);
+        }
+
+        public bool ReplaceItem(string name, dynamic item, bool upsert = false)
+        {
+            (bool, JObject) action()
+            {
+                if (_jsonData[name] == null && upsert == false)
+                    return (false, _jsonData);
+
+                _jsonData[name] = JObject.FromObject(item);
+                return (true, _jsonData);
+            }
+
+            return CommitSingle(name, action, false, SinlgeDynamicItemReadConverter).Result;
+        }
+
+        public async Task<bool> ReplaceItemAsync(string name, dynamic item, bool upsert = false)
+        {
+            (bool, JObject) action()
+            {
+                if (_jsonData[name] == null && upsert == false)
+                    return (false, _jsonData);
+
+                _jsonData[name] = JObject.FromObject(item);
+                return (true, _jsonData);
+            }
+
+            return await CommitSingle(name, action, true, SinlgeDynamicItemReadConverter);
+        }
+
+        public bool UpdateItem(string name, dynamic item)
+        {
+            (bool, JObject) action()
+            {
+                if (_jsonData[name] == null)
+                    return (false, _jsonData);
+
+                var toUpdate = SinlgeDynamicItemReadConverter(_jsonData[name]);
+                ObjectExtensions.CopyProperties(item, toUpdate);
+                _jsonData[name] = JObject.FromObject(toUpdate);
+
+                return (true, _jsonData);
+            }
+
+            return CommitSingle(name, action, false, SinlgeDynamicItemReadConverter).Result;
+        }
+
+        public async Task<bool> UpdateItemAsync(string name, dynamic item)
+        {
+            (bool, JObject) action()
+            {
+                if (_jsonData[name] == null)
+                    return (false, _jsonData);
+
+                var toUpdate = SinlgeDynamicItemReadConverter(_jsonData[name]);
+                ObjectExtensions.CopyProperties(item, toUpdate);
+                _jsonData[name] = JObject.FromObject(toUpdate);
+
+                return (true, _jsonData);
+            }
+
+            return await CommitSingle(name, action, true, SinlgeDynamicItemReadConverter);
+        }
+
+        public bool DeleteItem(string name)
+        {
+            (bool, JObject) action()
+            {
+                var result = _jsonData.Remove(name);
+                return (result, _jsonData);
+            }
+
+            return CommitSingle(name, action, false, SinlgeDynamicItemReadConverter).Result;
+        }
+
+        public async Task<bool> DeleteItemAsync(string name)
+        {
+            (bool, JObject) action()
+            {
+                var result = _jsonData.Remove(name);
+                return (result, _jsonData);
+            }
+
+            return await CommitSingle(name, action, true, SinlgeDynamicItemReadConverter);
+        }
+
+        private dynamic SinlgeDynamicItemReadConverter(JToken e)
+        {
             try
             {
                 // As we don't want to return JObject when using dynamic, JObject will be converted to ExpandoObject
-                return JsonConvert.DeserializeObject<ExpandoObject>(token.ToString(), _converter) as dynamic;
+                return JsonConvert.DeserializeObject<ExpandoObject>(e.ToString(), _converter) as dynamic;
             }
             catch (Exception ex) when (ex is InvalidCastException)
             {
-                return token.ToObject<object>();
+                return e.ToObject<object>();
             }
         }
 
@@ -190,6 +330,7 @@ namespace JsonFlatFileDataStore
 
         public IEnumerable<string> ListCollections()
         {
+            // NOTE 27.6.2017: Should this just list collections or single items as well?
             lock (_jsonData)
             {
                 return _jsonData.Children().Select(c => c.Path);
@@ -223,6 +364,44 @@ namespace JsonFlatFileDataStore
                 _keyProperty,
                 insertConvert,
                 createNewInstance);
+        }
+
+        // TODO 27.6.2017: Combine CommitSingle and Commit
+        private async Task<bool> CommitSingle<T>(string dataPath, Func<(bool, JObject)> commitOperation, bool isOperationAsync, Func<JToken, T> readConvert)
+        {
+            var commitAction = new CommitAction();
+
+            commitAction.HandleAction = new Func<JObject, (bool success, string json)>(currentJson =>
+            {
+                var (success, newJson) = commitOperation();
+                return success ? (true, _toJsonFunc(newJson)) : (false, string.Empty);
+            });
+
+            bool waitFlag = true;
+            bool actionSuccess = false;
+            Exception actionException = null;
+
+            commitAction.Ready = new Action<bool, Exception>((isSuccess, exception) =>
+            {
+                actionSuccess = isSuccess;
+                actionException = exception;
+                waitFlag = false;
+            });
+
+            _updates.Add(commitAction);
+
+            while (waitFlag)
+            {
+                if (isOperationAsync)
+                    await Task.Delay(5).ConfigureAwait(false);
+                else
+                    Task.Delay(5).Wait();
+            }
+
+            if (actionException != null)
+                throw actionException;
+
+            return actionSuccess;
         }
 
         private async Task<bool> Commit<T>(string dataPath, Func<List<T>, bool> commitOperation, bool isOperationAsync, Func<JToken, T> readConvert)
