@@ -194,7 +194,7 @@ namespace JsonFlatFileDataStore
                 if (_jsonData[name] != null)
                     return (false, _jsonData);
 
-                _jsonData[name] = JObject.FromObject(item);
+                _jsonData[name] = JToken.FromObject(item);
                 return (true, _jsonData);
             }
 
@@ -212,7 +212,7 @@ namespace JsonFlatFileDataStore
                 if (_jsonData[name] != null)
                     return (false, _jsonData);
 
-                _jsonData[name] = JObject.FromObject(item);
+                _jsonData[name] = JToken.FromObject(item);
                 return (true, _jsonData);
             }
 
@@ -230,7 +230,7 @@ namespace JsonFlatFileDataStore
                 if (_jsonData[name] == null && upsert == false)
                     return (false, _jsonData);
 
-                _jsonData[name] = JObject.FromObject(item);
+                _jsonData[name] = JToken.FromObject(item);
                 return (true, _jsonData);
             }
 
@@ -248,7 +248,7 @@ namespace JsonFlatFileDataStore
                 if (_jsonData[name] == null && upsert == false)
                     return (false, _jsonData);
 
-                _jsonData[name] = JObject.FromObject(item);
+                _jsonData[name] = JToken.FromObject(item);
                 return (true, _jsonData);
             }
 
@@ -267,8 +267,17 @@ namespace JsonFlatFileDataStore
                     return (false, _jsonData);
 
                 var toUpdate = SinlgeDynamicItemReadConverter(_jsonData[name]);
-                ObjectExtensions.CopyProperties(item, toUpdate);
-                _jsonData[name] = JObject.FromObject(toUpdate);
+
+                if (ObjectExtensions.IsReferenceType(item) && ObjectExtensions.IsReferenceType(toUpdate))
+                {
+                    ObjectExtensions.CopyProperties(item, toUpdate);
+                    _jsonData[name] = JToken.FromObject(toUpdate);
+                }
+                else
+                {
+                    _jsonData[name] = JToken.FromObject(item);
+                }
+
 
                 return (true, _jsonData);
             }
@@ -276,7 +285,11 @@ namespace JsonFlatFileDataStore
             return CommitSingle(name, action, false, SinlgeDynamicItemReadConverter).Result;
         }
 
-        public async Task<bool> UpdateItemAsync(string name, dynamic item)
+        public async Task<bool> UpdateItemAsync<T>(string name, T item) => await UpdateItemAsyncPrivate(name, item);
+
+        public async Task<bool> UpdateItemAsync(string name, dynamic item) => await UpdateItemAsyncPrivate(name, item);
+
+        private async Task<bool> UpdateItemAsyncPrivate<T>(string name, T item)
         {
             (bool, JObject) action()
             {
@@ -284,8 +297,16 @@ namespace JsonFlatFileDataStore
                     return (false, _jsonData);
 
                 var toUpdate = SinlgeDynamicItemReadConverter(_jsonData[name]);
-                ObjectExtensions.CopyProperties(item, toUpdate);
-                _jsonData[name] = JObject.FromObject(toUpdate);
+
+                if (ObjectExtensions.IsReferenceType(item) && ObjectExtensions.IsReferenceType(toUpdate))
+                {
+                    ObjectExtensions.CopyProperties(item, toUpdate);
+                    _jsonData[name] = JToken.FromObject(toUpdate);
+                }
+                else
+                {
+                    _jsonData[name] = JToken.FromObject(item);
+                }
 
                 return (true, _jsonData);
             }

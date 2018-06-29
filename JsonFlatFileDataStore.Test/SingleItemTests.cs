@@ -62,7 +62,6 @@ namespace JsonFlatFileDataStore.Test
             var store = new DataStore(newFilePath);
 
             var result = store.InsertItem("myUser2", new User { Id = 12, Name = "Teddy" });
-
             Assert.True(result);
 
             var user = store.GetItem<User>("myUser2");
@@ -84,7 +83,6 @@ namespace JsonFlatFileDataStore.Test
             var store = new DataStore(newFilePath);
 
             var result = store.InsertItem("myUser2", new { id = 12, name = "Teddy" });
-
             Assert.True(result);
 
             var user = store.GetItem("myUser2");
@@ -106,7 +104,6 @@ namespace JsonFlatFileDataStore.Test
             var store = new DataStore(newFilePath);
 
             var result = await store.InsertItemAsync("myUser2", new { id = 12, name = "Teddy" });
-
             Assert.True(result);
 
             var user = store.GetItem("myUser2");
@@ -130,7 +127,6 @@ namespace JsonFlatFileDataStore.Test
             var store = new DataStore(newFilePath);
 
             var result = await store.InsertItemAsync("myUser2", new User { Id = 12, Name = "Teddy" });
-
             Assert.True(result);
 
             var user = store.GetItem<User>("myUser2");
@@ -142,6 +138,63 @@ namespace JsonFlatFileDataStore.Test
 
             var user2 = store2.GetItem<User>("myUser2");
             Assert.Equal("Harold", user2.Name);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public async Task UpdateItem_ValueType()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var result = await store.InsertItemAsync("counter", 2);
+            Assert.True(result);
+
+            var counter = store.GetItem<int>("counter");
+            Assert.Equal(2, counter);
+
+            var updateResult = await store.UpdateItemAsync("counter", "2");
+            Assert.True(result);
+
+            var store2 = new DataStore(newFilePath);
+
+            var c2 = store2.GetItem("counter");
+            Assert.Equal("2", c2);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public async Task ReplaceItem_ValueType()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var result = await store.ReplaceItemAsync("counter", 2);
+            Assert.False(result);
+
+            result = await store.ReplaceItemAsync("counter", 2, true);
+            Assert.True(result);
+
+            var counter = store.GetItem<int>("counter");
+            Assert.Equal(2, counter);
+
+            var updateResult = await store.ReplaceItemAsync<string>("counter", "2");
+            Assert.True(result);
+
+            var store2 = new DataStore(newFilePath);
+
+            var c2 = store2.GetItem("counter");
+            Assert.Equal("2", c2);
+
+            updateResult = await store2.ReplaceItemAsync("counter", "4");
+            Assert.True(result);
+
+            c2 = store2.GetItem("counter");
+            Assert.Equal("4", c2);
 
             UTHelpers.Down(newFilePath);
         }
