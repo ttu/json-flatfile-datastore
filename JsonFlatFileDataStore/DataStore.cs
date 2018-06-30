@@ -151,7 +151,7 @@ namespace JsonFlatFileDataStore
             }
         }
 
-        public T GetItem<T>(string name)
+        public T GetItem<T>(string key)
         {
             if (_reloadBeforeGetCollection)
             {
@@ -159,7 +159,7 @@ namespace JsonFlatFileDataStore
                 _jsonData = JObject.Parse(ReadJsonFromFile(_filePath));
             }
 
-            var token = _jsonData[name];
+            var token = _jsonData[key];
 
             if (token == null)
                 throw new KeyNotFoundException();
@@ -167,7 +167,7 @@ namespace JsonFlatFileDataStore
             return token.ToObject<T>();
         }
 
-        public dynamic GetItem(string name)
+        public dynamic GetItem(string key)
         {
             if (_reloadBeforeGetCollection)
             {
@@ -175,7 +175,7 @@ namespace JsonFlatFileDataStore
                 _jsonData = JObject.Parse(ReadJsonFromFile(_filePath));
             }
 
-            var token = _jsonData[name];
+            var token = _jsonData[key];
 
             if (token == null)
                 return null;
@@ -183,133 +183,133 @@ namespace JsonFlatFileDataStore
             return SinlgeDynamicItemReadConverter(token);
         }
 
-        public bool InsertItem<T>(string name, T item)
+        public bool InsertItem<T>(string key, T item)
         {
             (bool, JObject) action()
             {
-                if (_jsonData[name] != null)
+                if (_jsonData[key] != null)
                     return (false, _jsonData);
 
-                _jsonData[name] = JToken.FromObject(item);
+                _jsonData[key] = JToken.FromObject(item);
                 return (true, _jsonData);
             }
 
-            return CommitSingle(name, action, false, SinlgeDynamicItemReadConverter).Result;
+            return CommitSingle(key, action, false, SinlgeDynamicItemReadConverter).Result;
         }
 
-        public async Task<bool> InsertItemAsync<T>(string name, T item)
+        public async Task<bool> InsertItemAsync<T>(string key, T item)
         {
             (bool, JObject) action()
             {
-                if (_jsonData[name] != null)
+                if (_jsonData[key] != null)
                     return (false, _jsonData);
 
-                _jsonData[name] = JToken.FromObject(item);
+                _jsonData[key] = JToken.FromObject(item);
                 return (true, _jsonData);
             }
 
-            return await CommitSingle(name, action, true, SinlgeDynamicItemReadConverter);
+            return await CommitSingle(key, action, true, SinlgeDynamicItemReadConverter);
         }
 
-        public bool ReplaceItem<T>(string name, T item, bool upsert = false)
+        public bool ReplaceItem<T>(string key, T item, bool upsert = false)
         {
             (bool, JObject) action()
             {
-                if (_jsonData[name] == null && upsert == false)
+                if (_jsonData[key] == null && upsert == false)
                     return (false, _jsonData);
 
-                _jsonData[name] = JToken.FromObject(item);
+                _jsonData[key] = JToken.FromObject(item);
                 return (true, _jsonData);
             }
 
-            return CommitSingle(name, action, false, SinlgeDynamicItemReadConverter).Result;
+            return CommitSingle(key, action, false, SinlgeDynamicItemReadConverter).Result;
         }
 
-        public async Task<bool> ReplaceItemAsync<T>(string name, T item, bool upsert = false)
+        public async Task<bool> ReplaceItemAsync<T>(string key, T item, bool upsert = false)
         {
             (bool, JObject) action()
             {
-                if (_jsonData[name] == null && upsert == false)
+                if (_jsonData[key] == null && upsert == false)
                     return (false, _jsonData);
 
-                _jsonData[name] = JToken.FromObject(item);
+                _jsonData[key] = JToken.FromObject(item);
                 return (true, _jsonData);
             }
 
-            return await CommitSingle(name, action, true, SinlgeDynamicItemReadConverter);
+            return await CommitSingle(key, action, true, SinlgeDynamicItemReadConverter);
         }
 
-        public bool UpdateItem<T>(string name, T item)
+        public bool UpdateItem(string key, dynamic item)
         {
             (bool, JObject) action()
             {
-                if (_jsonData[name] == null)
+                if (_jsonData[key] == null)
                     return (false, _jsonData);
 
-                var toUpdate = SinlgeDynamicItemReadConverter(_jsonData[name]);
+                var toUpdate = SinlgeDynamicItemReadConverter(_jsonData[key]);
 
                 if (ObjectExtensions.IsReferenceType(item) && ObjectExtensions.IsReferenceType(toUpdate))
                 {
                     ObjectExtensions.CopyProperties(item, toUpdate);
-                    _jsonData[name] = JToken.FromObject(toUpdate);
+                    _jsonData[key] = JToken.FromObject(toUpdate);
                 }
                 else
                 {
-                    _jsonData[name] = JToken.FromObject(item);
+                    _jsonData[key] = JToken.FromObject(item);
                 }
 
 
                 return (true, _jsonData);
             }
 
-            return CommitSingle(name, action, false, SinlgeDynamicItemReadConverter).Result;
+            return CommitSingle(key, action, false, SinlgeDynamicItemReadConverter).Result;
         }
 
-        public async Task<bool> UpdateItemAsync<T>(string name, T item)
+        public async Task<bool> UpdateItemAsync(string key, dynamic item)
         {
             (bool, JObject) action()
             {
-                if (_jsonData[name] == null)
+                if (_jsonData[key] == null)
                     return (false, _jsonData);
 
-                var toUpdate = SinlgeDynamicItemReadConverter(_jsonData[name]);
+                var toUpdate = SinlgeDynamicItemReadConverter(_jsonData[key]);
 
                 if (ObjectExtensions.IsReferenceType(item) && ObjectExtensions.IsReferenceType(toUpdate))
                 {
                     ObjectExtensions.CopyProperties(item, toUpdate);
-                    _jsonData[name] = JToken.FromObject(toUpdate);
+                    _jsonData[key] = JToken.FromObject(toUpdate);
                 }
                 else
                 {
-                    _jsonData[name] = JToken.FromObject(item);
+                    _jsonData[key] = JToken.FromObject(item);
                 }
 
                 return (true, _jsonData);
             }
 
-            return await CommitSingle(name, action, true, SinlgeDynamicItemReadConverter);
+            return await CommitSingle(key, action, true, SinlgeDynamicItemReadConverter);
         }
 
-        public bool DeleteItem(string name)
+        public bool DeleteItem(string key)
         {
             (bool, JObject) action()
             {
-                var result = _jsonData.Remove(name);
+                var result = _jsonData.Remove(key);
                 return (result, _jsonData);
             }
 
-            return CommitSingle(name, action, false, SinlgeDynamicItemReadConverter).Result;
+            return CommitSingle(key, action, false, SinlgeDynamicItemReadConverter).Result;
         }
 
-        public async Task<bool> DeleteItemAsync(string name)
+        public async Task<bool> DeleteItemAsync(string key)
         {
             (bool, JObject) action()
             {
-                var result = _jsonData.Remove(name);
+                var result = _jsonData.Remove(key);
                 return (result, _jsonData);
             }
 
-            return await CommitSingle(name, action, true, SinlgeDynamicItemReadConverter);
+            return await CommitSingle(key, action, true, SinlgeDynamicItemReadConverter);
         }
 
         private dynamic SinlgeDynamicItemReadConverter(JToken e)
