@@ -72,6 +72,9 @@ namespace JsonFlatFileDataStore.Test
             var user2 = store2.GetItem<User>("myUser2");
             Assert.Equal("Teddy", user2.Name);
 
+            var userDyanmic = store2.GetItem("myUser2");
+            Assert.Equal("Teddy", userDyanmic.name);
+
             UTHelpers.Down(newFilePath);
         }
 
