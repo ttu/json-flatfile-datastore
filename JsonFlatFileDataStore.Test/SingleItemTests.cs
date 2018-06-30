@@ -79,13 +79,13 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void InsertItem_DynamicUser()
+        public async Task InsertItem_DynamicUser()
         {
             var newFilePath = UTHelpers.Up();
 
             var store = new DataStore(newFilePath);
 
-            var result = store.InsertItem("myUser2", new { id = 12, name = "Teddy" });
+            var result = await store.InsertItemAsync("myUser2", new { id = 12, name = "Teddy" });
             Assert.True(result);
 
             var user = store.GetItem("myUser2");

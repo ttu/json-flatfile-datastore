@@ -183,7 +183,11 @@ namespace JsonFlatFileDataStore
             return SingleDynamicItemReadConverter(token);
         }
 
-        public bool InsertItem<T>(string key, T item)
+        public bool InsertItem<T>(string key, T item) => Insert(key, item).Result;
+
+        public async Task<bool> InsertItemAsync<T>(string key, T item) => await Insert(key, item);
+
+        private Task<bool> Insert<T>(string key, T item)
         {
             (bool, JObject) UpdateAction()
             {
@@ -194,24 +198,14 @@ namespace JsonFlatFileDataStore
                 return (true, _jsonData);
             }
 
-            return CommitItem(UpdateAction, false).Result;
+            return CommitItem(UpdateAction, true);
         }
 
-        public async Task<bool> InsertItemAsync<T>(string key, T item)
-        {
-            (bool, JObject) UpdateAction()
-            {
-                if (_jsonData[key] != null)
-                    return (false, _jsonData);
+        public bool ReplaceItem<T>(string key, T item, bool upsert = false) => Replace(key, item, upsert).Result;
 
-                _jsonData[key] = JToken.FromObject(item);
-                return (true, _jsonData);
-            }
+        public async Task<bool> ReplaceItemAsync<T>(string key, T item, bool upsert = false) => await Replace(key, item, upsert);
 
-            return await CommitItem(UpdateAction, true);
-        }
-
-        public bool ReplaceItem<T>(string key, T item, bool upsert = false)
+        private Task<bool> Replace<T>(string key, T item, bool upsert = false)
         {
             (bool, JObject) UpdateAction()
             {
@@ -222,24 +216,14 @@ namespace JsonFlatFileDataStore
                 return (true, _jsonData);
             }
 
-            return CommitItem(UpdateAction, false).Result;
+            return CommitItem(UpdateAction, true);
         }
 
-        public async Task<bool> ReplaceItemAsync<T>(string key, T item, bool upsert = false)
-        {
-            (bool, JObject) UpdateAction()
-            {
-                if (_jsonData[key] == null && upsert == false)
-                    return (false, _jsonData);
+        public bool UpdateItem(string key, dynamic item) => Update(key, item).Result;
 
-                _jsonData[key] = JToken.FromObject(item);
-                return (true, _jsonData);
-            }
+        public async Task<bool> UpdateItemAsync(string key, dynamic item) => await Update(key, item);
 
-            return await CommitItem(UpdateAction, true);
-        }
-
-        public bool UpdateItem(string key, dynamic item)
+        private Task<bool> Update(string key, dynamic item)
         {
             (bool, JObject) UpdateAction()
             {
@@ -261,35 +245,14 @@ namespace JsonFlatFileDataStore
                 return (true, _jsonData);
             }
 
-            return CommitItem(UpdateAction, false).Result;
+            return CommitItem(UpdateAction, true);
         }
 
-        public async Task<bool> UpdateItemAsync(string key, dynamic item)
-        {
-            (bool, JObject) UpdateAction()
-            {
-                if (_jsonData[key] == null)
-                    return (false, _jsonData);
+        public bool DeleteItem(string key) => Delete(key).Result;
 
-                var toUpdate = SingleDynamicItemReadConverter(_jsonData[key]);
+        public async Task<bool> DeleteItemAsync(string key) => await Delete(key);
 
-                if (ObjectExtensions.IsReferenceType(item) && ObjectExtensions.IsReferenceType(toUpdate))
-                {
-                    ObjectExtensions.CopyProperties(item, toUpdate);
-                    _jsonData[key] = JToken.FromObject(toUpdate);
-                }
-                else
-                {
-                    _jsonData[key] = JToken.FromObject(item);
-                }
-
-                return (true, _jsonData);
-            }
-
-            return await CommitItem(UpdateAction, true);
-        }
-
-        public bool DeleteItem(string key)
+        private Task<bool> Delete(string key)
         {
             (bool, JObject) UpdateAction()
             {
@@ -297,18 +260,7 @@ namespace JsonFlatFileDataStore
                 return (result, _jsonData);
             }
 
-            return CommitItem(UpdateAction, false).Result;
-        }
-
-        public async Task<bool> DeleteItemAsync(string key)
-        {
-            (bool, JObject) UpdateAction()
-            {
-                var result = _jsonData.Remove(key);
-                return (result, _jsonData);
-            }
-
-            return await CommitItem(UpdateAction, true);
+            return CommitItem(UpdateAction, false);
         }
 
         public IDocumentCollection<T> GetCollection<T>(string name = null) where T : class
