@@ -100,7 +100,7 @@ namespace JsonFlatFileDataStore
         Task<bool> ReplaceManyAsync(Predicate<T> filter, T item);
 
         /// <summary>
-        /// Update the first item matcheing the filter
+        /// Update the first item matching the filter
         /// </summary>
         /// <param name="filter">First item matcheíng the predicate will be replaced</param>
         /// <param name="item">New content</param>
@@ -132,7 +132,7 @@ namespace JsonFlatFileDataStore
         Task<bool> UpdateManyAsync(Predicate<T> filter, dynamic item);
 
         /// <summary>
-        /// Delete first item matchesing the filter
+        /// Delete first item matching the filter
         /// </summary>
         /// <param name="filter">First item matching the predicate will be deleted</param>
         /// <returns>true if items found for deletion</returns>
