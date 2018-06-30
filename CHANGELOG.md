@@ -1,7 +1,7 @@
 # Changelog
 
 ### [Unreleased]
-* Replace Func delegates from DocumentCollection methods with local functions
+* Support for single items
 
 ### [1.8.0] - 2017-11-22
 * DataStore to implement IDisposable

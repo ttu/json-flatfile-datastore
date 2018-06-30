@@ -68,6 +68,13 @@ await collection.UpdateOneAsync(e => e.Id == employee.Id, employee);
 
 // Use LINQ to query items
 var results = collection.AsQueryable().Where(e => e.Age > 30);
+
+// Save instance as a single item
+await store.InsertItemAsync("selected_employee", employee);
+
+// Single items can be of any type
+await store.InsertItemAsync("counter", 1);
+var counter = awaite store.GetItem<int>("counter");
 ```
 
 ##### Dynamically typed data
@@ -120,6 +127,8 @@ var results = collection.AsQueryable().Where(x => x.age > 30);
 
 ## Functionality
 
+### Collections
+
 Example user collection in JSON:
 
 ```json
@@ -153,7 +162,6 @@ var userDynamic = collection
 `AsQueryable` LINQ query with typed data:
 
 ```csharp
-
 var store = new DataStore(pathToJson);
 
 var collection = store.GetCollection<User>();
@@ -387,7 +395,7 @@ await collection.DeleteManyAsync(e => e.city == "NY");
 await collection.DeleteManyAsync(e => e.City == "NY");
 ```
 
-### Id-field value
+#### Id-field value
 
 
 If incrementing Id-field values is used, `GetNextIdValue` returns next Id-field value. If Id-property is integer, last item's value is incremented by one. If field is not an integer, it is converted to a string and number is parsed from the end of the string and incremented by one.
@@ -409,6 +417,84 @@ collection.InsertOne(new { myId = "hello3" });
 // nextId = "hello4"
 var nextId = collection.GetNextIdValue();
 ``` 
+
+### Single item
+
+```json
+{
+  "selected_user": { "id": 1, "name": "Phil", "age": 40, "city": "NY" },
+  "temperature": 23.45,
+  "note": "this is a test"
+}
+```
+
+Data store supports single items. Items can be value and reference types. Single item supports dynamic and typed data.
+
+Single item's support same methods as Collections (_Get_, _Insert_, _Replace_, _Update_, _Delete_). 
+
+#### Get
+
+```csharp
+var store = new DataStore(pathToJson);
+// Typed data
+var counter = store.GetItem<int>("counter");
+// Dynamic data
+var counter = store.GetItem("myUser");
+```
+
+#### Insert
+
+`InsertItem` and `InsertItemAsync` will insert a new item to the JSON. Method returns true if insert was successful.
+
+```csharp
+// Value type
+var result = await store.InsertItemAsync("counter", 2);
+// Reference type
+var user = new User { Id = 12, Name = "Teddy" }
+var result = await store.InsertItemAsync<User>("myUser", user);
+```
+
+
+#### Replace
+
+`ReplaceItem` and `ReplaceItemAsync` will replace the item with the key. Method will return true if item is found with the key.
+
+```csharp
+// Value type
+var result = await store.ReplaceItemAsync("counter", 4);
+// Reference type
+var result = await store.ReplaceItemAsync("myUser", new User { Id = 2, Name = "James" });
+```
+
+`ReplaceSingleItem` and `ReplaceSingleItem` have an upsert option. If the item to replace doesn't exists in the data store, new item will be inserted.
+```csharp
+// Value type
+var result = await store.ReplaceItemAsync("counter", 4, true);
+// Reference type
+var result = await store.ReplaceItemAsync("myUser", new User { Id = 2, Name = "James" }, true);
+```
+
+#### Update
+
+`UpdateItem` and `UpdateItemAsync` will update the first item that matches the filter with passed properties from dynamic object. Dynamic object can be an __Anonymous type__ or an __ExpandoObject__. Method will return true if item is found with the key.
+
+```csharp
+// Value type
+var result = await store.UpdateItemAsync("counter", 2);
+// Reference type
+var result = await store.UpdateItemAsync("myUser", new { name = "Harold" });
+```
+
+#### Delete
+
+`DeleteItem` and `DeleteItemAsync` will remove the item that matches the key. Method returns true if item is found and deleted with the key.
+
+```csharp
+// Sync
+var result = store.DeleteItem("counter");
+// Async
+var result = await store.DeleteItemAsync("counter");
+```
 
 ## DataStore and Collection lifecycle
 
