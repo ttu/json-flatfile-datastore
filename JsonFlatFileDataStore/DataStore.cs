@@ -311,19 +311,6 @@ namespace JsonFlatFileDataStore
             return await CommitItem(UpdateAction, true);
         }
 
-        private dynamic SingleDynamicItemReadConverter(JToken e)
-        {
-            try
-            {
-                // As we don't want to return JObject when using dynamic, JObject will be converted to ExpandoObject
-                return JsonConvert.DeserializeObject<ExpandoObject>(e.ToString(), _converter) as dynamic;
-            }
-            catch (Exception ex) when (ex is InvalidCastException)
-            {
-                return e.ToObject<object>();
-            }
-        }
-
         public IDocumentCollection<T> GetCollection<T>(string name = null) where T : class
         {
             // NOTE 27.6.2017: Should this be new Func<JToken, T>(e => e.ToObject<T>())?
@@ -450,6 +437,19 @@ namespace JsonFlatFileDataStore
                 throw actionException;
 
             return actionSuccess;
+        }
+
+        private dynamic SingleDynamicItemReadConverter(JToken e)
+        {
+            try
+            {
+                // As we don't want to return JObject when using dynamic, JObject will be converted to ExpandoObject
+                return JsonConvert.DeserializeObject<ExpandoObject>(e.ToString(), _converter) as dynamic;
+            }
+            catch (Exception ex) when (ex is InvalidCastException)
+            {
+                return e.ToObject<object>();
+            }
         }
 
         private string ReadJsonFromFile(string path)
