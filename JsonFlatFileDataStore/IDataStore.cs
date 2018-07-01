@@ -34,7 +34,7 @@ namespace JsonFlatFileDataStore
         /// </summary>
         /// <param name="typeToGet">Item type to get</param>
         /// <returns>Dictionary of keys and item value type</returns>
-        IDictionary<string, KeyValueType> GetKeys(KeyValueType? typeToGet = null);
+        IDictionary<string, ValueType> GetKeys(ValueType? typeToGet = null);
 
         /// <summary>
         /// List collections
@@ -138,7 +138,7 @@ namespace JsonFlatFileDataStore
         Task<bool> DeleteItemAsync(string key);
     }
 
-    public enum KeyValueType
+    public enum ValueType
     {
         Collection,
         Item

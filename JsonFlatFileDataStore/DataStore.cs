@@ -283,7 +283,7 @@ namespace JsonFlatFileDataStore
             return GetCollection(name, readConvert, insertConvert, createNewInstance);
         }
 
-        public IDictionary<string, KeyValueType> GetKeys(KeyValueType? typeToGet = null)
+        public IDictionary<string, ValueType> GetKeys(ValueType? typeToGet = null)
         {
             lock (_jsonData)
             {
@@ -291,17 +291,17 @@ namespace JsonFlatFileDataStore
                 {
                     case null:
                         return _jsonData.Children()
-                                        .ToDictionary(c => c.Path, c => c.Children().FirstOrDefault() is JArray ? KeyValueType.Collection : KeyValueType.Item);
+                                        .ToDictionary(c => c.Path, c => c.Children().FirstOrDefault() is JArray ? ValueType.Collection : ValueType.Item);
 
-                    case KeyValueType.Collection:
+                    case ValueType.Collection:
                         return _jsonData.Children()
                                         .Where(c => c.Children().FirstOrDefault() is JArray)
-                                        .ToDictionary(c => c.Path, c => KeyValueType.Collection);
+                                        .ToDictionary(c => c.Path, c => ValueType.Collection);
 
-                    case KeyValueType.Item:
+                    case ValueType.Item:
                         return _jsonData.Children()
                                         .Where(c => c.Children().FirstOrDefault()?.GetType() != typeof(JArray))
-                                        .ToDictionary(c => c.Path, c => KeyValueType.Item);
+                                        .ToDictionary(c => c.Path, c => ValueType.Item);
 
                     default:
                         throw new NotSupportedException();

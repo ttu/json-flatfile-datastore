@@ -51,7 +51,7 @@ namespace JsonFlatFileDataStore.Test
 
             var store = new DataStore(newFilePath);
 
-            var collections = store.GetKeys(KeyValueType.Collection);
+            var collections = store.GetKeys(ValueType.Collection);
             Assert.Equal("user", collections.First().Key);
             Assert.Equal(3, collections.Count());
 
@@ -65,7 +65,7 @@ namespace JsonFlatFileDataStore.Test
 
             var store = new DataStore(newFilePath);
 
-            var collections = store.GetKeys(KeyValueType.Item);
+            var collections = store.GetKeys(ValueType.Item);
             Assert.Equal("myValue", collections.First().Key);
             Assert.Equal(2, collections.Count());
 
