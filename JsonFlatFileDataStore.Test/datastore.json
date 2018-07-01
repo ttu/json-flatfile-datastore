@@ -1628,5 +1628,16 @@
       },
       "notes": "Deserunt est in quis cillum veniam et aliquip aliqua deserunt. Ea exercitation culpa velit proident fugiat amet. Anim proident ea minim velit excepteur laborum veniam et incididunt ipsum velit elit Lorem. Consequat culpa culpa voluptate cupidatat non velit in fugiat consequat irure adipisicing in. Minim consectetur duis nisi consectetur qui est eu ex et cillum ea. Ex non qui elit non.\r\n"
     }
-  ]
+  ],
+  "myValue": 2.1,
+  "myUser": {
+    "id": 222,
+    "name": "Hank",
+    "age": 76,
+    "location": "SF",
+    "work": {
+      "name": "ACME2",
+      "location": "SF"
+    }
+  }
 }

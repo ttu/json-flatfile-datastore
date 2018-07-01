@@ -151,8 +151,121 @@ namespace JsonFlatFileDataStore
             }
         }
 
+        public T GetItem<T>(string key)
+        {
+            if (_reloadBeforeGetCollection)
+            {
+                // This might be a bad idea especially if the file is in use, as this can take a long time
+                _jsonData = JObject.Parse(ReadJsonFromFile(_filePath));
+            }
+
+            var token = _jsonData[key];
+
+            if (token == null)
+                throw new KeyNotFoundException();
+
+            return token.ToObject<T>();
+        }
+
+        public dynamic GetItem(string key)
+        {
+            if (_reloadBeforeGetCollection)
+            {
+                // This might be a bad idea especially if the file is in use, as this can take a long time
+                _jsonData = JObject.Parse(ReadJsonFromFile(_filePath));
+            }
+
+            var token = _jsonData[key];
+
+            if (token == null)
+                return null;
+
+            return SingleDynamicItemReadConverter(token);
+        }
+
+        public bool InsertItem<T>(string key, T item) => Insert(key, item).Result;
+
+        public async Task<bool> InsertItemAsync<T>(string key, T item) => await Insert(key, item);
+
+        private Task<bool> Insert<T>(string key, T item)
+        {
+            (bool, JObject) UpdateAction()
+            {
+                if (_jsonData[key] != null)
+                    return (false, _jsonData);
+
+                _jsonData[key] = JToken.FromObject(item);
+                return (true, _jsonData);
+            }
+
+            return CommitItem(UpdateAction, true);
+        }
+
+        public bool ReplaceItem<T>(string key, T item, bool upsert = false) => Replace(key, item, upsert).Result;
+
+        public async Task<bool> ReplaceItemAsync<T>(string key, T item, bool upsert = false) => await Replace(key, item, upsert);
+
+        private Task<bool> Replace<T>(string key, T item, bool upsert = false)
+        {
+            (bool, JObject) UpdateAction()
+            {
+                if (_jsonData[key] == null && upsert == false)
+                    return (false, _jsonData);
+
+                _jsonData[key] = JToken.FromObject(item);
+                return (true, _jsonData);
+            }
+
+            return CommitItem(UpdateAction, true);
+        }
+
+        public bool UpdateItem(string key, dynamic item) => Update(key, item).Result;
+
+        public async Task<bool> UpdateItemAsync(string key, dynamic item) => await Update(key, item);
+
+        private Task<bool> Update(string key, dynamic item)
+        {
+            (bool, JObject) UpdateAction()
+            {
+                if (_jsonData[key] == null)
+                    return (false, _jsonData);
+
+                var toUpdate = SingleDynamicItemReadConverter(_jsonData[key]);
+
+                if (ObjectExtensions.IsReferenceType(item) && ObjectExtensions.IsReferenceType(toUpdate))
+                {
+                    ObjectExtensions.CopyProperties(item, toUpdate);
+                    _jsonData[key] = JToken.FromObject(toUpdate);
+                }
+                else
+                {
+                    _jsonData[key] = JToken.FromObject(item);
+                }
+
+                return (true, _jsonData);
+            }
+
+            return CommitItem(UpdateAction, true);
+        }
+
+        public bool DeleteItem(string key) => Delete(key).Result;
+
+        public async Task<bool> DeleteItemAsync(string key) => await Delete(key);
+
+        private Task<bool> Delete(string key)
+        {
+            (bool, JObject) UpdateAction()
+            {
+                var result = _jsonData.Remove(key);
+                return (result, _jsonData);
+            }
+
+            return CommitItem(UpdateAction, false);
+        }
+
         public IDocumentCollection<T> GetCollection<T>(string name = null) where T : class
         {
+            // NOTE 27.6.2017: Should this be new Func<JToken, T>(e => e.ToObject<T>())?
             var readConvert = new Func<JToken, T>(e => JsonConvert.DeserializeObject<T>(e.ToString()));
             var insertConvert = new Func<T, T>(e => e);
             var createNewInstance = new Func<T>(() => Activator.CreateInstance<T>());
@@ -170,11 +283,41 @@ namespace JsonFlatFileDataStore
             return GetCollection(name, readConvert, insertConvert, createNewInstance);
         }
 
+        public IDictionary<string, ValueType> GetKeys(ValueType? typeToGet = null)
+        {
+            lock (_jsonData)
+            {
+                switch (typeToGet)
+                {
+                    case null:
+                        return _jsonData.Children()
+                                        .ToDictionary(c => c.Path, c => c.Children().FirstOrDefault() is JArray ? ValueType.Collection : ValueType.Item);
+
+                    case ValueType.Collection:
+                        return _jsonData.Children()
+                                        .Where(c => c.Children().FirstOrDefault() is JArray)
+                                        .ToDictionary(c => c.Path, c => ValueType.Collection);
+
+                    case ValueType.Item:
+                        return _jsonData.Children()
+                                        .Where(c => c.Children().FirstOrDefault()?.GetType() != typeof(JArray))
+                                        .ToDictionary(c => c.Path, c => ValueType.Item);
+
+                    default:
+                        throw new NotSupportedException();
+                }
+            }
+        }
+
+        [Obsolete("Use GetKeys")]
         public IEnumerable<string> ListCollections()
         {
             lock (_jsonData)
             {
-                return _jsonData.Children().Select(c => c.Path);
+                return _jsonData
+                        .Children()
+                        .Where(c => c.Children().FirstOrDefault() is JArray)
+                        .Select(c => c.Path);
             }
         }
 
@@ -207,6 +350,19 @@ namespace JsonFlatFileDataStore
                 createNewInstance);
         }
 
+        private async Task<bool> CommitItem(Func<(bool, JObject)> commitOperation, bool isOperationAsync)
+        {
+            var commitAction = new CommitAction();
+
+            commitAction.HandleAction = new Func<JObject, (bool success, string json)>(currentJson =>
+            {
+                var (success, newJson) = commitOperation();
+                return success ? (true, _toJsonFunc(newJson)) : (false, string.Empty);
+            });
+
+            return await InnerCommit(isOperationAsync, commitAction);
+        }
+
         private async Task<bool> Commit<T>(string dataPath, Func<List<T>, bool> commitOperation, bool isOperationAsync, Func<JToken, T> readConvert)
         {
             var commitAction = new CommitAction();
@@ -232,6 +388,11 @@ namespace JsonFlatFileDataStore
                 return (success, updatedJson);
             });
 
+            return await InnerCommit(isOperationAsync, commitAction);
+        }
+
+        private async Task<bool> InnerCommit(bool isOperationAsync, CommitAction commitAction)
+        {
             bool waitFlag = true;
             bool actionSuccess = false;
             Exception actionException = null;
@@ -257,6 +418,19 @@ namespace JsonFlatFileDataStore
                 throw actionException;
 
             return actionSuccess;
+        }
+
+        private dynamic SingleDynamicItemReadConverter(JToken e)
+        {
+            try
+            {
+                // As we don't want to return JObject when using dynamic, JObject will be converted to ExpandoObject
+                return JsonConvert.DeserializeObject<ExpandoObject>(e.ToString(), _converter) as dynamic;
+            }
+            catch (Exception ex) when (ex is InvalidCastException)
+            {
+                return e.ToObject<object>();
+            }
         }
 
         private string ReadJsonFromFile(string path)

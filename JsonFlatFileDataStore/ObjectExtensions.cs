@@ -117,6 +117,8 @@ public static class ObjectExtensions
         return AnyPropertyHasValue(source);
     }
 
+    public static bool IsReferenceType(dynamic o) => IsValueReferenceType(o.GetType());
+
     private static void HandleTyped(object source, object destination)
     {
         foreach (var srcProp in GetProperties(source))
