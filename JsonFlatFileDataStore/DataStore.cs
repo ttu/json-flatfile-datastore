@@ -283,12 +283,41 @@ namespace JsonFlatFileDataStore
             return GetCollection(name, readConvert, insertConvert, createNewInstance);
         }
 
-        public IEnumerable<string> ListCollections()
+        public IDictionary<string, KeyValueType> GetKeys(KeyValueType? typeToGet = null)
         {
-            // NOTE 27.6.2017: Should this just list collections or single items as well?
             lock (_jsonData)
             {
-                return _jsonData.Children().Select(c => c.Path);
+                switch (typeToGet)
+                {
+                    case null:
+                        return _jsonData.Children()
+                                        .ToDictionary(c => c.Path, c => c.Children().FirstOrDefault() is JArray ? KeyValueType.Collection : KeyValueType.Item);
+
+                    case KeyValueType.Collection:
+                        return _jsonData.Children()
+                                        .Where(c => c.Children().FirstOrDefault() is JArray)
+                                        .ToDictionary(c => c.Path, c => KeyValueType.Collection);
+
+                    case KeyValueType.Item:
+                        return _jsonData.Children()
+                                        .Where(c => c.Children().FirstOrDefault()?.GetType() != typeof(JArray))
+                                        .ToDictionary(c => c.Path, c => KeyValueType.Item);
+
+                    default:
+                        throw new NotSupportedException();
+                }
+            }
+        }
+
+        [Obsolete("Use GetKeys")]
+        public IEnumerable<string> ListCollections()
+        {
+            lock (_jsonData)
+            {
+                return _jsonData
+                        .Children()
+                        .Where(c => c.Children().FirstOrDefault() is JArray)
+                        .Select(c => c.Path);
             }
         }
 

@@ -30,9 +30,17 @@ namespace JsonFlatFileDataStore
         IDocumentCollection<T> GetCollection<T>(string name = null) where T : class;
 
         /// <summary>
+        /// List keys in JSON
+        /// </summary>
+        /// <param name="typeToGet">Item type to get</param>
+        /// <returns>Dictionary of keys and item value type</returns>
+        IDictionary<string, KeyValueType> GetKeys(KeyValueType? typeToGet = null);
+
+        /// <summary>
         /// List collections
         /// </summary>
         /// <returns>List of collection names</returns>
+        [Obsolete("Use GetKeys")]
         IEnumerable<string> ListCollections();
 
         /// <summary>
@@ -128,5 +136,11 @@ namespace JsonFlatFileDataStore
         /// <param name="key">Item key</param>
         /// <returns>true if items found for deletion</returns>
         Task<bool> DeleteItemAsync(string key);
+    }
+
+    public enum KeyValueType
+    {
+        Collection,
+        Item
     }
 }

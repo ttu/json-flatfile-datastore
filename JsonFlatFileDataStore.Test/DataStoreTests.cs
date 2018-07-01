@@ -31,15 +31,43 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
+        public void ListKeys()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collections = store.GetKeys();
+            Assert.Equal("user", collections.First().Key);
+            Assert.Equal(5, collections.Count());
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
         public void ListCollections()
         {
             var newFilePath = UTHelpers.Up();
 
             var store = new DataStore(newFilePath);
 
-            var collections = store.ListCollections();
-            Assert.Equal("user", collections.First());
-            Assert.Equal(5, collections.Count());
+            var collections = store.GetKeys(KeyValueType.Collection);
+            Assert.Equal("user", collections.First().Key);
+            Assert.Equal(3, collections.Count());
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public void ListItems()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collections = store.GetKeys(KeyValueType.Item);
+            Assert.Equal("myValue", collections.First().Key);
+            Assert.Equal(2, collections.Count());
 
             UTHelpers.Down(newFilePath);
         }
