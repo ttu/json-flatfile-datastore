@@ -9,12 +9,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JsonFlatFileDataStore.Test"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E02F2E47-379D-441C-9B98-40F7BABDDC64}"
 	ProjectSection(SolutionItems) = preProject
+		.travis.yml = .travis.yml
 		CHANGELOG.md = CHANGELOG.md
 		LICENSE = LICENSE
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JsonFlatFileDataStore.Benchmark", "JsonFlatFileDataStore.Benchmark\JsonFlatFileDataStore.Benchmark.csproj", "{31BC8A9C-A1E7-447F-BD67-66A6E607D476}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JsonFlatFileDataStore.Benchmark", "JsonFlatFileDataStore.Benchmark\JsonFlatFileDataStore.Benchmark.csproj", "{31BC8A9C-A1E7-447F-BD67-66A6E607D476}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

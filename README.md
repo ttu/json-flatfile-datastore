@@ -17,8 +17,8 @@ Simple data store that saves the data in JSON format to a single file.
   * Easy to initialize
   * Easy to edit
   * Perfect for small apps and prototyping
-* [.NET Standard 1.4](https://github.com/dotnet/standard/blob/master/docs/versions/netstandard1.4.md)
-  * .NET Core 1.0 & .NET Framework 4.6.1
+* [.NET Standard 2.0](https://github.com/dotnet/standard/blob/master/docs/versions/netstandard2.0.md)
+  * .NET Core 2.0 & .NET Framework 4.6.1
 
 ## Installation
 
@@ -617,7 +617,7 @@ collection2.ReplaceOne((Predicate<dynamic>)(e => e.id == 11), dynamicUser);
 
 ## Unit Tests & Benchmarks
 
-`JsonFlatFileDataStore.Test` and `JsonFlatFileDataStore.Benchmark` are _.NET Core 2.0_ projects.
+`JsonFlatFileDataStore.Test` and `JsonFlatFileDataStore.Benchmark` are _.NET Core_ projects.
 
 Unit Tests are executed automatically with CI builds.
 

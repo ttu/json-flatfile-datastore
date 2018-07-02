@@ -1,6 +1,7 @@
 # Changelog
 
 ### [Unreleased]
+* Target netstandard 2.0
 * Support for single items
 
 ### [1.8.0] - 2017-11-22
