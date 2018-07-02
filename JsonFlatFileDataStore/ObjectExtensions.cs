@@ -9,14 +9,14 @@ using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 
-public static class ObjectExtensions
+internal static class ObjectExtensions
 {
     /// <summary>
     /// Copy property values from the source object to the destination object
     /// </summary>
     /// <param name="source">The source</param>
     /// <param name="destination">The destination</param>
-    public static void CopyProperties(object source, object destination)
+    internal static void CopyProperties(object source, object destination)
     {
         if (source == null || destination == null)
             throw new Exception("source or/and destination objects are null");
@@ -30,7 +30,7 @@ public static class ObjectExtensions
             HandleTyped(source, destination);
     }
 
-    public static void AddDataToField(object item, string fieldName, dynamic data)
+    internal static void AddDataToField(object item, string fieldName, dynamic data)
     {
         if (item is JToken)
         {
@@ -57,7 +57,7 @@ public static class ObjectExtensions
         }
     }
 
-    public static bool IsAnonymousType(object o)
+    internal static bool IsAnonymousType(object o)
     {
         var name = o.GetType().Name;
         return name.Length >= 3 &&
@@ -66,7 +66,7 @@ public static class ObjectExtensions
                name.IndexOf("AnonymousType", StringComparison.Ordinal) > 0;
     }
 
-    public static bool HasField<T>(T item, string idField)
+    internal static bool HasField<T>(T item, string idField)
     {
         var idProperty = item.GetType()
                              .GetProperties()
@@ -75,7 +75,7 @@ public static class ObjectExtensions
         return idProperty != null;
     }
 
-    public static bool FullTextSearch(dynamic source, string text, bool caseSensitive = false)
+    internal static bool FullTextSearch(dynamic source, string text, bool caseSensitive = false)
     {
         var compareFunc = caseSensitive
                        ? new Func<string, string, bool>((a, b) => a.IndexOf(b, StringComparison.Ordinal) >= 0)
@@ -117,7 +117,7 @@ public static class ObjectExtensions
         return AnyPropertyHasValue(source);
     }
 
-    public static bool IsReferenceType(dynamic o) => IsValueReferenceType(o.GetType());
+    internal static bool IsReferenceType(dynamic o) => IsValueReferenceType(o.GetType());
 
     private static void HandleTyped(object source, object destination)
     {
