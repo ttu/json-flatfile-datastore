@@ -3,6 +3,7 @@
 ### [Unreleased]
 * Target netstandard 2.0
 * Support for single items
+* ObjectExtensions to internal class
 
 ### [1.8.0] - 2017-11-22
 * DataStore to implement IDisposable
