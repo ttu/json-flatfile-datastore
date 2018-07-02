@@ -37,13 +37,6 @@ namespace JsonFlatFileDataStore
         IDictionary<string, ValueType> GetKeys(ValueType? typeToGet = null);
 
         /// <summary>
-        /// List collections
-        /// </summary>
-        /// <returns>List of collection names</returns>
-        [Obsolete("Use GetKeys")]
-        IEnumerable<string> ListCollections();
-
-        /// <summary>
         /// Update the content of the json file
         /// </summary>
         /// <param name="jsonData">New content</param>

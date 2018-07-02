@@ -309,18 +309,6 @@ namespace JsonFlatFileDataStore
             }
         }
 
-        [Obsolete("Use GetKeys")]
-        public IEnumerable<string> ListCollections()
-        {
-            lock (_jsonData)
-            {
-                return _jsonData
-                        .Children()
-                        .Where(c => c.Children().FirstOrDefault() is JArray)
-                        .Select(c => c.Path);
-            }
-        }
-
         private IDocumentCollection<T> GetCollection<T>(string path, Func<JToken, T> readConvert, Func<T, T> insertConvert, Func<T> createNewInstance)
         {
             var data = new Lazy<List<T>>(() =>

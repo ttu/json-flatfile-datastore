@@ -3,6 +3,7 @@
 ### [Unreleased]
 * Target netstandard 2.0
 * Support for single items
+* GetKeys method, removed old ListCollections method
 * ObjectExtensions to internal class
 
 ### [1.8.0] - 2017-11-22
