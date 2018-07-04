@@ -1,6 +1,8 @@
 # Changelog
 
 ### [Unreleased]
+
+### [2.0.0] - 2017-07-04
 * Target netstandard 2.0
 * Support for single items
 * GetKeys method, removed old ListCollections method
