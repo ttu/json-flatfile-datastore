@@ -442,6 +442,16 @@ var counter = store.GetItem<int>("counter");
 var counter = store.GetItem("myUser");
 ```
 
+Typed data will throw `KeyNotFoundException` if key is not found. Dynamic data and nullable types will return null.
+
+```csharp
+// Will throw KeyNotFoundException
+var counter = store.GetItem<int>("counter_NotFound");
+// Will return null
+var counter = store.GetItem<int?>("counter_NotFound");
+var counter = store.GetItem("counter_NotFound");
+```
+
 #### Insert
 
 `InsertItem` and `InsertItemAsync` will insert a new item to the JSON. Method returns true if insert was successful.

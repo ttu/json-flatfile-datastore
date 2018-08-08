@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace JsonFlatFileDataStore.Test
@@ -39,20 +41,39 @@ namespace JsonFlatFileDataStore.Test
             UTHelpers.Down(newFilePath);
         }
 
-        // TODO: What should these return? Like in case of int that is not found?
+        [Fact]
+        public void GetItem_Nullable_NotFound()
+        {
+            var newFilePath = UTHelpers.Up();
 
-        //[Fact]
-        //public void NotFound_Exception()
-        //{
-        //    var newFilePath = UTHelpers.Up();
+            var store = new DataStore(newFilePath);
 
-        //    var store = new DataStore(newFilePath);
+            var result = store.GetItem<int?>("notFound");
+            Assert.False(result.HasValue);
+            Assert.Null(result);
 
-        //    Assert.Throws<KeyNotFoundException>(() => store.GetItem("notFound"));
-        //    Assert.Throws<KeyNotFoundException>(() => store.GetItem<User>("notFound"));
+            var result2 = store.GetItem<Guid?>("notFound");
+            Assert.False(result2.HasValue);
+            Assert.Null(result2);
 
-        //    UTHelpers.Down(newFilePath);
-        //}
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public void NotFound_Exception()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            Assert.Throws<KeyNotFoundException>(() => store.GetItem<User>("notFound"));
+            Assert.Throws<KeyNotFoundException>(() => store.GetItem<Guid>("notFound"));
+
+            Assert.Null(store.GetItem("notFound"));
+            Assert.Null(store.GetItem<Guid?>("notFound"));
+
+            UTHelpers.Down(newFilePath);
+        }
 
         [Fact]
         public void InsertItem_TypedUser()
