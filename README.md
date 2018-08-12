@@ -439,7 +439,18 @@ var store = new DataStore(pathToJson);
 // Typed data
 var counter = store.GetItem<int>("counter");
 // Dynamic data
-var counter = store.GetItem("myUser");
+var user = store.GetItem("myUser");
+```
+
+Typed data will throw `KeyNotFoundException` if key is not found. Dynamic data and nullable types will return null.
+
+```csharp
+// throw KeyNotFoundException
+var counter = store.GetItem<int>("counter_NotFound");
+var user = store.GetItem<User>("user_NotFound");
+// return null
+var counter = store.GetItem<int?>("counter_NotFound");
+var counter = store.GetItem("counter_NotFound");
 ```
 
 #### Insert

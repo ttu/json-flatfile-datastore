@@ -1,6 +1,7 @@
 # Changelog
 
 ### [Unreleased]
+* GetItem to return null for not found nullable type
 
 ### [2.0.0] - 2017-07-04
 * Target netstandard 2.0

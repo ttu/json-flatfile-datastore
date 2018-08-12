@@ -162,7 +162,14 @@ namespace JsonFlatFileDataStore
             var token = _jsonData[key];
 
             if (token == null)
+            {
+                if (Nullable.GetUnderlyingType(typeof(T)) != null)
+                {
+                    return default(T);
+                }
+
                 throw new KeyNotFoundException();
+            }
 
             return token.ToObject<T>();
         }
