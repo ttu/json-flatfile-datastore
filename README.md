@@ -445,9 +445,10 @@ var counter = store.GetItem("myUser");
 Typed data will throw `KeyNotFoundException` if key is not found. Dynamic data and nullable types will return null.
 
 ```csharp
-// Will throw KeyNotFoundException
+// throw KeyNotFoundException
 var counter = store.GetItem<int>("counter_NotFound");
-// Will return null
+var user = store.GetItem<User>("user_NotFound");
+// return null
 var counter = store.GetItem<int?>("counter_NotFound");
 var counter = store.GetItem("counter_NotFound");
 ```
