@@ -623,6 +623,11 @@ Unit Tests are executed automatically with CI builds.
 
 Benchmarks are not part of CI builds. Benchmarks can be used as a reference when making changes to the existing functionality by comparing the execution times before and after the changes.
 
+Run benchmarks from command line:
+```sh
+$ dotnet run --configuration Release --project JsonFlatFileDataStore.Benchmark\JsonFlatFileDataStore.Benchmark.csproj
+```
+
 ## API
 
 API is heavily influenced by MongoDB's C# API, so switching to the MongoDB or [DocumentDB](https://docs.microsoft.com/en-us/azure/documentdb/documentdb-protocol-mongodb) might be easy.
