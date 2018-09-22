@@ -74,7 +74,7 @@ await store.InsertItemAsync("selected_employee", employee);
 
 // Single items can be of any type
 await store.InsertItemAsync("counter", 1);
-var counter = awaite store.GetItem<int>("counter");
+var counter = await store.GetItem<int>("counter");
 ```
 
 ##### Dynamically typed data
