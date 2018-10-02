@@ -220,7 +220,7 @@ var newItems = new[]
 collection.InsertMany(newItems);
 ```
 
-`Insert`-methods will update the inserted object's `Id`-field, if it has a field with that name and the field is writable. If the `Id`-field is missing from the dynamic object, a field is added with the correct value. If an anonymous type is used for insert, `id` will be added to the persisted object if the `id`-field is missing. If the `id` is present, then that value will be used.
+`Insert`-methods will update the inserted object's `Id`-field, if it has a field with that name and the field is writable. If the `Id`-field is missing from the dynamic object, a field is added with the correct value. If an `Anonymous type` is used for insert, `id` will be added to the persisted object if the `id`-field is missing. If the `id` is present, then that value will be used.
 
 ```csharp
 var newItems = new[]
@@ -280,7 +280,7 @@ collection.ReplaceOne(e => e.id == 11, new { id = 11, name = "Theodor" }, true);
 
 #### Update
 
-`UpdateOne` and `UpdateOneAsync` will update the first item that matches the filter with passed properties from dynamic object. Dynamic object can be an __Anonymous type__ or an `ExpandoObject`. Method will return true if item(s) found with the filter.
+`UpdateOne` and `UpdateOneAsync` will update the first item that matches the filter with passed properties from dynamic object. Dynamic object can be an `Anonymous type` or an `ExpandoObject`. Method will return true if item(s) found with the filter.
 
 ```csharp
 // Dynamic
@@ -487,7 +487,7 @@ var result = await store.ReplaceItemAsync("myUser", new User { Id = 2, Name = "J
 
 #### Update
 
-`UpdateItem` and `UpdateItemAsync` will update the first item that matches the filter with passed properties from dynamic object. Dynamic object can be an __Anonymous type__ or an `ExpandoObject`. Method will return true if item is found with the key.
+`UpdateItem` and `UpdateItemAsync` will update the first item that matches the filter with passed properties from dynamic object. Dynamic object can be an `Anonymous type` or an `ExpandoObject`. Method will return true if item is found with the key.
 
 ```csharp
 // Value type
