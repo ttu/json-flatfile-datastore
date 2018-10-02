@@ -38,7 +38,7 @@ PM> Install-Package JsonFlatFileDataStore
 
 ## Example
 
-##### Typed data
+#### Typed data
 
 ```csharp
 public class Employee
@@ -77,9 +77,9 @@ await store.InsertItemAsync("counter", 1);
 var counter = await store.GetItem<int>("counter");
 ```
 
-##### Dynamically typed data
+#### Dynamically typed data
 
-Dynamic data can be __Anonymous type__, __ExpandoObject__, JSON objects (__JToken__, __JObject__, __JArray__) or __Dictionary<string, object>__. Internally dynamic data is serialized to __ExpandoObject__.
+Dynamic data can be `Anonymous type`, `ExpandoObject`, JSON objects (`JToken`, `JObject`, `JArray`) or `Dictionary<string, object>`. Internally dynamic data is serialized to `ExpandoObject`.
 
 ```csharp
 // Open database (create new if file doesn't exist)
@@ -144,7 +144,7 @@ Example user collection in JSON:
 
 Collection can be queried with LINQ by getting queryable from the collection with `AsQueryable` method.
 
-NOTE: `AsQueryable` returns __IEnumerable__, instead of IQueryable, because IQueryable doesn't support Dynamic types in LINQ queries. With this data store it won't matter as all data is already loaded into memory.
+NOTE: `AsQueryable` returns `IEnumerable`, instead of `IQueryable`, because `IQueryable` doesn't support Dynamic types in LINQ queries. With this data store it won't matter as all data is already loaded into memory.
 
 `AsQueryable` LINQ query with dynamic data:
 
@@ -174,7 +174,7 @@ var userTyped = collection
 
 #### Full-text search
 
-Full-text search can be performed with `Find` method. Full-text search does deep search on all child objects. By default the search is not case sensitive.
+Full-text search can be performed with `Find` method. Full-text search does deep search on all child objects. __By default__ the search is not case sensitive.
 
 ```csharp
 var store = new DataStore(pathToJson);
@@ -220,7 +220,7 @@ var newItems = new[]
 collection.InsertMany(newItems);
 ```
 
-Insert-methods will update the inserted object's Id-field, if it has a field with that name and the field is writable. If the Id-field is missing from the dynamic object, a field is added with the correct value. If an anonymous type is used for insert, id will be added to the persisted object if the id-field is missing. If the id is present, then that value will be used.
+`Insert`-methods will update the inserted object's `Id`-field, if it has a field with that name and the field is writable. If the `Id`-field is missing from the dynamic object, a field is added with the correct value. If an anonymous type is used for insert, `id` will be added to the persisted object if the `id`-field is missing. If the `id` is present, then that value will be used.
 
 ```csharp
 var newItems = new[]
@@ -235,7 +235,7 @@ collection.InsertMany(newItems);
 // Item in newItems collection won't have id property as anonymous types are read only
 ```
 
-If the Id-field 's type is a number, value is incremented by one. If the type is a string, incremented value number is added to the end of the initial text.
+If the `id`-field 's type is a *number*, value is incremented by one. If the type is a *string*, incremented value number is added to the end of the initial text.
 
 ```csharp
 // Latest id in the collection is hello5
@@ -280,7 +280,7 @@ collection.ReplaceOne(e => e.id == 11, new { id = 11, name = "Theodor" }, true);
 
 #### Update
 
-`UpdateOne` and `UpdateOneAsync` will update the first item that matches the filter with passed properties from dynamic object. Dynamic object can be an __Anonymous type__ or an __ExpandoObject__. Method will return true if item(s) found with the filter.
+`UpdateOne` and `UpdateOneAsync` will update the first item that matches the filter with passed properties from dynamic object. Dynamic object can be an __Anonymous type__ or an `ExpandoObject`. Method will return true if item(s) found with the filter.
 
 ```csharp
 // Dynamic
@@ -302,7 +302,7 @@ await collection.UpdateOneAsync(e => e.Name == "Phil", new { age = 42 });
 await collection.UpdateManyAsync(e => e.Age == 30, new { age = 31 });
 ```
 
-Update can also update items from the collection and add new items to the collection. Null items in the passed update data are skipped, so with null items data in the correct index can be updated.
+Update can also update items from the collection and add new items to the collection. `null` items in the passed update data are skipped, so with `null` items data in the correct index can be updated.
 
 ```csharp
 var family = new Family
@@ -325,7 +325,7 @@ await collection.UpdateOneAsync(e => e.Id == 12, new { Parents = new[] { null, n
 await collection.UpdateOneAsync(e => e.Id == 12, new { Parents = new[] { new { age = 42 } } });
 ```
 
-Easy way to create a patch __ExpandoObject__ on runtime is to create a __Dictionary__ and then to serialize it to a JSON and deserialize to an __ExpandoObject__.
+Easy way to create a patch `ExpandoObject` on runtime is to create a `Dictionary` and then to serialize it to a JSON and deserialize to an `ExpandoObject`.
 
 ```csharp
 var user = new User
@@ -351,17 +351,17 @@ await collection.UpdateOneAsync(e => e.Id == 12, patchExpando);
 
 ##### Limitations
 
-__Dictionaries__ won't work when serializing JSON or data to __ExpandoObjects__. This is becauses dictionaries and objects are similar when serialized to JSON, so serialization creates an __ExpandoObject__ from __Dictionary__. Update's are mainly meant to be used with `HTTP PATCH`, so normally `Replace` is easier and better way to update data. 
+Dictionaries won't work when serializing JSON or data to `ExpandoObjects`. This is becauses dictionaries and objects are similar when serialized to JSON, so serialization creates an `ExpandoObject` from `Dictionary`. Update's are mainly meant to be used with `HTTP PATCH`, so normally `Replace` is easier and better way to update data.
 
-If the update __ExpandoObject__ is created manually then Dictionaries content can be updated. Unlike List, Dictionary's whole content is replaced with the update data's content.
+If the update `ExpandoObject` is created manually, then the Dictionaries content can be updated. Unlike `List`, `Dictionary`'s whole content is replaced with the update data's content.
 
 ```csharp
 var player = new Player
 {
     Id = 423,
-    Scores = new Dictionary<string, int> 
-    { 
-        { "Blue Max", 1256 }, 
+    Scores = new Dictionary<string, int>
+    {
+        { "Blue Max", 1256 },
         { "Pacman", 3221 }
     },
 };
@@ -416,7 +416,7 @@ var nextId = collection.GetNextIdValue();
 collection.InsertOne(new { myId = "hello3" });
 // nextId = "hello4"
 var nextId = collection.GetNextIdValue();
-``` 
+```
 
 ### Single item
 
@@ -430,7 +430,7 @@ var nextId = collection.GetNextIdValue();
 
 Data store supports single items. Items can be value and reference types. Single item supports dynamic and typed data.
 
-Single item's support same methods as Collections (_Get_, _Insert_, _Replace_, _Update_, _Delete_). 
+Single item's support same methods as Collections (`Get`, `Insert`, `Replace`, `Update`, `Delete`).
 
 #### Get
 
@@ -487,7 +487,7 @@ var result = await store.ReplaceItemAsync("myUser", new User { Id = 2, Name = "J
 
 #### Update
 
-`UpdateItem` and `UpdateItemAsync` will update the first item that matches the filter with passed properties from dynamic object. Dynamic object can be an __Anonymous type__ or an __ExpandoObject__. Method will return true if item is found with the key.
+`UpdateItem` and `UpdateItemAsync` will update the first item that matches the filter with passed properties from dynamic object. Dynamic object can be an __Anonymous type__ or an `ExpandoObject`. Method will return true if item is found with the key.
 
 ```csharp
 // Value type
@@ -513,13 +513,13 @@ When the data store is created, it reads the JSON file to the memory. Data store
 
 When the collection is created it has a lazy reference to the data and it will deserialize the JSON to objects when it is accessed for the first time.
 
-All write operations in collections are executed immediately internally in the collection and then the same operation is queued on DataStore's BlockingCollection. Operations from the BlockingCollection are executed on background thread to DataStore's internal collection and saved to file. 
+All write operations in collections are executed immediately internally in the collection and then the same operation is queued on DataStore's BlockingCollection. Operations from the BlockingCollection are executed on background thread to DataStore's internal collection and saved to file.
 
 ```csharp
 // Data is loaded from the file
 var store = new DataStore(newFilePath);
 
-// Lazy reference to the data is created 
+// Lazy reference to the data is created
 var collection1st = store.GetCollection("hello");
 var collection2nd = store.GetCollection("hello");
 
@@ -527,7 +527,7 @@ var collection2nd = store.GetCollection("hello");
 collection1st.InsertOne(new { id = "hello" });
 
 // Data is loaded from the store to the collection and new item is inserted
-// This collection will also have item with id: hello as data is serialized when it is used for the first time 
+// This collection will also have item with id: hello as data is serialized when it is used for the first time
 collection2nd.InsertOne(new { id = "hello2" });
 
 // collection1st won't have item with id hello2
@@ -611,7 +611,7 @@ When __Dynamic type__ is used with lambdas, compiler will give you error __CS197
 
 > CS1977: Cannot use a lambda expression as an argument to a dynamically dispatched operation without first casting it to a delegate or expression tree type
 
-A lambda needs to know the data type of the parameter at compile time. Cast dynamic to an object and compiler will happily accept it, as it believes you know what you are doing and leaves validation to Dynamic Language Runtime.  
+A lambda needs to know the data type of the parameter at compile time. Cast dynamic to an object and compiler will happily accept it, as it believes you know what you are doing and leaves validation to Dynamic Language Runtime.
 
 ```csharp
 dynamic dynamicUser = new { id = 11, name = "Theodor" };
