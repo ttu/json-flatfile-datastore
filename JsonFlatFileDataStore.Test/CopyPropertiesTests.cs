@@ -367,5 +367,30 @@ namespace JsonFlatFileDataStore.Test
             Assert.Equal("CEEC", user.MyStrings["C"]);
             Assert.Equal(333, user.MyIntegers[3]);
         }
+
+        public class ClassForGetDefaultValue
+        {
+            public int Field1 { get; set; }
+            public int Field2 { get; set; }
+            public string Field3 { get; set; }
+            public Family Field4 { get; set; }
+            public double Field5 { get; set; }
+            public decimal Field6 { get; set; }
+            public bool Field7 { get; set; }
+        }
+
+        [Theory]
+        [InlineData("Field1", 0)]
+        [InlineData("Field2", 0)]
+        [InlineData("Field3", "0")]
+        [InlineData("Field4", null)]
+        [InlineData("Field5", 0)]
+        [InlineData("Field6", 0)]
+        [InlineData("Field7", false)]
+        public void GetDefaultValue(string field, dynamic result)
+        {
+            var value = ObjectExtensions.GetDefaultValue<ClassForGetDefaultValue>(field);
+            Assert.Equal(value, result);
+        }
     }
 }

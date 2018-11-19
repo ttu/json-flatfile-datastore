@@ -119,6 +119,23 @@ internal static class ObjectExtensions
 
     internal static bool IsReferenceType(dynamic o) => IsValueReferenceType(o.GetType());
 
+    internal static dynamic GetDefaultValue<T>(string fieldName)
+    {
+        var idProp = typeof(T).GetProperties().FirstOrDefault(p => string.Equals(p.Name, fieldName, StringComparison.OrdinalIgnoreCase));
+
+        switch (idProp)
+        {
+            case null:
+                return 0;
+            case var p when p.PropertyType.IsValueType:
+                return Activator.CreateInstance(p.PropertyType);
+            case var p when p.PropertyType == typeof(string):
+                return "0";
+            default:
+                return null;
+        }
+    }
+
     private static void HandleTyped(object source, object destination)
     {
         foreach (var srcProp in GetProperties(source))

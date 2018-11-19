@@ -330,7 +330,51 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public async Task Insert_CorrectIdWithDynamic_NoIdInitially()
+        public async Task Insert_CorrectIdWithDynamic_No_InitialId()
+        {
+            var pathToJson = UTHelpers.Up();
+
+            var store = new DataStore(pathToJson, keyProperty: "acc");
+
+            var collection = store.GetCollection("employee");
+
+            // Create new employee instance
+            var employee = new
+            {
+                name = "John",
+                age = 46
+            };
+
+            // Example with JSON object
+            var employeeJson = JToken.Parse("{ 'name': 'Raymond', 'age': 32 }");
+
+            // Example with JSON object
+            var employeeDict = new Dictionary<string, object>
+            {
+                ["name"] = "Andy",
+                ["age"] = 32
+            };
+
+            var employeeExpando = new ExpandoObject();
+            var items = employeeExpando as IDictionary<string, object>;
+            items.Add("name", "Karl");
+            items.Add("age", 34);
+
+            // Insert new employee
+            await collection.InsertOneAsync(employee);
+            await collection.InsertOneAsync(employeeJson);
+            await collection.InsertOneAsync(employeeDict);
+            await collection.InsertOneAsync(employeeExpando);
+
+            Assert.Equal(1, employeeJson["acc"]);
+            Assert.Equal(2, employeeDict["acc"]);
+            Assert.Equal(3, ((IDictionary<string, object>)employeeExpando)["acc"]);
+
+            UTHelpers.Down(pathToJson);
+        }
+
+        [Fact]
+        public async Task Insert_CorrectIdWithDynamic_With_InitialId()
         {
             var pathToJson = UTHelpers.Up();
 
