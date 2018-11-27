@@ -370,7 +370,9 @@ namespace JsonFlatFileDataStore
         private dynamic GetNextIdValue(List<T> data)
         {
             if (!data.Any())
-                return 0;
+            {
+                return ObjectExtensions.GetDefaultValue<T>(_idField);
+            }
 
             var lastItem = data.Last();
             var expando = JsonConvert.DeserializeObject<ExpandoObject>(JsonConvert.SerializeObject(lastItem), new ExpandoObjectConverter());

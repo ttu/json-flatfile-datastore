@@ -1,13 +1,14 @@
 # Changelog
 
 ### [Unreleased]
-* GetItem to return null for not found nullable type
+* CHANGED: GetItem to return null for not found nullable type
+* FIXED: Add id-value correctly for fields with string type when collection is empty
 
 ### [2.0.0] - 2018-07-04
-* Target netstandard 2.0
-* Support for single items
-* GetKeys method, removed old ListCollections method
-* ObjectExtensions to internal class
+* CHANGED: Target to netstandard 2.0
+* ADDED: Support for single items
+* ADDED: GetKeys method, removed old ListCollections method
+* CHANGED: ObjectExtensions to internal class
 
 ### [1.8.0] - 2017-11-22
 * DataStore to implement IDisposable

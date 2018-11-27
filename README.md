@@ -249,6 +249,8 @@ await collection.InsertOneAsync(userNoId);
 // After addition: userNoId["id"] == "hello7"
 ```
 
+If collection is empty and the type of the id-field is number, then first id will be `0`. If type is string then first id will be `"0"`. 
+
 #### Replace
 
 `ReplaceOne` and `ReplaceOneAsync` will replace the first item that matches the filter. Method will return true if item(s) found with the filter.
