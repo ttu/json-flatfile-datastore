@@ -1,6 +1,9 @@
 # Changelog
 
 ### [Unreleased]
+*
+
+### [2.0.1] - 2018-12-14
 * CHANGED: GetItem to return null for not found nullable type
 * FIXED: Add id-value correctly for fields with string type when collection is empty
 
