@@ -33,10 +33,12 @@
   ],
   "movies": [
     {
-      "name": "Die Hard"
+      "name": "Die Hard",
+      "rating": 7.4
     },
     {
-      "name": "Predator"
+      "name": "Predator",
+      "rating": 8.2
     }
   ],
   "family": [
