@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Dynamic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -420,7 +421,14 @@ namespace JsonFlatFileDataStore
             try
             {
                 // As we don't want to return JObject when using dynamic, JObject will be converted to ExpandoObject
-                return JsonConvert.DeserializeObject<ExpandoObject>(e.ToString(), _converter) as dynamic;
+                var settings = new JsonSerializerSettings
+                {
+                    Converters = new List<JsonConverter> { _converter },
+                    Culture = new CultureInfo("en-US")
+                };
+
+                return JsonConvert.DeserializeObject<ExpandoObject>(e.ToString(), settings) as dynamic;
+
             }
             catch (Exception ex) when (ex is InvalidCastException)
             {
