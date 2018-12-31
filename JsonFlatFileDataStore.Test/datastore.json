@@ -1632,10 +1632,18 @@
     }
   ],
   "myValue": 2.1,
+  "myValues": [
+    2.1,
+    5.6,
+    7.8
+  ],
+  "myDate_string": "6/15/2009",
+  "myDate_date": "2015-11-23T00:00:00",
   "myUser": {
     "id": 222,
     "name": "Hank",
     "age": 76,
+    "value": 6.7,
     "location": "SF",
     "work": {
       "name": "ACME2",

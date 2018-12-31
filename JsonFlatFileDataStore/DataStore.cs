@@ -303,12 +303,15 @@ namespace JsonFlatFileDataStore
 
                     case ValueType.Collection:
                         return _jsonData.Children()
-                                        .Where(c => c.Children().FirstOrDefault() is JArray)
+                                        .Where(c => c.Children().FirstOrDefault() is JArray
+                                                 && c.Children().FirstOrDefault()?.First()?.Type == JTokenType.Object)
                                         .ToDictionary(c => c.Path, c => ValueType.Collection);
 
                     case ValueType.Item:
                         return _jsonData.Children()
-                                        .Where(c => c.Children().FirstOrDefault()?.GetType() != typeof(JArray))
+                                        .Where(c => c.Children().FirstOrDefault().GetType() != typeof(JArray)
+                                                 || (c.Children().FirstOrDefault() is JArray
+                                                 && c.Children().FirstOrDefault()?.First()?.Type != JTokenType.Object))
                                         .ToDictionary(c => c.Path, c => ValueType.Item);
 
                     default:
@@ -418,21 +421,22 @@ namespace JsonFlatFileDataStore
 
         private dynamic SingleDynamicItemReadConverter(JToken e)
         {
-            try
+            switch (e)
             {
-                // As we don't want to return JObject when using dynamic, JObject will be converted to ExpandoObject
-                var settings = new JsonSerializerSettings
-                {
-                    Converters = new List<JsonConverter> { _converter },
-                    Culture = new CultureInfo("en-US")
-                };
+                case var objToken when e.Type == JTokenType.Object:
+                    //As we don't want to return JObject when using dynamic, JObject will be converted to ExpandoObject
+                    // JToken.ToString() is not culture invariant, so need to use string.Format
+                    var content = string.Format(CultureInfo.InvariantCulture, "{0}", objToken);
+                    return JsonConvert.DeserializeObject<ExpandoObject>(content, _converter) as dynamic;
 
-                return JsonConvert.DeserializeObject<ExpandoObject>(e.ToString(), settings) as dynamic;
+                case var arrayToken when e.Type == JTokenType.Array:
+                    return e.ToObject<List<object>>();
 
-            }
-            catch (Exception ex) when (ex is InvalidCastException)
-            {
-                return e.ToObject<object>();
+                case JValue jv when e is JValue:
+                    return jv.Value;
+
+                default:
+                    return e.ToObject<object>();
             }
         }
 

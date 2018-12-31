@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -21,6 +22,7 @@ namespace JsonFlatFileDataStore.Test
             Assert.Equal("SF", itemDynamic.work.location);
             Assert.Equal("Hank", itemTyped.Name);
             Assert.Equal("SF", itemTyped.Work.Location);
+            Assert.Equal(6.7, itemDynamic.value);
 
             UTHelpers.Down(newFilePath);
         }
@@ -37,6 +39,45 @@ namespace JsonFlatFileDataStore.Test
 
             Assert.Equal(2.1, itemDynamic);
             Assert.Equal(2.1, itemTyped);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public void GetItem_DynamicAndTyped_ArrayType()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var itemDynamic = store.GetItem("myValues");
+            var itemTyped = store.GetItem<List<double>>("myValues");
+
+            Assert.Equal(3, itemDynamic.Count);
+            Assert.Equal(2.1, itemDynamic[0]);
+            Assert.Equal(3, itemTyped.Count);
+            Assert.Equal(2.1, itemTyped.First());
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public void GetItem_DynamicAndTyped_DateType()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var test = DateTime.Now.ToShortDateString();
+
+            var itemDynamic = store.GetItem("myDate_string");
+            var itemTyped = store.GetItem<DateTime>("myDate_string");
+            Assert.Equal(2009, itemTyped.Year);
+
+            var itemDynamic2 = store.GetItem("myDate_date");
+            var itemTyped2 = store.GetItem<DateTime>("myDate_date");
+            Assert.Equal(2015, itemDynamic2.Year);
+            Assert.Equal(2015, itemTyped2.Year);
 
             UTHelpers.Down(newFilePath);
         }
@@ -127,11 +168,12 @@ namespace JsonFlatFileDataStore.Test
 
             var store = new DataStore(newFilePath);
 
-            var result = await store.InsertItemAsync("myUser2", new { id = 12, name = "Teddy" });
+            var result = await store.InsertItemAsync("myUser2", new { id = 12, name = "Teddy", Value = 2.1 });
             Assert.True(result);
 
             var user = store.GetItem("myUser2");
             Assert.Equal("Teddy", user.name);
+            Assert.Equal(2.1, user.value);
 
             var updateResult = await store.UpdateItemAsync("myUser2", new { name = "Harold" });
 
