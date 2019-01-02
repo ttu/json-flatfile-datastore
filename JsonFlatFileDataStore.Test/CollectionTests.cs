@@ -56,10 +56,11 @@ namespace JsonFlatFileDataStore.Test
             var nextId = collection.GetNextIdValue();
             Assert.Equal(4, nextId);
 
+            collection.InsertOne(new { id = nextId + 1 });
             collection.InsertOne(new { id = nextId });
 
             nextId = collection.GetNextIdValue();
-            Assert.Equal(5, nextId);
+            Assert.Equal(6, nextId);
         }
 
         [Fact]
@@ -124,7 +125,7 @@ namespace JsonFlatFileDataStore.Test
             collection.InsertOne(new { myId = "hello2" });
 
             nextId = collection.GetNextIdValue();
-            Assert.Equal("hello3", nextId);
+            Assert.Equal("hello5", nextId);
 
             var same = collection.AsQueryable().Where(e => e.myId == "hello2");
             Assert.Equal(2, same.Count());
@@ -140,17 +141,19 @@ namespace JsonFlatFileDataStore.Test
             var collection = store.GetCollection("collectionWithStringId");
 
             // Insert seed value with upsert
-            collection.ReplaceOne(e => e, JToken.Parse("{ 'myId': 'test1' }"), true);
+            collection.ReplaceOne(e => true, JToken.Parse("{ 'myId': 'test1' }"), true);
+            collection.InsertOne(JToken.Parse("{ 'myId': 'test3' }"));
+            collection.InsertOne(JToken.Parse("{ 'myId': 'test2' }"));
 
             var nextId = collection.GetNextIdValue();
-            Assert.Equal("test2", nextId);
+            Assert.Equal("test4", nextId);
 
-            var nextUpdate = JToken.Parse("{ 'myId': 'somethingWrong2' }");
+            var nextUpdate = JToken.Parse("{ 'myId': 'somethingWrong4' }");
             collection.InsertOne(nextUpdate);
             Assert.Equal(nextId, nextUpdate["myId"]);
 
             nextId = collection.GetNextIdValue();
-            Assert.Equal("test3", nextId);
+            Assert.Equal("test5", nextId);
 
             nextUpdate = JToken.Parse("{ 'xxx': 111 }");
             collection.InsertOne(nextUpdate);
@@ -158,7 +161,7 @@ namespace JsonFlatFileDataStore.Test
             Assert.Equal(111, nextUpdate["xxx"]);
 
             nextId = collection.GetNextIdValue();
-            Assert.Equal("test4", nextId);
+            Assert.Equal("test6", nextId);
         }
 
         [Fact]
