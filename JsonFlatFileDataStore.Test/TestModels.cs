@@ -26,6 +26,8 @@ namespace JsonFlatFileDataStore.Test
     public class Movie
     {
         public string Name { get; set; }
+
+        public double Rating { get; set; }
     }
 
     public class PrivateOwner
