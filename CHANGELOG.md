@@ -1,7 +1,7 @@
 # Changelog
 
 ### [Unreleased]
-* FIXED: Single item dynamic converter. Returns lists correctly, regional fixes for dates and numbers.
+* FIXED: Single item dynamic converter. Returns lists correctly, regional fixes for dates and number types.
 
 ### [2.0.1] - 2018-12-14
 * CHANGED: GetItem to return null for not found nullable type
