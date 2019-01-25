@@ -320,6 +320,108 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
+        public async Task UpdateOne_TypedModel_InnerSimpleArray()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection<TestModelWithStringArray>();
+            Assert.Equal(0, collection.Count);
+
+            var newModel = new TestModelWithStringArray
+            {
+                Id = Guid.NewGuid().ToString(),
+                Type = "empty",
+                Fragments = new List<string>
+                {
+                    Guid.NewGuid().ToString()
+                }
+            };
+
+            var insertResult = collection.InsertOne(newModel);
+            Assert.True(insertResult);
+            Assert.Equal(1, collection.Count);
+
+            var store2 = new DataStore(newFilePath);
+            var collection2 = store2.GetCollection<TestModelWithStringArray>();
+            Assert.Equal(1, collection2.Count);
+
+            var updateData = new
+            {
+                Type = "filled",
+                Fragments = new List<string>
+                {
+                     Guid.NewGuid().ToString(),
+                     Guid.NewGuid().ToString()
+                }
+            };
+
+            await collection2.UpdateOneAsync(e => e.Id == newModel.Id, updateData);
+
+            var store3 = new DataStore(newFilePath);
+            var collection3 = store3.GetCollection<TestModelWithStringArray>();
+            var updated = collection3.Find(e => e.Id == newModel.Id).First();
+            Assert.Equal(2, updated.Fragments.Count());
+            Assert.Equal(2, updated.Fragments.Count());
+            Assert.Equal(2, updated.Fragments.Count());
+            Assert.Equal("filled", updated.Type);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public async Task UpdateOne_TypedModel_InnerSimpleIntArray()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection<TestModelWithIntArray>();
+            Assert.Equal(0, collection.Count);
+
+            var newModel = new TestModelWithIntArray
+            {
+                Id = Guid.NewGuid().ToString(),
+                Type = "empty",
+                Fragments = new List<int>
+                {
+                    1
+                }
+            };
+
+            var insertResult = collection.InsertOne(newModel);
+            Assert.True(insertResult);
+            Assert.Equal(1, collection.Count);
+
+            var store2 = new DataStore(newFilePath);
+            var collection2 = store2.GetCollection<TestModelWithIntArray>();
+            Assert.Equal(1, collection2.Count);
+
+            var updateData = new
+            {
+                Type = "filled",
+                Fragments = new List<int>
+                {
+                     2,
+                     3
+                }
+            };
+
+            await collection2.UpdateOneAsync(e => e.Id == newModel.Id, updateData);
+
+            var store3 = new DataStore(newFilePath);
+            var collection3 = store3.GetCollection<TestModelWithIntArray>();
+            var updated = collection3.Find(e => e.Id == newModel.Id).First();
+            Assert.Equal(2, updated.Fragments.Count());
+            Assert.Equal(2, updated.Fragments.First());
+            Assert.Equal(3, updated.Fragments.Last());
+            Assert.Equal("filled", updated.Type);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
         public async Task UpdateOne_DynamicUser()
         {
             var newFilePath = UTHelpers.Up();
