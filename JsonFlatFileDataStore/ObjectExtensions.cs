@@ -174,8 +174,6 @@ internal static class ObjectExtensions
 
             if (IsEnumerable(srcProp.PropertyType))
             {
-                //var arrayType = srcProp.PropertyType.GetElementType();
-
                 var sourceArray = (IList)GetValue(source, srcProp);
                 var targetArray = (IList)targetProperty.GetValue(destination, null);
 
