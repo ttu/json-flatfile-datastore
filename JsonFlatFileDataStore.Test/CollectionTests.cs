@@ -263,6 +263,33 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
+        public void InsertOne_TypedUser_NewUser_WithId()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection<User>("user2");
+            Assert.Equal(0, collection.Count);
+
+            collection.InsertOne(new User { Id = 12, Name = "Teddy" });
+            Assert.Equal(1, collection.Count);
+
+            var collection2 = store.GetCollection<User>("user2");
+            Assert.Equal(1, collection2.Count);
+
+            var store2 = new DataStore(newFilePath);
+
+            var collection3 = store2.GetCollection<User>("user2");
+            Assert.Equal(1, collection3.Count);
+
+            var item = collection3.AsQueryable().SingleOrDefault(e => e.Id == 12);
+            Assert.NotNull(item);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
         public async Task InsertOneAsync_TypedUser()
         {
             var newFilePath = UTHelpers.Up();

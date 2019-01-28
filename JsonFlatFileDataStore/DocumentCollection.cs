@@ -41,7 +41,7 @@ namespace JsonFlatFileDataStore
         {
             bool UpdateAction(List<T> data)
             {
-                var itemToInsert = GetItemToInsert(GetNextIdValue(data), item, _insertConvert);
+                var itemToInsert = GetItemToInsert(GetNextIdValue(data, item), item, _insertConvert);
                 data.Add(itemToInsert);
                 return true;
             };
@@ -55,7 +55,7 @@ namespace JsonFlatFileDataStore
         {
             bool UpdateAction(List<T> data)
             {
-                var itemToInsert = GetItemToInsert(GetNextIdValue(data), item, _insertConvert);
+                var itemToInsert = GetItemToInsert(GetNextIdValue(data, item), item, _insertConvert);
                 data.Add(itemToInsert);
                 return true;
             };
@@ -71,7 +71,7 @@ namespace JsonFlatFileDataStore
             {
                 foreach (var item in items)
                 {
-                    var itemToInsert = GetItemToInsert(GetNextIdValue(data), item, _insertConvert);
+                    var itemToInsert = GetItemToInsert(GetNextIdValue(data, item), item, _insertConvert);
                     data.Add(itemToInsert);
                 }
 
@@ -89,7 +89,7 @@ namespace JsonFlatFileDataStore
             {
                 foreach (var item in items)
                 {
-                    var itemToInsert = GetItemToInsert(GetNextIdValue(data), item, _insertConvert);
+                    var itemToInsert = GetItemToInsert(GetNextIdValue(data, item), item, _insertConvert);
                     data.Add(itemToInsert);
                 }
 
@@ -367,27 +367,50 @@ namespace JsonFlatFileDataStore
             }
         }
 
-        private dynamic GetNextIdValue(List<T> data)
+        private dynamic GetNextIdValue(List<T> data, T item = default(T))
         {
             if (!data.Any())
             {
+                if (item != null)
+                {
+                    dynamic primaryKeyValue = GetFieldValue(item, _idField);
+
+                    if (primaryKeyValue != null)
+                    {
+                        // Without casting dynamic will return Int64 for int
+                        if (primaryKeyValue is Int64)
+                            return (int)primaryKeyValue;
+
+                        return primaryKeyValue;
+                    }
+                }
+
                 return ObjectExtensions.GetDefaultValue<T>(_idField);
             }
 
             var lastItem = data.Last();
-            var expando = JsonConvert.DeserializeObject<ExpandoObject>(JsonConvert.SerializeObject(lastItem), new ExpandoObjectConverter());
+
+            dynamic keyValue = GetFieldValue(lastItem, _idField);
+
+            if (keyValue == null)
+                return null;
+
+            if (keyValue is Int64)
+                return (int)keyValue + 1;
+
+            return ParseNextIntegertToKeyValue(keyValue.ToString());
+        }
+
+        private dynamic GetFieldValue(T item, string fieldName)
+        {
+            var expando = JsonConvert.DeserializeObject<ExpandoObject>(JsonConvert.SerializeObject(item), new ExpandoObjectConverter());
             // Problem here is if we have typed data with upper camel case properties but lower camel case in JSON, so need to use OrdinalIgnoreCase string comparer
             var expandoAsIgnoreCase = new Dictionary<string, dynamic>(expando, StringComparer.OrdinalIgnoreCase);
 
             if (!expandoAsIgnoreCase.ContainsKey(_idField))
                 return null;
 
-            dynamic keyValue = expandoAsIgnoreCase[_idField];
-
-            if (keyValue is Int64)
-                return (int)keyValue + 1;
-
-            return ParseNextIntegertToKeyValue(keyValue.ToString());
+            return expandoAsIgnoreCase[_idField];
         }
 
         private string ParseNextIntegertToKeyValue(string input)
