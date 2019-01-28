@@ -127,10 +127,13 @@ internal static class ObjectExtensions
         {
             case null:
                 return 0;
+
             case var p when p.PropertyType.IsValueType:
                 return Activator.CreateInstance(p.PropertyType);
+
             case var p when p.PropertyType == typeof(string):
                 return "0";
+
             default:
                 return null;
         }
@@ -172,8 +175,6 @@ internal static class ObjectExtensions
 
             if (IsEnumerable(srcProp.PropertyType))
             {
-                var arrayType = srcProp.PropertyType.GetElementType();
-
                 var sourceArray = (IList)GetValue(source, srcProp);
                 var targetArray = (IList)targetProperty.GetValue(destination, null);
 
@@ -192,11 +193,11 @@ internal static class ObjectExtensions
                     {
                         if (targetArray.Count - 1 < i)
                         {
-                            var newTargetItem = Activator.CreateInstance(type);
+                            var newTargetItem = CreateInstance(type);
                             targetArray.Add(newTargetItem);
                         }
 
-                        if (type.GetTypeInfo().IsValueType)
+                        if (type.GetTypeInfo().IsValueType || type == typeof(string))
                             targetArray[i] = sourceValue;
                         else
                             CopyProperties(sourceValue, targetArray[i]);
@@ -256,7 +257,7 @@ internal static class ObjectExtensions
                 var destExpandoDict = ((IDictionary<string, object>)destination);
 
                 if (!destExpandoDict.ContainsKey(srcProp.Name))
-                    destExpandoDict.Add(srcProp.Name, Activator.CreateInstance(srcProp.PropertyType));
+                    destExpandoDict.Add(srcProp.Name, CreateInstance(srcProp.PropertyType));
 
                 var sourceValue = GetValue(source, srcProp);
                 HandleExpando(sourceValue, destExpandoDict[srcProp.Name]);
@@ -266,7 +267,7 @@ internal static class ObjectExtensions
                 var destExpandoDict = ((IDictionary<string, object>)destination);
 
                 if (!destExpandoDict.ContainsKey(srcProp.Name))
-                    destExpandoDict.Add(srcProp.Name, Activator.CreateInstance(srcProp.PropertyType));
+                    destExpandoDict.Add(srcProp.Name, CreateInstance(srcProp.PropertyType));
 
                 var targetDict = (IDictionary)destExpandoDict[srcProp.Name];
                 var sourceDict = (IDictionary)GetValue(source, srcProp);
@@ -286,7 +287,7 @@ internal static class ObjectExtensions
                 var destExpandoDict = ((IDictionary<string, object>)destination);
 
                 if (!destExpandoDict.ContainsKey(srcProp.Name))
-                    destExpandoDict.Add(srcProp.Name, Activator.CreateInstance(srcProp.PropertyType));
+                    destExpandoDict.Add(srcProp.Name, CreateInstance(srcProp.PropertyType));
 
                 var targetArray = (IList)destExpandoDict[srcProp.Name];
                 var sourceArray = (IList)GetValue(source, srcProp);
@@ -309,10 +310,10 @@ internal static class ObjectExtensions
                         {
                             if (targetArray.Count - 1 < i)
                             {
-                                targetArray.Add(Activator.CreateInstance(type));
+                                targetArray.Add(CreateInstance(type));
                             }
 
-                            if (type.GetTypeInfo().IsValueType)
+                            if (type.GetTypeInfo().IsValueType || type == typeof(string))
                                 targetArray[i] = sourceValue;
                             else
                                 CopyProperties(sourceValue, targetArray[i]);
@@ -383,5 +384,10 @@ internal static class ObjectExtensions
                toTest.GetGenericTypeDefinition() == typeof(List<>) ||
                toTest.GetGenericTypeDefinition() == typeof(ICollection<>) ||
                toTest.GetGenericTypeDefinition() == typeof(Collection<>);
+    }
+
+    private static dynamic CreateInstance(Type type)
+    {
+        return type != typeof(string) ? Activator.CreateInstance(type) : string.Empty;
     }
 }

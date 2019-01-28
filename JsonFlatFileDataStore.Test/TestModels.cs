@@ -3,6 +3,20 @@ using System.Collections.Generic;
 
 namespace JsonFlatFileDataStore.Test
 {
+    public class TestModelWithStringArray
+    {
+        public string Id { get; set; }
+        public string Type { get; set; }
+        public List<string> Fragments { get; set; }
+    }
+
+    public class TestModelWithIntArray
+    {
+        public string Id { get; set; }
+        public string Type { get; set; }
+        public List<int> Fragments { get; set; }
+    }
+
     public class User
     {
         public int Id { get; set; }
