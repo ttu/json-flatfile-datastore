@@ -287,6 +287,34 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
+        public async Task UpdateOneAsync_TypedUser_WrongCase()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection<User>("users2");
+
+            await collection.InsertOneAsync(new User { Id = 0, Name = "original" });
+            await collection.InsertOneAsync(new User { Id = 1, Name = "original 2" });
+
+            var store2 = new DataStore(newFilePath);
+
+            var collection2 = store2.GetCollection<User>("users2");
+            await collection2.UpdateOneAsync(x => x.Id == 0, new { name = "new value" });
+            await collection2.UpdateOneAsync(x => x.Id == 1, JToken.Parse("{ name: \"new value 2\"} "));
+
+            var store3 = new DataStore(newFilePath);
+
+            var collection3 = store3.GetCollection<User>("users2");
+            var items = collection3.AsQueryable();
+            Assert.Equal(2, items.Count());
+
+            Assert.Equal("new value", items.First().Name);
+            Assert.Equal("new value 2", items.Last().Name);
+        }
+
+        [Fact]
         public async Task UpdateOne_TypedUser()
         {
             var newFilePath = UTHelpers.Up();
@@ -337,6 +365,32 @@ namespace JsonFlatFileDataStore.Test
             Assert.True(updateResult);
 
             await collection.UpdateOneAsync(e => e.id == 11, new { someThatIsNotThere = "No" });
+
+            var store2 = new DataStore(newFilePath);
+            var collection2 = store2.GetCollection("user");
+            var updated = collection2.Find(e => e.id == 11).First();
+            Assert.Equal(22, updated.age);
+            Assert.Equal("Teddy", updated.name);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public async Task UpdateOne_DynamicUser_WrongCase()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection("user");
+            Assert.Equal(3, collection.Count);
+
+            await collection.InsertOneAsync(new { id = 11, name = "Teddy", age = 21 });
+
+            dynamic source = new ExpandoObject();
+            source.Age = 22;
+            var updateResult = await collection.UpdateOneAsync(e => e.id == 11, source as object);
+            Assert.True(updateResult);
 
             var store2 = new DataStore(newFilePath);
             var collection2 = store2.GetCollection("user");
@@ -820,7 +874,7 @@ namespace JsonFlatFileDataStore.Test
             var patchData = new Dictionary<string, object>
             {
                 { "Age", 41 },
-                { "Name", "James" },
+                { "name", "James" },
                 { "Work", new Dictionary<string, object> { { "Name", "ACME" } } }
             };
             var jobject = JObject.FromObject(patchData);

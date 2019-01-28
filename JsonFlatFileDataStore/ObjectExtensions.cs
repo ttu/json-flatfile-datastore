@@ -140,7 +140,8 @@ internal static class ObjectExtensions
     {
         foreach (var srcProp in GetProperties(source))
         {
-            var targetProperty = destination.GetType().GetProperty((string)srcProp.Name);
+            var targetProperty = destination.GetType().GetProperty((string)srcProp.Name)
+                                    ?? destination.GetType().GetProperty(SwitchFirstChar((string)srcProp.Name));
 
             if (targetProperty == null)
                 continue;
@@ -232,6 +233,18 @@ internal static class ObjectExtensions
 
             targetProperty.SetValue(destination, GetValue(source, srcProp), null);
         }
+    }
+
+    private static string SwitchFirstChar(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return name;
+
+        var chars = name.ToCharArray();
+        var first = chars.First();
+        
+        return (char.IsLower(first) ? char.ToString(first).ToUpper() : char.ToString(first).ToLower()) +
+                    (chars.Length > 1 ? new string(chars.Skip(1).ToArray()) : string.Empty);
     }
 
     private static void HandleExpando(object source, object destination)
