@@ -2,6 +2,8 @@ JSON Flat File Data Store
 ----------------------------------
 
 [![NuGet](https://img.shields.io/nuget/v/JsonFlatFileDataStore.svg)](https://www.nuget.org/packages/JsonFlatFileDataStore/)
+[![NuGetCount](https://img.shields.io/nuget/dt/JsonFlatFileDataStore.svg
+)](https://www.nuget.org/packages/JsonFlatFileDataStore/)
 
 | Build server| Platform       | Build status      |
 |-------------|----------------|-------------|
