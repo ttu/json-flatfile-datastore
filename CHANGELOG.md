@@ -1,10 +1,12 @@
 # Changelog
 
 ### [Unreleased]
+
+### [2.1.0] - 2019-01-30
 * FIXED: Single item dynamic converter. Returns lists correctly, regional fixes for dates and number types.
-* FIXED: Copy strings correctly inside collections
-* CHANGED: Get seed item id from the first item if id value is set
-* CHANGED: On data update ignore the case of the first character of property's name
+* FIXED: Copy values inside collection of strings correctly
+* CHANGED: On add, if collection is empty and item's id is set, that id value is used instead of generated one
+* CHANGED: On update, case of the first character of property's name is insensitive. E.g. Name can be updated with Name or name.
 
 ### [2.0.1] - 2018-12-14
 * CHANGED: GetItem to return null for not found nullable type
