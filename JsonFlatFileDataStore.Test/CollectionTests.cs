@@ -852,6 +852,33 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
+        public void DeleteOne_With_Id_TypedUser()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection<User>("user");
+            Assert.Equal(3, collection.Count);
+
+            var newUser = new User { Id = 11, Name = "Teddy" };
+            collection.InsertOne(newUser);
+            Assert.Equal(4, collection.Count);
+
+            var store2 = new DataStore(newFilePath);
+
+            var collection2 = store2.GetCollection<User>("user");
+            collection2.DeleteOne(newUser.Id);
+            Assert.Equal(3, collection2.Count);
+
+            var store3 = new DataStore(newFilePath);
+            var collection3 = store3.GetCollection<User>("user");
+            Assert.Equal(3, collection3.Count);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
         public async Task DeleteOneAsync_DynamicNewCollection()
         {
             var newFilePath = UTHelpers.Up();
@@ -870,6 +897,35 @@ namespace JsonFlatFileDataStore.Test
             Assert.Equal(1, collection2.Count);
 
             var deleteResult = await collection2.DeleteOneAsync(e => e.Id == 1);
+            Assert.True(deleteResult);
+            Assert.Equal(0, collection2.Count);
+
+            var store3 = new DataStore(newFilePath);
+            var collection3 = store3.GetCollection("book");
+            Assert.Equal(0, collection3.Count);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public async Task DeleteOneAsync_With_Id_DynamicNewCollection()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath, false);
+
+            var collection = store.GetCollection("book");
+            Assert.Equal(0, collection.Count);
+
+            await collection.InsertOneAsync(new { Id = 1, Name = "Some name" });
+            Assert.Equal(1, collection.Count);
+
+            var store2 = new DataStore(newFilePath);
+
+            var collection2 = store2.GetCollection("book");
+            Assert.Equal(1, collection2.Count);
+
+            var deleteResult = await collection2.DeleteOneAsync(1);
             Assert.True(deleteResult);
             Assert.Equal(0, collection2.Count);
 

@@ -139,6 +139,18 @@ internal static class ObjectExtensions
         }
     }
 
+    internal static dynamic GetFieldValue(object source, string fieldName)
+    {
+        if (source.GetType() == typeof(ExpandoObject))
+        {
+            var sourceExpandoDict = new Dictionary<string, dynamic>(source as ExpandoObject, StringComparer.OrdinalIgnoreCase);
+            return sourceExpandoDict.ContainsKey(fieldName) ? sourceExpandoDict[fieldName] : null;
+        }
+
+        var srcProp = source.GetType().GetProperties().FirstOrDefault(p => string.Equals(p.Name, fieldName, StringComparison.OrdinalIgnoreCase));
+        return srcProp != null ? srcProp.GetValue(source, null) : null;
+    }
+
     private static void HandleTyped(object source, object destination)
     {
         foreach (var srcProp in GetProperties(source))
@@ -243,7 +255,7 @@ internal static class ObjectExtensions
 
         var chars = name.ToCharArray();
         var first = chars.First();
-        
+
         return (char.IsLower(first) ? char.ToString(first).ToUpper() : char.ToString(first).ToLower()) +
                     (chars.Length > 1 ? new string(chars.Skip(1).ToArray()) : string.Empty);
     }

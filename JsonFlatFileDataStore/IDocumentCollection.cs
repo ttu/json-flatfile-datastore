@@ -138,12 +138,16 @@ namespace JsonFlatFileDataStore
         /// <returns>true if item found for deletion</returns>
         bool DeleteOne(Predicate<T> filter);
 
+        bool DeleteOne(dynamic id);
+
         /// <summary>
         /// Delete first item matching the filter
         /// </summary>
         /// <param name="filter">First item matching the predicate will be deleted</param>
         /// <returns>true if item found for deletion</returns>
         Task<bool> DeleteOneAsync(Predicate<T> filter);
+
+        Task<bool> DeleteOneAsync(dynamic id);
 
         /// <summary>
         /// Delete all items matching the filter

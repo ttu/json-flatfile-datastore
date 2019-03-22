@@ -313,6 +313,8 @@ namespace JsonFlatFileDataStore
             return _commit(_path, UpdateAction, false).Result;
         }
 
+        public bool DeleteOne(dynamic id) => DeleteOne(GetFilterPredicate(id));
+
         public async Task<bool> DeleteOneAsync(Predicate<T> filter)
         {
             bool UpdateAction(List<T> data)
@@ -330,6 +332,9 @@ namespace JsonFlatFileDataStore
 
             return await _commit(_path, UpdateAction, true).ConfigureAwait(false);
         }
+
+        public Task<bool> DeleteOneAsync(dynamic id) => DeleteOneAsync(GetFilterPredicate(id));
+
 
         public bool DeleteMany(Predicate<T> filter)
         {
@@ -452,5 +457,7 @@ namespace JsonFlatFileDataStore
                 return insertConvert(item);
             }
         }
+
+        private Predicate<T> GetFilterPredicate(dynamic id) => new Predicate<T>(e => ObjectExtensions.GetFieldValue(e, _idField) == id);
     }
 }

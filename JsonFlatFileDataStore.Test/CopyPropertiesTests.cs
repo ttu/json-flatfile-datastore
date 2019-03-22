@@ -392,5 +392,17 @@ namespace JsonFlatFileDataStore.Test
             var value = ObjectExtensions.GetDefaultValue<ClassForGetDefaultValue>(field);
             Assert.Equal(value, result);
         }
+
+        [Theory]
+        [InlineData("Id", 2)]
+        [InlineData("Age", 40)]
+        [InlineData("NotFound", null)]
+        public void GetFieldValue(string field, dynamic result)
+        {
+            var user = new User { Id = 2, Age = 40 };
+
+            var value = ObjectExtensions.GetFieldValue(user, field);
+            Assert.Equal(value, result);
+        }
     }
 }
