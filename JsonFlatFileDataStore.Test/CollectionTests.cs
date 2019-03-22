@@ -868,6 +868,8 @@ namespace JsonFlatFileDataStore.Test
             var store2 = new DataStore(newFilePath);
 
             var collection2 = store2.GetCollection<User>("user");
+            Assert.Equal(4, collection2.Count);
+
             collection2.DeleteOne(newUser.Id);
             Assert.Equal(3, collection2.Count);
 
