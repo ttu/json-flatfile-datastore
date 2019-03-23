@@ -74,6 +74,8 @@ namespace JsonFlatFileDataStore
         /// <returns>true if item found for replacement</returns>
         bool ReplaceOne(Predicate<T> filter, T item, bool upsert = false);
 
+        bool ReplaceOne(dynamic id, T item, bool upsert = false);
+
         /// <summary>
         /// Replace the first item matching the filter
         /// </summary>
@@ -82,6 +84,8 @@ namespace JsonFlatFileDataStore
         /// <param name="upsert">Will item be inserted if not found</param>
         /// <returns>true if item found for replacement</returns>
         Task<bool> ReplaceOneAsync(Predicate<T> filter, T item, bool upsert = false);
+
+        Task<bool> ReplaceOneAsync(dynamic id, T item, bool upsert = false);
 
         /// <summary>
         /// Replace all items matching the filter
@@ -107,6 +111,8 @@ namespace JsonFlatFileDataStore
         /// <returns>true if item found for update</returns>
         bool UpdateOne(Predicate<T> filter, dynamic item);
 
+        bool UpdateOne(dynamic id, dynamic item);
+
         /// <summary>
         /// Update the first item matching the filter
         /// </summary>
@@ -114,6 +120,7 @@ namespace JsonFlatFileDataStore
         /// <param name="item">New content</param>
         /// <returns>true if item found for update</returns>
         Task<bool> UpdateOneAsync(Predicate<T> filter, dynamic item);
+        Task<bool> UpdateOneAsync(dynamic id, dynamic item);
 
         /// <summary>
         /// Update all items matching the filter

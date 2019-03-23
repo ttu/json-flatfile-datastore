@@ -342,7 +342,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public async Task UpdateOne_TypedUser()
+        public async Task UpdateOneAsync_TypedUser()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -369,13 +369,14 @@ namespace JsonFlatFileDataStore.Test
             Assert.Equal("Teddy", updated.Name);
 
             // Try to update property that doesn't exist
-            collection2.UpdateOne(e => e.Id == 11, new { SomeThatIsNotThere = "No" });
+            var notThereResult = await collection2.UpdateOneAsync(e => e.Id == newUser.Id, new { SomeThatIsNotThere = "No" });
+            Assert.True(notThereResult);
 
             UTHelpers.Down(newFilePath);
         }
 
         [Fact]
-        public async Task UpdateOne_TypedModel_InnerSimpleArray()
+        public async Task UpdateOneAsync_TypedModel_InnerSimpleArray()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -426,7 +427,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public async Task UpdateOne_TypedModel_InnerSimpleIntArray()
+        public async Task UpdateOneAsync_TypedModel_InnerSimpleIntArray()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -477,7 +478,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public async Task UpdateOne_DynamicUser()
+        public async Task UpdateOneAsync_Predicate_Id_DynamicUser()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -493,19 +494,21 @@ namespace JsonFlatFileDataStore.Test
             var updateResult = await collection.UpdateOneAsync(e => e.id == 11, source as object);
             Assert.True(updateResult);
 
-            await collection.UpdateOneAsync(e => e.id == 11, new { someThatIsNotThere = "No" });
+            var resultNotThere = await collection.UpdateOneAsync(11, new { someThatIsNotThere = "No" });
+            Assert.True(resultNotThere);
 
             var store2 = new DataStore(newFilePath);
             var collection2 = store2.GetCollection("user");
             var updated = collection2.Find(e => e.id == 11).First();
             Assert.Equal(22, updated.age);
             Assert.Equal("Teddy", updated.name);
+            Assert.Equal("No", updated.someThatIsNotThere);
 
             UTHelpers.Down(newFilePath);
         }
 
         [Fact]
-        public async Task UpdateOne_DynamicUser_WrongCase()
+        public async Task UpdateOneAsync_DynamicUser_WrongCase()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -531,7 +534,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public async Task UpdateMany_DynamicUser()
+        public async Task UpdateManyAsync_DynamicUser()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -569,7 +572,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public async Task UpdateMany_JsonUser()
+        public async Task UpdateManyAsync_JsonUser()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -656,7 +659,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void ReplaceOne_TypedUser()
+        public void ReplaceOne__Preditacte_Id_TypedUser()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -681,11 +684,18 @@ namespace JsonFlatFileDataStore.Test
             var updated = collection3.Find(e => e.Id == newUser.Id).First();
             Assert.Equal("Theodor", updated.Name);
 
+            collection3.ReplaceOne(newUser.Id, new User { Id = newUser.Id, Name = "Theodor_2" });
+
+            var store4 = new DataStore(newFilePath);
+            var collection4 = store4.GetCollection<User>("user");
+            var updated_2 = collection4.Find(e => e.Id == newUser.Id).First();
+            Assert.Equal("Theodor_2", updated_2.Name);
+
             UTHelpers.Down(newFilePath);
         }
 
         [Fact]
-        public void ReplaceOne_Upsert_TypedUser()
+        public void ReplaceOne_Upsert__Predicate_Id_TypedUser()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -701,7 +711,7 @@ namespace JsonFlatFileDataStore.Test
             Assert.True(success);
             Assert.Equal(4, collection.Count);
 
-            success = collection.ReplaceOne(e => e.Id == 11, new User { Id = 11, Name = "Jimmy" }, true);
+            success = collection.ReplaceOne(11, new User { Id = 11, Name = "Jimmy" }, true);
             Assert.True(success);
             Assert.Equal(4, collection.Count);
 
@@ -939,7 +949,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public async Task DeleteMany_NotFoundAndFound()
+        public async Task DeleteManyAsync_NotFoundAndFound()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -1009,7 +1019,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public async Task InsertOne_100Async()
+        public async Task InsertOneAsync_100Async()
         {
             var newFilePath = UTHelpers.Up();
 
