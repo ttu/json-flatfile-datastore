@@ -66,7 +66,7 @@ await collection.InsertOneAsync(employee);
 // Update employee
 employee.Name = "John Doe";
 
-await collection.UpdateOneAsync(e => e.Id == employee.Id, employee);
+await collection.UpdateOneAsync(employee.Id, employee);
 
 // Use LINQ to query items
 var results = collection.AsQueryable().Where(e => e.Age > 30);
