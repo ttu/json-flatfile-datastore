@@ -1,7 +1,8 @@
 # Changelog
 
 ### [Unreleased]
-
+* ADDED: DocumentCollection Update, Replace and Delete-methods with id-value parameter
+ 
 ### [2.1.0] - 2019-01-30
 * FIXED: Single item dynamic converter. Returns lists correctly, regional fixes for dates and number types.
 * FIXED: Copy values inside collection of strings correctly

@@ -130,6 +130,8 @@ namespace JsonFlatFileDataStore
             return _commit(_path, UpdateAction, false).Result;
         }
 
+        public bool ReplaceOne(dynamic id, T item, bool upsert = false) => ReplaceOne(GetFilterPredicate(id), item, upsert);
+
         public bool ReplaceMany(Predicate<T> filter, T item)
         {
             bool UpdateAction(List<T> data)
@@ -183,6 +185,8 @@ namespace JsonFlatFileDataStore
             return await _commit(_path, UpdateAction, true).ConfigureAwait(false);
         }
 
+        public Task<bool> ReplaceOneAsync(dynamic id, T item, bool upsert = false) => ReplaceOneAsync(GetFilterPredicate(id), item, upsert);
+
         public async Task<bool> ReplaceManyAsync(Predicate<T> filter, T item)
         {
             bool UpdateAction(List<T> data)
@@ -228,6 +232,8 @@ namespace JsonFlatFileDataStore
             return _commit(_path, UpdateAction, false).Result;
         }
 
+        public bool UpdateOne(dynamic id, dynamic item) => UpdateOne(GetFilterPredicate(id), item);
+
         public async Task<bool> UpdateOneAsync(Predicate<T> filter, dynamic item)
         {
             bool UpdateAction(List<T> data)
@@ -248,6 +254,8 @@ namespace JsonFlatFileDataStore
 
             return await _commit(_path, UpdateAction, true).ConfigureAwait(false);
         }
+
+        public Task<bool> UpdateOneAsync(dynamic id, dynamic item) => UpdateOneAsync(GetFilterPredicate(id), item);
 
         public bool UpdateMany(Predicate<T> filter, dynamic item)
         {
@@ -313,6 +321,8 @@ namespace JsonFlatFileDataStore
             return _commit(_path, UpdateAction, false).Result;
         }
 
+        public bool DeleteOne(dynamic id) => DeleteOne(GetFilterPredicate(id));
+
         public async Task<bool> DeleteOneAsync(Predicate<T> filter)
         {
             bool UpdateAction(List<T> data)
@@ -330,6 +340,8 @@ namespace JsonFlatFileDataStore
 
             return await _commit(_path, UpdateAction, true).ConfigureAwait(false);
         }
+
+        public Task<bool> DeleteOneAsync(dynamic id) => DeleteOneAsync(GetFilterPredicate(id));
 
         public bool DeleteMany(Predicate<T> filter)
         {
@@ -452,5 +464,7 @@ namespace JsonFlatFileDataStore
                 return insertConvert(item);
             }
         }
+
+        private Predicate<T> GetFilterPredicate(dynamic id) => new Predicate<T>(e => ObjectExtensions.GetFieldValue(e, _idField) == id);
     }
 }

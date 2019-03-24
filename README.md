@@ -66,7 +66,7 @@ await collection.InsertOneAsync(employee);
 // Update employee
 employee.Name = "John Doe";
 
-await collection.UpdateOneAsync(e => e.Id == employee.Id, employee);
+await collection.UpdateOneAsync(employee.Id, employee);
 
 // Use LINQ to query items
 var results = collection.AsQueryable().Where(e => e.Age > 30);
@@ -255,18 +255,20 @@ If collection is empty and the type of the id-field is number, then first id wil
 
 #### Replace
 
-`ReplaceOne` and `ReplaceOneAsync` will replace the first item that matches the filter. Method will return true if item(s) found with the filter.
+`ReplaceOne` and `ReplaceOneAsync` will replace the first item that matches the filter or provided id-value matches the defined id-field. Method will return true if item(s) found with the filter.
 
 ```csharp
 // Sync and dynamic
 // Before update : { "id": 3, "name": "Raymond", "age": 32, "city": "NY" }
 // After update  : { "id": 3, "name": "Barry", "age": 42 }
+collection.ReplaceOne(3, new { id = 3, name = "Barry", age = 33 });
+// or with predicate
 collection.ReplaceOne(e => e.id == 3, new { id = 3, name = "Barry", age = 33 });
 
 // Async and typed
 // Before update : { "id": 3, "name": "Raymond", "age": 32, "city": "NY" }
 // After update  : { "id": 3, "name": "Barry", "age": 42 }
-await collection.ReplaceOneAsync(e => e.Id == 3, new User { Id = 3, Name = "Barry", Age = 33 });
+await collection.ReplaceOneAsync(3, new User { Id = 3, Name = "Barry", Age = 33 });
 ```
 
 `ReplaceMany` and `ReplaceManyAsync` will replace all items that match the filter.
@@ -279,12 +281,12 @@ collection.ReplaceMany(e => e.City == "NY", new { City = "New York" });
 
 ```csharp
 // New item will be inserted with id 11
-collection.ReplaceOne(e => e.id == 11, new { id = 11, name = "Theodor" }, true);
+collection.ReplaceOne(11, new { id = 11, name = "Theodor" }, true);
 ```
 
 #### Update
 
-`UpdateOne` and `UpdateOneAsync` will update the first item that matches the filter with passed properties from dynamic object. Dynamic object can be an `Anonymous type` or an `ExpandoObject`. Method will return true if item(s) found with the filter.
+`UpdateOne` and `UpdateOneAsync` will update the first item that matches the filter or provided id-value matches the defined id-field. Properties to update are defined with dynamic object. Dynamic object can be an `Anonymous type` or an `ExpandoObject`. Method will return true if item(s) found with the filter.
 
 ```csharp
 // Dynamic
@@ -292,6 +294,8 @@ collection.ReplaceOne(e => e.id == 11, new { id = 11, name = "Theodor" }, true);
 // After update  : { "id": 1, "name": "Barry", "age": 42 }
 dynamic source = new ExpandoObject();
 source.age = 42;
+await collection.UpdateOneAsync(1, source as object);
+// or with predicate
 await collection.UpdateOneAsync(e => e.id == 1, source as object);
 
 // Typed
@@ -379,13 +383,15 @@ await collection.UpdateOneAsync(e => e.Id == 423, patchData);
 
 #### Delete
 
-`DeleteOne` and `DeleteOneAsync` will remove the first object that matches the filter. Method returns true if item(s) found with the filter.
+`DeleteOne` and `DeleteOneAsync` will remove the first object that matches the filter or provided id-value matches the defined id-field. Method returns true if item(s) found with the filter or with the id.
 
 ```csharp
 // Dynamic
+await collection.DeleteOneAsync(3);
 await collection.DeleteOneAsync(e => e.id == 3);
 
 // Typed
+await collection.DeleteOneAsync(3);
 await collection.DeleteOneAsync(e => e.Id == 3);
 ```
 

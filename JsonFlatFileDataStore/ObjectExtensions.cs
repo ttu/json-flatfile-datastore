@@ -24,7 +24,7 @@ internal static class ObjectExtensions
         if (source is JToken || IsDictionary(source.GetType()))
             source = JsonConvert.DeserializeObject<ExpandoObject>(JsonConvert.SerializeObject(source), new ExpandoObjectConverter());
 
-        if (destination.GetType() == typeof(ExpandoObject))
+        if (destination is ExpandoObject)
             HandleExpando(source, destination);
         else
             HandleTyped(source, destination);
@@ -139,6 +139,18 @@ internal static class ObjectExtensions
         }
     }
 
+    internal static dynamic GetFieldValue(object source, string fieldName)
+    {
+        if (source is ExpandoObject sourceExpando)
+        {
+            var sourceExpandoDict = new Dictionary<string, dynamic>(sourceExpando, StringComparer.OrdinalIgnoreCase);
+            return sourceExpandoDict.ContainsKey(fieldName) ? sourceExpandoDict[fieldName] : null;
+        }
+
+        var srcProp = source.GetType().GetProperties().FirstOrDefault(p => string.Equals(p.Name, fieldName, StringComparison.OrdinalIgnoreCase));
+        return srcProp?.GetValue(source, null);
+    }
+
     private static void HandleTyped(object source, object destination)
     {
         foreach (var srcProp in GetProperties(source))
@@ -243,7 +255,7 @@ internal static class ObjectExtensions
 
         var chars = name.ToCharArray();
         var first = chars.First();
-        
+
         return (char.IsLower(first) ? char.ToString(first).ToUpper() : char.ToString(first).ToLower()) +
                     (chars.Length > 1 ? new string(chars.Skip(1).ToArray()) : string.Empty);
     }
@@ -349,14 +361,12 @@ internal static class ObjectExtensions
 
     private static object GetValue(object source, dynamic srcProp)
     {
-        return source.GetType() == typeof(ExpandoObject)
-                    ? srcProp.Value
-                    : srcProp.GetValue(source, null);
+        return source is ExpandoObject ? srcProp.Value : srcProp.GetValue(source, null);
     }
 
     private static IEnumerable<dynamic> GetProperties(object source)
     {
-        if (source.GetType() == typeof(ExpandoObject))
+        if (source is ExpandoObject)
         {
             return ((IDictionary<string, object>)source)
                 .Select(i => new { Name = i.Key, Value = i.Value, PropertyType = i.Value?.GetType() })
