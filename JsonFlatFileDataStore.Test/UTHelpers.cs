@@ -7,16 +7,18 @@ namespace JsonFlatFileDataStore.Test
 {
     public static class UTHelpers
     {
+        private static string _dir = Path.GetDirectoryName(typeof(DataStoreTests).GetTypeInfo().Assembly.Location);
+
+        private static Lazy<string> _originalContent = new Lazy<string>(() =>
+        {
+            var path = Path.Combine(_dir, "datastore.json");
+            return File.ReadAllText(path);
+        });
+
         public static string Up([CallerMemberName] string name = "")
         {
-            var dir = Path.GetDirectoryName(typeof(DataStoreTests).GetTypeInfo().Assembly.Location);
-
-            var path = Path.Combine(dir, "datastore.json");
-            var content = File.ReadAllText(path);
-
-            var newFilePath = Path.Combine(dir, $"{name}.json");
-            File.WriteAllText(newFilePath, content);
-
+            var newFilePath = Path.Combine(_dir, $"{name}.json");
+            File.WriteAllText(newFilePath, _originalContent.Value);
             return newFilePath;
         }
 
