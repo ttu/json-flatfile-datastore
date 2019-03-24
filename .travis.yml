@@ -1,8 +1,8 @@
 language: csharp
-dist: trusty
+dist: bionic
 sudo: required
 mono: none
-dotnet: 2.1.300
+dotnet: 2.2
 solution: JsonFlatFileDataStore.sln
 script:
   - dotnet restore
