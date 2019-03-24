@@ -1,7 +1,7 @@
 # Changelog
 
 ### [Unreleased]
-* ADDED: DocumentCollection methods with id-value parameter instead of predicate filter
+* ADDED: DocumentCollection Update, Replace and Delete-methods with id-value parameter
  
 ### [2.1.0] - 2019-01-30
 * FIXED: Single item dynamic converter. Returns lists correctly, regional fixes for dates and number types.
