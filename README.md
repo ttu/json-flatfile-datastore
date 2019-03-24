@@ -255,7 +255,7 @@ If collection is empty and the type of the id-field is number, then first id wil
 
 #### Replace
 
-`ReplaceOne` and `ReplaceOneAsync` will replace the first item that matches the filter or id-value. Method will return true if item(s) found with the filter.
+`ReplaceOne` and `ReplaceOneAsync` will replace the first item that matches the filter or provided id-value matches the defined id-field. Method will return true if item(s) found with the filter.
 
 ```csharp
 // Sync and dynamic
@@ -286,7 +286,7 @@ collection.ReplaceOne(11, new { id = 11, name = "Theodor" }, true);
 
 #### Update
 
-`UpdateOne` and `UpdateOneAsync` will update the first item that matches the filter or id-value with passed properties from dynamic object. Dynamic object can be an `Anonymous type` or an `ExpandoObject`. Method will return true if item(s) found with the filter.
+`UpdateOne` and `UpdateOneAsync` will update the first item that matches the filter or provided id-value matches the defined id-field. Properties to update are defined with dynamic object. Dynamic object can be an `Anonymous type` or an `ExpandoObject`. Method will return true if item(s) found with the filter.
 
 ```csharp
 // Dynamic
@@ -383,16 +383,16 @@ await collection.UpdateOneAsync(e => e.Id == 423, patchData);
 
 #### Delete
 
-`DeleteOne` and `DeleteOneAsync` will remove the first object that matches the filter. Method returns true if item(s) found with the filter or with the id.
+`DeleteOne` and `DeleteOneAsync` will remove the first object that matches the filter or provided id-value matches the defined id-field. Method returns true if item(s) found with the filter or with the id.
 
 ```csharp
 // Dynamic
-await collection.DeleteOneAsync(e => e.id == 3);
 await collection.DeleteOneAsync(3);
+await collection.DeleteOneAsync(e => e.id == 3);
 
 // Typed
-await collection.DeleteOneAsync(e => e.Id == 3);
 await collection.DeleteOneAsync(3);
+await collection.DeleteOneAsync(e => e.Id == 3);
 ```
 
 `DeleteMany` and `DeleteManyAsync` will delete all items that match the filter. Method returns true if item(s) found with the filter.

@@ -74,6 +74,13 @@ namespace JsonFlatFileDataStore
         /// <returns>true if item found for replacement</returns>
         bool ReplaceOne(Predicate<T> filter, T item, bool upsert = false);
 
+        /// <summary>
+        /// Replace the item matching the id
+        /// </summary>
+        /// <param name="id">The item mathcing the id-value will be replaced</param>
+        /// <param name="item">New content</param>
+        /// <param name="upsert">Will item be inserted if not found</param>
+        /// <returns>true if item found for replacement</returns>
         bool ReplaceOne(dynamic id, T item, bool upsert = false);
 
         /// <summary>
@@ -85,6 +92,13 @@ namespace JsonFlatFileDataStore
         /// <returns>true if item found for replacement</returns>
         Task<bool> ReplaceOneAsync(Predicate<T> filter, T item, bool upsert = false);
 
+        /// <summary>
+        /// Replace the item matching the id
+        /// </summary>
+        /// <param name="id">The item matching the id-value will be replaced</param>
+        /// <param name="item">New content</param>
+        /// <param name="upsert">Will item be inserted if not found</param>
+        /// <returns>true if item found for replacement</returns>
         Task<bool> ReplaceOneAsync(dynamic id, T item, bool upsert = false);
 
         /// <summary>
@@ -111,6 +125,12 @@ namespace JsonFlatFileDataStore
         /// <returns>true if item found for update</returns>
         bool UpdateOne(Predicate<T> filter, dynamic item);
 
+        /// <summary>
+        /// Update the item matching the id
+        /// </summary>
+        /// <param name="id">The item matching the id-value will be replaced</param>
+        /// <param name="item">New content</param>
+        /// <returns>true if item found for update</returns>
         bool UpdateOne(dynamic id, dynamic item);
 
         /// <summary>
@@ -120,6 +140,13 @@ namespace JsonFlatFileDataStore
         /// <param name="item">New content</param>
         /// <returns>true if item found for update</returns>
         Task<bool> UpdateOneAsync(Predicate<T> filter, dynamic item);
+
+        /// <summary>
+        /// Update the item matching the id
+        /// </summary>
+        /// <param name="id">The item matching the id-value will be replaced</param>
+        /// <param name="item">New content</param>
+        /// <returns>true if item found for update</returns>
         Task<bool> UpdateOneAsync(dynamic id, dynamic item);
 
         /// <summary>
@@ -145,6 +172,11 @@ namespace JsonFlatFileDataStore
         /// <returns>true if item found for deletion</returns>
         bool DeleteOne(Predicate<T> filter);
 
+        /// <summary>
+        /// Delete the item matching the id
+        /// </summary>
+        /// <param name="id">The item matching the id-value will be deleted</param>
+        /// <returns>true if item found for deletion</returns>
         bool DeleteOne(dynamic id);
 
         /// <summary>
@@ -154,6 +186,11 @@ namespace JsonFlatFileDataStore
         /// <returns>true if item found for deletion</returns>
         Task<bool> DeleteOneAsync(Predicate<T> filter);
 
+        /// <summary>
+        /// Delete the item matching the id
+        /// </summary>
+        /// <param name="id">The item matching the id-vvalue will be deleted</param>
+        /// <returns>true if item found for deletion</returns>
         Task<bool> DeleteOneAsync(dynamic id);
 
         /// <summary>
