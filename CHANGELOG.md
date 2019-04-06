@@ -1,6 +1,9 @@
 # Changelog
 
 ### [Unreleased]
+
+
+### [2.2.0] - 2019-04-06
 * ADDED: DocumentCollection Update, Replace and Delete-methods with id-value parameter
  
 ### [2.1.0] - 2019-01-30
