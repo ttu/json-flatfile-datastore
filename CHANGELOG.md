@@ -1,7 +1,7 @@
 # Changelog
 
 ### [Unreleased]
-
+* FIXED: Single item sync methods to use non-async commit
 
 ### [2.2.0] - 2019-04-06
 * ADDED: DocumentCollection Update, Replace and Delete-methods with id-value parameter

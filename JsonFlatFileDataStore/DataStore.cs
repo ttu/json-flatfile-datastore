@@ -193,9 +193,9 @@ namespace JsonFlatFileDataStore
 
         public bool InsertItem<T>(string key, T item) => Insert(key, item).Result;
 
-        public async Task<bool> InsertItemAsync<T>(string key, T item) => await Insert(key, item);
+        public async Task<bool> InsertItemAsync<T>(string key, T item) => await Insert(key, item, true).ConfigureAwait(false);
 
-        private Task<bool> Insert<T>(string key, T item)
+        private Task<bool> Insert<T>(string key, T item, bool isAsync = false)
         {
             (bool, JObject) UpdateAction()
             {
@@ -206,14 +206,14 @@ namespace JsonFlatFileDataStore
                 return (true, _jsonData);
             }
 
-            return CommitItem(UpdateAction, true);
+            return CommitItem(UpdateAction, isAsync);
         }
 
         public bool ReplaceItem<T>(string key, T item, bool upsert = false) => Replace(key, item, upsert).Result;
 
-        public async Task<bool> ReplaceItemAsync<T>(string key, T item, bool upsert = false) => await Replace(key, item, upsert);
+        public async Task<bool> ReplaceItemAsync<T>(string key, T item, bool upsert = false) => await Replace(key, item, upsert, true).ConfigureAwait(false);
 
-        private Task<bool> Replace<T>(string key, T item, bool upsert = false)
+        private Task<bool> Replace<T>(string key, T item, bool upsert = false, bool isAsync = false)
         {
             (bool, JObject) UpdateAction()
             {
@@ -224,14 +224,14 @@ namespace JsonFlatFileDataStore
                 return (true, _jsonData);
             }
 
-            return CommitItem(UpdateAction, true);
+            return CommitItem(UpdateAction, isAsync);
         }
 
         public bool UpdateItem(string key, dynamic item) => Update(key, item).Result;
 
-        public async Task<bool> UpdateItemAsync(string key, dynamic item) => await Update(key, item);
+        public async Task<bool> UpdateItemAsync(string key, dynamic item) => await Update(key, item, true).ConfigureAwait(false);
 
-        private Task<bool> Update(string key, dynamic item)
+        private Task<bool> Update(string key, dynamic item, bool isAsync = false)
         {
             (bool, JObject) UpdateAction()
             {
@@ -253,14 +253,14 @@ namespace JsonFlatFileDataStore
                 return (true, _jsonData);
             }
 
-            return CommitItem(UpdateAction, true);
+            return CommitItem(UpdateAction, isAsync);
         }
 
         public bool DeleteItem(string key) => Delete(key).Result;
 
-        public async Task<bool> DeleteItemAsync(string key) => await Delete(key);
+        public async Task<bool> DeleteItemAsync(string key) => await Delete(key).ConfigureAwait(false);
 
-        private Task<bool> Delete(string key)
+        private Task<bool> Delete(string key, bool isAsync = false)
         {
             (bool, JObject) UpdateAction()
             {
@@ -268,7 +268,7 @@ namespace JsonFlatFileDataStore
                 return (result, _jsonData);
             }
 
-            return CommitItem(UpdateAction, false);
+            return CommitItem(UpdateAction, isAsync);
         }
 
         public IDocumentCollection<T> GetCollection<T>(string name = null) where T : class
