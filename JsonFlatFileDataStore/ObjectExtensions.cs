@@ -32,15 +32,13 @@ internal static class ObjectExtensions
 
     internal static void AddDataToField(object item, string fieldName, dynamic data)
     {
-        if (item is JToken)
+        if (item is JToken token)
         {
-            dynamic jTokenItem = item;
-            jTokenItem[fieldName] = data;
+            token[fieldName] = data;
         }
-        else if (item is ExpandoObject)
+        else if (item is ExpandoObject expando)
         {
-            dynamic expandoItem = item;
-            var expandoDict = expandoItem as IDictionary<string, object>;
+            var expandoDict = expando as IDictionary<string, object>;
             expandoDict[fieldName] = data;
         }
         else if (IsDictionary(item.GetType()))
