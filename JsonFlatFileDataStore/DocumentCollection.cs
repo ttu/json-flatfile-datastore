@@ -419,10 +419,10 @@ namespace JsonFlatFileDataStore
             // Problem here is if we have typed data with upper camel case properties but lower camel case in JSON, so need to use OrdinalIgnoreCase string comparer
             var expandoAsIgnoreCase = new Dictionary<string, dynamic>(expando, StringComparer.OrdinalIgnoreCase);
 
-            if (!expandoAsIgnoreCase.ContainsKey(_idField))
+            if (!expandoAsIgnoreCase.ContainsKey(fieldName))
                 return null;
 
-            return expandoAsIgnoreCase[_idField];
+            return expandoAsIgnoreCase[fieldName];
         }
 
         private string ParseNextIntegertToKeyValue(string input)
