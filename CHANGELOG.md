@@ -1,6 +1,8 @@
 # Changelog
 
 ### [Unreleased]
+
+### [2.2.1] - 2019-10-11
 * FIXED: Single item sync methods to use non-async commit
 
 ### [2.2.0] - 2019-04-06

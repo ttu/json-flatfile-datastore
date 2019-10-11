@@ -3,16 +3,16 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Authors>Tomi Tuhkanen</Authors>
-    <AssemblyVersion>2.2.0.0</AssemblyVersion>
+    <AssemblyVersion>2.2.1.0</AssemblyVersion>
     <PackageProjectUrl>https://github.com/ttu/json-flatfile-datastore</PackageProjectUrl>
     <RepositoryUrl>https://github.com/ttu/json-flatfile-datastore</RepositoryUrl>
-    <Version>2.2.0</Version>
+    <Version>2.2.1</Version>
     <Company />
     <Description>Simple JSON flat file data store</Description>
     <PackageLicenseUrl></PackageLicenseUrl>
     <PackageTags>json flat file data store database linq</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <FileVersion>2.2.0.0</FileVersion>
+    <FileVersion>2.2.1.0</FileVersion>
     <Product>JsonFlatFileDataStore</Product>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
