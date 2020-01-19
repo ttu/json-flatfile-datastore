@@ -434,11 +434,14 @@ var nextId = collection.GetNextIdValue();
 {
   "selected_user": { "id": 1, "name": "Phil", "age": 40, "city": "NY" },
   "temperature": 23.45,
+  "temperatues": [ 12.4, 12.42, 12.38 ],
   "note": "this is a test"
 }
 ```
 
 Data store supports single items. Items can be value and reference types. Single item supports dynamic and typed data.
+
+Arrays are concidered as single items if they contain value types. If Array is empty it is listed as a collection.
 
 Single item's support same methods as Collections (`Get`, `Insert`, `Replace`, `Update`, `Delete`).
 
