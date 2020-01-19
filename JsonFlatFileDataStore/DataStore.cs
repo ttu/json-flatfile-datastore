@@ -293,27 +293,30 @@ namespace JsonFlatFileDataStore
 
         public IDictionary<string, ValueType> GetKeys(ValueType? typeToGet = null)
         {
+            bool IsCollection(JToken c) => c.Children().FirstOrDefault() is JArray && c.Children().FirstOrDefault().Any() == false
+                                        || c.Children().FirstOrDefault()?.FirstOrDefault()?.Type == JTokenType.Object;
+
+            bool IsItem(JToken c) => c.Children().FirstOrDefault().GetType() != typeof(JArray)
+                                  || (c.Children().FirstOrDefault() is JArray
+                                   && c.Children().FirstOrDefault().Any() // Empty array is considered as a collection
+                                   && c.Children().FirstOrDefault()?.FirstOrDefault()?.Type != JTokenType.Object);
+
             lock (_jsonData)
             {
                 switch (typeToGet)
                 {
                     case null:
                         return _jsonData.Children()
-                                        .ToDictionary(c => c.Path, c => c.Children().FirstOrDefault() is JArray ? ValueType.Collection : ValueType.Item);
+                                        .ToDictionary(c => c.Path, c => IsCollection(c) ? ValueType.Collection : ValueType.Item);
 
                     case ValueType.Collection:
                         return _jsonData.Children()
-                                        .Where(c => c.Children().FirstOrDefault() is JArray
-                                                 && (c.Children().FirstOrDefault().Any() == false 
-                                                 || c.Children().FirstOrDefault()?.FirstOrDefault()?.Type == JTokenType.Object))
+                                        .Where(IsCollection)
                                         .ToDictionary(c => c.Path, c => ValueType.Collection);
 
                     case ValueType.Item:
                         return _jsonData.Children()
-                                        .Where(c => c.Children().FirstOrDefault().GetType() != typeof(JArray)
-                                                || (c.Children().FirstOrDefault() is JArray 
-                                                    && c.Children().FirstOrDefault().Any() // Empty array is considered as a collection
-                                                    && c.Children().FirstOrDefault()?.FirstOrDefault()?.Type != JTokenType.Object))
+                                        .Where(IsItem)
                                         .ToDictionary(c => c.Path, c => ValueType.Item);
 
                     default:
