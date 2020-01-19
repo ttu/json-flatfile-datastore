@@ -1,6 +1,7 @@
 # Changelog
 
 ### [Unreleased]
+* FIXED: GetKeys when collection is empty
 
 ### [2.2.1] - 2019-10-11
 * FIXED: Single item sync methods to use non-async commit

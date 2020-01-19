@@ -1649,5 +1649,6 @@
       "name": "ACME2",
       "location": "SF"
     }
-  }
+  },
+  "emptyCollection": []
 }

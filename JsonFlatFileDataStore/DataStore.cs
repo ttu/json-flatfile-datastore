@@ -304,14 +304,16 @@ namespace JsonFlatFileDataStore
                     case ValueType.Collection:
                         return _jsonData.Children()
                                         .Where(c => c.Children().FirstOrDefault() is JArray
-                                                 && c.Children().FirstOrDefault()?.First()?.Type == JTokenType.Object)
+                                                 && (c.Children().FirstOrDefault().Any() == false 
+                                                 || c.Children().FirstOrDefault()?.FirstOrDefault()?.Type == JTokenType.Object))
                                         .ToDictionary(c => c.Path, c => ValueType.Collection);
 
                     case ValueType.Item:
                         return _jsonData.Children()
                                         .Where(c => c.Children().FirstOrDefault().GetType() != typeof(JArray)
-                                                 || (c.Children().FirstOrDefault() is JArray
-                                                 && c.Children().FirstOrDefault()?.First()?.Type != JTokenType.Object))
+                                                || (c.Children().FirstOrDefault() is JArray 
+                                                    && c.Children().FirstOrDefault().Any() // Empty array is considered as a collection
+                                                    && c.Children().FirstOrDefault()?.FirstOrDefault()?.Type != JTokenType.Object))
                                         .ToDictionary(c => c.Path, c => ValueType.Item);
 
                     default:
