@@ -1,6 +1,8 @@
 # Changelog
 
 ### [Unreleased]
+
+### [2.2.2] - 2020-02-26
 * FIXED: GetKeys when collection is empty
 
 ### [2.2.1] - 2019-10-11
