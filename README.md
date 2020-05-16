@@ -584,7 +584,7 @@ var store = new DataStore();
 store.Dispose();
 
 // Call dispose automatically with using
-usig(var store = new DataStore())
+using(var store = new DataStore())
 {
     // ...
 }
