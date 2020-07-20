@@ -92,7 +92,12 @@ internal static class ObjectExtensions
                 {
                     if (IsEnumerable(srcProp.PropertyType) && srcProp.PropertyType != typeof(ExpandoObject))
                     {
-                        foreach (var i in GetValue(current, srcProp) as IEnumerable)
+                        var collection = GetValue(current, srcProp);
+
+                        if (collection == null)
+                            continue;
+
+                        foreach (var i in collection as IEnumerable)
                         {
                             if (AnyPropertyHasValue(i))
                                 return true;
