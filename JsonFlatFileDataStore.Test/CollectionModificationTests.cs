@@ -819,5 +819,68 @@ namespace JsonFlatFileDataStore.Test
 
             UTHelpers.Down(newFilePath);
         }
+
+        [Fact]
+        public void UpdateOne_InnerCollection_Typed()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection<Family>();
+
+            var family = collection
+                             .Find(p => p.Id == 4)
+                             .First();
+
+            Assert.Null(family.Children[1].Friends);
+
+            family.Children[1].Friends = family.Children[0].Friends;
+
+            collection.UpdateOne(family.Id, family);
+
+            var store2 = new DataStore(newFilePath);
+
+            var collection2 = store2.GetCollection<Family>();
+
+            var family_updated = collection2
+                            .Find(p => p.Id == 4)
+                            .First();
+
+            Assert.Equal(family_updated.Children[0].Friends.Count, family_updated.Children[1].Friends.Count);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public void UpdateOne_InnerCollection_Dynamic()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection("family");
+
+            var family = collection
+                             .Find(p => p.id == 4)
+                             .First();
+
+            Assert.Null(family.children[1].friends);
+            family.children[1].friends = family.children[0].friends;
+
+            collection.UpdateOne(family.id, family);
+
+            var store2 = new DataStore(newFilePath);
+
+            var collection2 = store2.GetCollection<Family>();
+
+            var family_updated = collection2
+                            .Find(p => p.Id == 4)
+                            .First();
+
+            Assert.Equal(family_updated.Children[0].Friends.Count, family_updated.Children[1].Friends.Count);
+
+            UTHelpers.Down(newFilePath);
+        }
     }
 }
