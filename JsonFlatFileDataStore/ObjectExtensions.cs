@@ -320,7 +320,17 @@ internal static class ObjectExtensions
                 var targetArray = (IList)destExpandoDict[srcProp.Name];
                 var sourceArray = (IList)GetValue(source, srcProp);
 
-                var arrayType = srcProp.PropertyType.GetElementType();
+                if (sourceArray == null)
+                {
+                    destExpandoDict[srcProp.Name] = null;
+                    continue;
+                }
+                else if (targetArray == null)
+                {
+                    targetArray = CreateInstance(srcProp.PropertyType);
+                    destExpandoDict[srcProp.Name] = targetArray;
+                }
+
                 var type = targetArray.GetType();
 
                 if (IsGenericListOrColletion(type))

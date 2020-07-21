@@ -870,7 +870,11 @@ namespace JsonFlatFileDataStore.Test
                              .First();
 
             Assert.Null(family.children[1].friends);
-            family.children[1].friends = family.children[0].friends;
+
+            var origCount = family.children[0].friends.Count;
+
+            family.children[1].friends = ((List<dynamic>)family.children[0].friends).ToList();
+            family.children[0].friends = null;
 
             collection.UpdateOne(family.id, family);
 
@@ -882,7 +886,8 @@ namespace JsonFlatFileDataStore.Test
                             .Find(p => p.Id == 4)
                             .First();
 
-            Assert.Equal(family_updated.Children[0].Friends.Count, family_updated.Children[1].Friends.Count);
+            Assert.Equal(origCount, family_updated.Children[1].Friends.Count);
+            Assert.Null(family_updated.Children[0].Friends);
 
             UTHelpers.Down(newFilePath);
         }
