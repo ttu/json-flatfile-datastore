@@ -821,7 +821,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void UpdateOne_InnerCollection_Typed()
+        public void UpdateOne_InnerCollection_FromAndToNull_Typed()
         {
             var newFilePath = UTHelpers.Up();
 
@@ -835,7 +835,10 @@ namespace JsonFlatFileDataStore.Test
 
             Assert.Null(family.Children[1].Friends);
 
-            family.Children[1].Friends = family.Children[0].Friends;
+            var originalCount = family.Children[0].Friends.Count;
+
+            family.Children[1].Friends = family.Children[0].Friends.ToList();
+            family.Children[0].Friends = null;
 
             collection.UpdateOne(family.Id, family);
 
@@ -847,13 +850,14 @@ namespace JsonFlatFileDataStore.Test
                             .Find(p => p.Id == 4)
                             .First();
 
-            Assert.Equal(family_updated.Children[0].Friends.Count, family_updated.Children[1].Friends.Count);
+            Assert.Equal(originalCount, family_updated.Children[1].Friends.Count);
+            Assert.Null(family_updated.Children[0].Friends);
 
             UTHelpers.Down(newFilePath);
         }
 
         [Fact]
-        public void UpdateOne_InnerCollection_Dynamic()
+        public void UpdateOne_InnerCollection_FromAndToNull_Dynamic()
         {
             var newFilePath = UTHelpers.Up();
 

@@ -195,6 +195,17 @@ internal static class ObjectExtensions
                 var sourceArray = (IList)GetValue(source, srcProp);
                 var targetArray = (IList)targetProperty.GetValue(destination, null);
 
+                if (sourceArray == null)
+                {
+                    targetProperty.SetValue(destination, null);
+                    continue;
+                }
+                else if (targetArray == null)
+                {
+                    targetArray = CreateInstance(srcProp.PropertyType);
+                    targetProperty.SetValue(destination, targetArray);
+                }
+
                 var type = targetProperty.PropertyType;
 
                 if (IsGenericListOrColletion(type))
