@@ -385,7 +385,7 @@
           "name": "Fernandez",
           "gender": "male",
           "age": 8,
-          "friends": []
+          "friends": null
         },
         {
           "name": "Knox",

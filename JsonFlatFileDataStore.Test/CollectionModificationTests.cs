@@ -819,5 +819,77 @@ namespace JsonFlatFileDataStore.Test
 
             UTHelpers.Down(newFilePath);
         }
+
+        [Fact]
+        public void UpdateOne_InnerCollection_FromAndToNull_Typed()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection<Family>();
+
+            var family = collection
+                             .Find(p => p.Id == 4)
+                             .First();
+
+            Assert.Null(family.Children[1].Friends);
+
+            var originalCount = family.Children[0].Friends.Count;
+
+            family.Children[1].Friends = family.Children[0].Friends.ToList();
+            family.Children[0].Friends = null;
+
+            collection.UpdateOne(family.Id, family);
+
+            var store2 = new DataStore(newFilePath);
+
+            var collection2 = store2.GetCollection<Family>();
+
+            var family_updated = collection2
+                            .Find(p => p.Id == 4)
+                            .First();
+
+            Assert.Equal(originalCount, family_updated.Children[1].Friends.Count);
+            Assert.Null(family_updated.Children[0].Friends);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public void UpdateOne_InnerCollection_FromAndToNull_Dynamic()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection("family");
+
+            var family = collection
+                             .Find(p => p.id == 4)
+                             .First();
+
+            Assert.Null(family.children[1].friends);
+
+            var origCount = family.children[0].friends.Count;
+
+            family.children[1].friends = ((List<dynamic>)family.children[0].friends).ToList();
+            family.children[0].friends = null;
+
+            collection.UpdateOne(family.id, family);
+
+            var store2 = new DataStore(newFilePath);
+
+            var collection2 = store2.GetCollection<Family>();
+
+            var family_updated = collection2
+                            .Find(p => p.Id == 4)
+                            .First();
+
+            Assert.Equal(origCount, family_updated.Children[1].Friends.Count);
+            Assert.Null(family_updated.Children[0].Friends);
+
+            UTHelpers.Down(newFilePath);
+        }
     }
 }

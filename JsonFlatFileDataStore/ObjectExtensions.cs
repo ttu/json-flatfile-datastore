@@ -92,7 +92,12 @@ internal static class ObjectExtensions
                 {
                     if (IsEnumerable(srcProp.PropertyType) && srcProp.PropertyType != typeof(ExpandoObject))
                     {
-                        foreach (var i in GetValue(current, srcProp) as IEnumerable)
+                        var collection = GetValue(current, srcProp);
+
+                        if (collection == null)
+                            continue;
+
+                        foreach (var i in collection as IEnumerable)
                         {
                             if (AnyPropertyHasValue(i))
                                 return true;
@@ -189,6 +194,17 @@ internal static class ObjectExtensions
             {
                 var sourceArray = (IList)GetValue(source, srcProp);
                 var targetArray = (IList)targetProperty.GetValue(destination, null);
+
+                if (sourceArray == null)
+                {
+                    targetProperty.SetValue(destination, null);
+                    continue;
+                }
+                else if (targetArray == null)
+                {
+                    targetArray = CreateInstance(srcProp.PropertyType);
+                    targetProperty.SetValue(destination, targetArray);
+                }
 
                 var type = targetProperty.PropertyType;
 
@@ -304,7 +320,17 @@ internal static class ObjectExtensions
                 var targetArray = (IList)destExpandoDict[srcProp.Name];
                 var sourceArray = (IList)GetValue(source, srcProp);
 
-                var arrayType = srcProp.PropertyType.GetElementType();
+                if (sourceArray == null)
+                {
+                    destExpandoDict[srcProp.Name] = null;
+                    continue;
+                }
+                else if (targetArray == null)
+                {
+                    targetArray = CreateInstance(srcProp.PropertyType);
+                    destExpandoDict[srcProp.Name] = targetArray;
+                }
+
                 var type = targetArray.GetType();
 
                 if (IsGenericListOrColletion(type))
