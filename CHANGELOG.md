@@ -1,6 +1,7 @@
 # Changelog
 
 ### [Unreleased]
+* FIXED: Updates and full text search for objects with null collections
 
 ### [2.2.2] - 2020-02-26
 * FIXED: GetKeys when collection is empty
