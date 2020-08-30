@@ -420,6 +420,33 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
+        public void GetRoot_Dynamic()
+        {
+            var pathToJson = UTHelpers.Up();
+
+            var store = new DataStore(pathToJson);
+
+            // Get root
+            var root = store.GetRoot();
+
+            UTHelpers.Down(pathToJson);
+        }
+
+        [Fact]
+        public void GetRoot_Typed()
+        {
+            var pathToJson = UTHelpers.Up();
+
+            // Open database (create new if file doesn't exist)
+            var store = new DataStore(pathToJson);
+
+            // Get root
+            var root = store.GetRoot<RootExample>();
+
+            UTHelpers.Down(pathToJson);
+        }
+
+        [Fact]
         public async Task Readme_Example3()
         {
             var pathToJson = UTHelpers.Up();
@@ -454,6 +481,13 @@ namespace JsonFlatFileDataStore.Test
             Assert.Single(results.Where(e => e.Name == "John Doe"));
 
             UTHelpers.Down(pathToJson);
+        }
+
+        public class RootExample
+        {
+            public List<Family> Family { get; set; }
+
+            public int MyValue { get; set; }
         }
 
         public class Employee
