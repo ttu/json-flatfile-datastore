@@ -641,7 +641,7 @@ collection2.ReplaceOne((Predicate<dynamic>)(e => e.id == 11), dynamicUser);
 
 ## Unit Tests & Benchmarks
 
-`JsonFlatFileDataStore.Test` and `JsonFlatFileDataStore.Benchmark` are _.NET Core_ projects.
+`JsonFlatFileDataStore.Test` and `JsonFlatFileDataStore.Benchmark` are _.NET 5_ projects.
 
 Unit Tests are executed automatically with CI builds.
 
