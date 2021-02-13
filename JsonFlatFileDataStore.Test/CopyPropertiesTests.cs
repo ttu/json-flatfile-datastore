@@ -351,7 +351,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void CopyProperties_DynamicithDictionary()
+        public void CopyProperties_DynamicWithDictionary()
         {
             dynamic user = new ExpandoObject();
             user.FirstName = "Timmy";
@@ -368,7 +368,7 @@ namespace JsonFlatFileDataStore.Test
             Assert.Equal(333, user.MyIntegers[3]);
         }
 
-        public class ClassForGetDefaultValue
+        private class ClassForGetDefaultValue
         {
             public int Field1 { get; set; }
             public int Field2 { get; set; }

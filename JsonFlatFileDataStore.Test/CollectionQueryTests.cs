@@ -219,7 +219,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void ReloadAutiomatic()
+        public void ReloadAutomatic()
         {
             var newFilePath = UTHelpers.Up();
 

@@ -7,9 +7,9 @@ namespace JsonFlatFileDataStore.Test
 {
     public static class UTHelpers
     {
-        private static string _dir = Path.GetDirectoryName(typeof(DataStoreTests).GetTypeInfo().Assembly.Location);
+        private static readonly string _dir = Path.GetDirectoryName(typeof(DataStoreTests).GetTypeInfo().Assembly.Location);
 
-        private static Lazy<string> _originalContent = new Lazy<string>(() =>
+        private static readonly Lazy<string> _originalContent = new Lazy<string>(() =>
         {
             var path = Path.Combine(_dir, "datastore.json");
             return File.ReadAllText(path);

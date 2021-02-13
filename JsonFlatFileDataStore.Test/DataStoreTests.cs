@@ -102,8 +102,8 @@ namespace JsonFlatFileDataStore.Test
             var collectionLowercase = store2.GetCollection<PrivateOwner>("privateOwner");
             Assert.Equal(1, collectionLowercase.Count);
 
-            var collectionNocase = store2.GetCollection<PrivateOwner>();
-            Assert.Equal(1, collectionNocase.Count);
+            var collectionNoCase = store2.GetCollection<PrivateOwner>();
+            Assert.Equal(1, collectionNoCase.Count);
 
             UTHelpers.Down(newFilePath);
         }
@@ -146,7 +146,7 @@ namespace JsonFlatFileDataStore.Test
         public void GetCollection_Mocked()
         {
             var innerCollection = new DocumentCollection<Movie>(
-                new Func<string, Func<List<Movie>, bool>, bool, Task<bool>>((s, d, i) => { return Task.FromResult(true); }),
+                new Func<string, Func<List<Movie>, bool>, bool, Task<bool>>((s, d, i) => Task.FromResult(true)),
                 new Lazy<List<Movie>>(() => new List<Movie> { new Movie { Name = "Commando" } }),
                 @"/path/to/file",
                 "id",
@@ -169,7 +169,7 @@ namespace JsonFlatFileDataStore.Test
         public void GetCollection_Exception()
         {
             var innerCollection = new DocumentCollection<Movie>(
-                new Func<string, Func<List<Movie>, bool>, bool, Task<bool>>((s, d, i) => { throw new Exception("Failed"); }),
+                new Func<string, Func<List<Movie>, bool>, bool, Task<bool>>((s, d, i) => throw new Exception("Failed")),
                 new Lazy<List<Movie>>(() => new List<Movie> { new Movie { Name = "Commando" } }),
                 @"/path/to/file",
                 "id",

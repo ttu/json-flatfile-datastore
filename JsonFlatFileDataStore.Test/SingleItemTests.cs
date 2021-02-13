@@ -249,7 +249,7 @@ namespace JsonFlatFileDataStore.Test
             Assert.Equal(2, counter);
 
             var updateResult = await store.ReplaceItemAsync<string>("counter", "2");
-            Assert.True(result);
+            Assert.True(updateResult);
 
             var store2 = new DataStore(newFilePath);
 
@@ -257,7 +257,7 @@ namespace JsonFlatFileDataStore.Test
             Assert.Equal("2", c2);
 
             updateResult = await store2.ReplaceItemAsync("counter", "4");
-            Assert.True(result);
+            Assert.True(updateResult);
 
             c2 = store2.GetItem("counter");
             Assert.Equal("4", c2);

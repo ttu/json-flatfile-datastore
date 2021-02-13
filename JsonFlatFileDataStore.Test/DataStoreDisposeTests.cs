@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -19,11 +17,11 @@ namespace JsonFlatFileDataStore.Test
 
             // Fail the test is running time is more than maxTimeMs
             var sw = Stopwatch.StartNew();
-            int maxTimeMs = 60000;
+            const int maxTimeMs = 60000;
 
             var newFilePath = UTHelpers.Up(testName);
 
-            int itemCount = 200;
+            const int itemCount = 200;
 
             WeakReference storeRef = null;
 
