@@ -1631,6 +1631,18 @@
       "notes": "Deserunt est in quis cillum veniam et aliquip aliqua deserunt. Ea exercitation culpa velit proident fugiat amet. Anim proident ea minim velit excepteur laborum veniam et incididunt ipsum velit elit Lorem. Consequat culpa culpa voluptate cupidatat non velit in fugiat consequat irure adipisicing in. Minim consectetur duis nisi consectetur qui est eu ex et cillum ea. Ex non qui elit non.\r\n"
     }
   ],
+  "worlds": [
+    {
+      "id": 0,
+      "position": [
+        3.6640577,
+        5.5219193,
+        3.4788187
+      ],
+      "cameraRotationX": -0.66699946,
+      "cameraRotationY": -0.003000007
+    }
+  ],
   "emptyCollection": [],
   "myValue": 2.1,
   "myValues": [

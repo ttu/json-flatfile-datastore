@@ -891,5 +891,35 @@ namespace JsonFlatFileDataStore.Test
 
             UTHelpers.Down(newFilePath);
         }
+        
+        [Fact]
+        public async Task UpdateInnerFloatArray_DynamicWorld()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection("worlds");
+            Assert.Equal(1, collection.Count);
+
+            var original = collection.Find(e=> e.id == 0).First();
+            Assert.Equal(3.6640577, original.position[0]);
+
+            await collection.UpdateOneAsync(e => e.id == 0, new { cameraRotationX = 5.2 });
+            
+            var collection2 = store.GetCollection("worlds");
+            var updated = collection2.Find(e=> e.id == 0).First();
+            Assert.Equal(5.2, updated.cameraRotationX);
+              
+            await collection.UpdateOneAsync(e => e.id == 0, new { position = new float[] { 10, 11, 12 } } );
+            
+            var collection3 = store.GetCollection("worlds");
+            var updated2 = collection3.Find(e=> e.id == 0).First();
+            Assert.Equal(10, updated2.position[0]);
+            Assert.Equal(11, updated2.position[1]);
+            Assert.Equal(12, updated2.position[2]);
+
+            UTHelpers.Down(newFilePath);
+        }
     }
 }
