@@ -331,27 +331,30 @@ internal static class ObjectExtensions
                     destExpandoDict[srcProp.Name] = targetArray;
                 }
 
-                var type = targetArray.GetType();
-
-                if (IsGenericListOrColletion(type))
+                Type GetTypeFromTargetItem(IList target, int index)
                 {
-                    type = type.GetGenericArguments()[0];
+                    if (index <= target.Count - 1) return target[index].GetType();
+                    
+                    var targetType = target.GetType();
+                    return IsGenericListOrColletion(targetType) ? targetType.GetGenericArguments()[0] : targetType;
                 }
-
+                
                 for (int i = 0; i < sourceArray.Count; i++)
                 {
                     var sourceValue = sourceArray[i];
 
                     if (sourceValue != null)
                     {
-                        if (type != typeof(ExpandoObject))
+                        var targetType = GetTypeFromTargetItem(targetArray, i);
+                    
+                        if (targetType != typeof(ExpandoObject))
                         {
                             if (targetArray.Count - 1 < i)
                             {
-                                targetArray.Add(CreateInstance(type));
+                                targetArray.Add(CreateInstance(targetType));
                             }
 
-                            if (type.GetTypeInfo().IsValueType || type == typeof(string))
+                            if (targetType.GetTypeInfo().IsValueType || targetType == typeof(string))
                                 targetArray[i] = sourceValue;
                             else
                                 CopyProperties(sourceValue, targetArray[i]);
