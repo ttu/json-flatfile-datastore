@@ -500,7 +500,7 @@ namespace JsonFlatFileDataStore.Test
             var collection3 = store3.GetCollection<User>("user");
             var updated = collection3.Find(e => e.Id == newUser.Id).First();
             Assert.Equal("Theodor", updated.Name);
-
+            
             collection3.ReplaceOne(newUser.Id, new User { Id = newUser.Id, Name = "Theodor_2" });
 
             var store4 = new DataStore(newFilePath);
@@ -918,6 +918,36 @@ namespace JsonFlatFileDataStore.Test
             Assert.Equal(10, updated2.position[0]);
             Assert.Equal(11, updated2.position[1]);
             Assert.Equal(12, updated2.position[2]);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public async Task UpdateInnerFloatArray_TypedWorld()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection<World>("worlds");
+            Assert.Equal(1, collection.Count);
+
+            var original = collection.Find(e => e.Id == 0).First();
+            Assert.InRange(original.Position[0], 3.66, 3.67);
+
+            await collection.UpdateOneAsync(e => e.Id == 0, new {CameraRotationX = 5.2f});
+
+            var collection2 = store.GetCollection<World>("worlds");
+            var updated = collection2.Find(e => e.Id == 0).First();
+            Assert.InRange(updated.CameraRotationX, 5.19, 5.2);
+
+            await collection.UpdateOneAsync(e => e.Id == 0, new {Position = new float[] {10, 11, 12}});
+
+            var collection3 = store.GetCollection<World>("worlds");
+            var updated2 = collection3.Find(e => e.Id == 0).First();
+            Assert.Equal(10, updated2.Position[0]);
+            Assert.Equal(11, updated2.Position[1]);
+            Assert.Equal(12, updated2.Position[2]);
 
             UTHelpers.Down(newFilePath);
         }

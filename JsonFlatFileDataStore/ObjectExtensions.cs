@@ -206,12 +206,8 @@ internal static class ObjectExtensions
                     targetProperty.SetValue(destination, targetArray);
                 }
 
-                var type = targetProperty.PropertyType;
-
-                if (IsGenericListOrColletion(type))
-                {
-                    type = type.GetGenericArguments()[0];
-                }
+                var targetPropertyType = targetProperty.PropertyType;
+                var type = IsGenericListOrColletion(targetPropertyType) ? targetPropertyType.GetGenericArguments()[0] : targetPropertyType.GetElementType();
 
                 for (int i = 0; i < sourceArray.Count; i++)
                 {
@@ -419,10 +415,11 @@ internal static class ObjectExtensions
 
     private static bool IsGenericListOrColletion(Type toTest)
     {
-        return toTest.GetGenericTypeDefinition() == typeof(IList<>) ||
+        return toTest.IsGenericType && (
+               toTest.GetGenericTypeDefinition() == typeof(IList<>) ||
                toTest.GetGenericTypeDefinition() == typeof(List<>) ||
                toTest.GetGenericTypeDefinition() == typeof(ICollection<>) ||
-               toTest.GetGenericTypeDefinition() == typeof(Collection<>);
+               toTest.GetGenericTypeDefinition() == typeof(Collection<>));
     }
 
     private static dynamic CreateInstance(Type type)
