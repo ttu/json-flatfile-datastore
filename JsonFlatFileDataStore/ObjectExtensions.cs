@@ -202,7 +202,8 @@ namespace JsonFlatFileDataStore
                         targetProperty.SetValue(destination, null);
                         continue;
                     }
-                    else if (targetArray == null)
+                    
+                    if (targetArray == null)
                     {
                         targetArray = CreateInstance(srcProp.PropertyType);
                         targetProperty.SetValue(destination, targetArray);
@@ -323,7 +324,8 @@ namespace JsonFlatFileDataStore
                         destExpandoDict[srcProp.Name] = null;
                         continue;
                     }
-                    else if (targetArray == null)
+                    
+                    if (targetArray == null)
                     {
                         targetArray = CreateInstance(srcProp.PropertyType);
                         destExpandoDict[srcProp.Name] = targetArray;
@@ -332,11 +334,11 @@ namespace JsonFlatFileDataStore
                     Type GetTypeFromTargetItem(IList target, int index)
                     {
                         if (index <= target.Count - 1) return target[index].GetType();
-                    
+
                         var targetType = target.GetType();
                         return IsGenericListOrColletion(targetType) ? targetType.GetGenericArguments()[0] : targetType;
                     }
-                
+
                     for (int i = 0; i < sourceArray.Count; i++)
                     {
                         var sourceValue = sourceArray[i];
@@ -344,7 +346,7 @@ namespace JsonFlatFileDataStore
                         if (sourceValue != null)
                         {
                             var targetType = GetTypeFromTargetItem(targetArray, i);
-                    
+
                             if (targetType != typeof(ExpandoObject))
                             {
                                 if (targetArray.Count - 1 < i)
@@ -396,7 +398,10 @@ namespace JsonFlatFileDataStore
             if (source is ExpandoObject)
             {
                 return ((IDictionary<string, object>)source)
-                       .Select(i => new { Name = i.Key, Value = i.Value, PropertyType = i.Value?.GetType() })
+                       .Select(i => new
+                       {
+                           Name = i.Key, Value = i.Value, PropertyType = i.Value?.GetType()
+                       })
                        .ToList();
             }
             else
