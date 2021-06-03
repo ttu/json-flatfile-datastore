@@ -183,9 +183,8 @@ namespace JsonFlatFileDataStore
 
                     targetDict.Clear();
 
-                    foreach (var item in sourceDict)
+                    foreach (var kvp in sourceDict.Cast<DictionaryEntry>())
                     {
-                        var kvp = (DictionaryEntry)item;
                         targetDict.Add(kvp.Key, kvp.Value);
                     }
 
