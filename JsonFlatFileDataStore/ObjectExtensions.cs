@@ -305,8 +305,6 @@ namespace JsonFlatFileDataStore
                         var kvp = (DictionaryEntry)item;
                         targetDict.Add(kvp.Key, kvp.Value);
                     }
-
-                    continue;
                 }
                 else if (IsEnumerable(srcProp.PropertyType))
                 {
