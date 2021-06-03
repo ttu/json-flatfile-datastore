@@ -1,7 +1,8 @@
 # Changelog
 
 ### [Unreleased]
-* FIXED: Update dynamic arrays in dynamic objects
+* FIXED: Update of typed arrays
+* FIXED: Update of dynamic arrays in dynamic objects
 * FIXED: Updates and full text search for objects with null collections
 
 ### [2.2.2] - 2020-02-26
