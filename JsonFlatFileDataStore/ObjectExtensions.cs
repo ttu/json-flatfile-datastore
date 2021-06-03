@@ -210,7 +210,7 @@ namespace JsonFlatFileDataStore
                     }
 
                     var targetPropertyType = targetProperty.PropertyType;
-                    var type = IsGenericListOrColletion(targetPropertyType) ? targetPropertyType.GetGenericArguments()[0] : targetPropertyType.GetElementType();
+                    var type = IsGenericListOrCollection(targetPropertyType) ? targetPropertyType.GetGenericArguments()[0] : targetPropertyType.GetElementType();
 
                     for (int i = 0; i < sourceArray.Count; i++)
                     {
@@ -336,7 +336,7 @@ namespace JsonFlatFileDataStore
                         if (index <= target.Count - 1) return target[index].GetType();
 
                         var targetType = target.GetType();
-                        return IsGenericListOrColletion(targetType) ? targetType.GetGenericArguments()[0] : targetType;
+                        return IsGenericListOrCollection(targetType) ? targetType.GetGenericArguments()[0] : targetType;
                     }
 
                     for (int i = 0; i < sourceArray.Count; i++)
@@ -420,7 +420,7 @@ namespace JsonFlatFileDataStore
             return typeof(IDictionary).IsAssignableFrom(toTest) && toTest != typeof(string);
         }
 
-        private static bool IsGenericListOrColletion(Type toTest)
+        private static bool IsGenericListOrCollection(Type toTest)
         {
             return toTest.IsGenericType && (
                 toTest.GetGenericTypeDefinition() == typeof(IList<>) ||
