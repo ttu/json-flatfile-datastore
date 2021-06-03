@@ -212,23 +212,23 @@ namespace JsonFlatFileDataStore
                     var targetPropertyType = targetProperty.PropertyType;
                     var type = IsGenericListOrCollection(targetPropertyType) ? targetPropertyType.GetGenericArguments()[0] : targetPropertyType.GetElementType();
 
-                    for (int i = 0; i < sourceArray.Count; i++)
+                    for (var i = 0; i < sourceArray.Count; i++)
                     {
                         var sourceValue = sourceArray[i];
 
-                        if (sourceValue != null)
-                        {
-                            if (targetArray.Count - 1 < i)
-                            {
-                                var newTargetItem = CreateInstance(type);
-                                targetArray.Add(newTargetItem);
-                            }
+                        if (sourceValue == null)
+                            continue;
 
-                            if (type.GetTypeInfo().IsValueType || type == typeof(string))
-                                targetArray[i] = sourceValue;
-                            else
-                                CopyProperties(sourceValue, targetArray[i]);
+                        if (targetArray.Count - 1 < i)
+                        {
+                            var newTargetItem = CreateInstance(type);
+                            targetArray.Add(newTargetItem);
                         }
+
+                        if (type.GetTypeInfo().IsValueType || type == typeof(string))
+                            targetArray[i] = sourceValue;
+                        else
+                            CopyProperties(sourceValue, targetArray[i]);
                     }
 
                     continue;
@@ -339,35 +339,35 @@ namespace JsonFlatFileDataStore
                         return IsGenericListOrCollection(targetType) ? targetType.GetGenericArguments()[0] : targetType;
                     }
 
-                    for (int i = 0; i < sourceArray.Count; i++)
+                    for (var i = 0; i < sourceArray.Count; i++)
                     {
                         var sourceValue = sourceArray[i];
 
-                        if (sourceValue != null)
+                        if (sourceValue == null)
+                            continue;
+
+                        var targetType = GetTypeFromTargetItem(targetArray, i);
+
+                        if (targetType != typeof(ExpandoObject))
                         {
-                            var targetType = GetTypeFromTargetItem(targetArray, i);
-
-                            if (targetType != typeof(ExpandoObject))
+                            if (targetArray.Count - 1 < i)
                             {
-                                if (targetArray.Count - 1 < i)
-                                {
-                                    targetArray.Add(CreateInstance(targetType));
-                                }
-
-                                if (targetType.GetTypeInfo().IsValueType || targetType == typeof(string))
-                                    targetArray[i] = sourceValue;
-                                else
-                                    CopyProperties(sourceValue, targetArray[i]);
+                                targetArray.Add(CreateInstance(targetType));
                             }
+
+                            if (targetType.GetTypeInfo().IsValueType || targetType == typeof(string))
+                                targetArray[i] = sourceValue;
                             else
+                                CopyProperties(sourceValue, targetArray[i]);
+                        }
+                        else
+                        {
+                            if (targetArray.Count - 1 < i)
                             {
-                                if (targetArray.Count - 1 < i)
-                                {
-                                    targetArray.Add(new ExpandoObject());
-                                }
-
-                                HandleExpando(sourceValue, targetArray[i]);
+                                targetArray.Add(new ExpandoObject());
                             }
+
+                            HandleExpando(sourceValue, targetArray[i]);
                         }
                     }
                 }
