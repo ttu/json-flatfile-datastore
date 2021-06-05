@@ -410,7 +410,7 @@ namespace JsonFlatFileDataStore
             if (keyValue is Int64)
                 return (int)keyValue + 1;
 
-            return ParseNextIntegertToKeyValue(keyValue.ToString());
+            return ParseNextIntegerToKeyValue(keyValue.ToString());
         }
 
         private dynamic GetFieldValue(T item, string fieldName)
@@ -425,7 +425,7 @@ namespace JsonFlatFileDataStore
             return expandoAsIgnoreCase[fieldName];
         }
 
-        private string ParseNextIntegertToKeyValue(string input)
+        private string ParseNextIntegerToKeyValue(string input)
         {
             int nextInt = 0;
 

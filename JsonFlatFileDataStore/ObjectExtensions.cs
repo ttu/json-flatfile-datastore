@@ -81,41 +81,35 @@ namespace JsonFlatFileDataStore
         {
             var compareFunc = caseSensitive
                 ? new Func<string, string, bool>((a, b) => a.IndexOf(b, StringComparison.Ordinal) >= 0)
-                : new Func<string, string, bool>((a, b) => a.IndexOf(b, StringComparison.OrdinalIgnoreCase) >= 0);
+                : (a, b) => a.IndexOf(b, StringComparison.OrdinalIgnoreCase) >= 0;
 
             bool AnyPropertyHasValue(dynamic current)
             {
                 if (current == null)
                     return false;
 
-                if (IsValueReferenceType(current.GetType()))
+                if (!IsValueReferenceType(current.GetType()))
+                    return compareFunc(current.ToString(), text);
+
+                foreach (var srcProp in GetProperties(current))
                 {
-                    foreach (var srcProp in GetProperties(current))
+                    var propValue = GetValue(current, srcProp);
+
+                    if (propValue == null)
+                        continue;
+
+                    if (IsEnumerable(srcProp.PropertyType) && srcProp.PropertyType != typeof(ExpandoObject))
                     {
-                        if (IsEnumerable(srcProp.PropertyType) && srcProp.PropertyType != typeof(ExpandoObject))
+                        foreach (var i in propValue as IEnumerable)
                         {
-                            var collection = GetValue(current, srcProp);
-
-                            if (collection == null)
-                                continue;
-
-                            foreach (var i in collection as IEnumerable)
-                            {
-                                if (AnyPropertyHasValue(i))
-                                    return true;
-                            }
-                        }
-                        else
-                        {
-                            if (AnyPropertyHasValue(GetValue(current, srcProp)))
+                            if (AnyPropertyHasValue(i))
                                 return true;
                         }
                     }
-                }
-                else
-                {
-                    if (compareFunc(current.ToString(), text))
+                    else if (AnyPropertyHasValue(propValue))
+                    {
                         return true;
+                    }
                 }
 
                 return false;
@@ -178,59 +172,13 @@ namespace JsonFlatFileDataStore
 
                 if (IsDictionary(srcProp.PropertyType))
                 {
-                    var targetDict = (IDictionary)targetProperty.GetValue(destination, null);
-                    var sourceDict = (IDictionary)GetValue(source, srcProp);
-
-                    targetDict.Clear();
-
-                    foreach (var item in sourceDict)
-                    {
-                        var kvp = (DictionaryEntry)item;
-                        targetDict.Add(kvp.Key, kvp.Value);
-                    }
-
+                    HandleTypedDictionary(source, destination, targetProperty, srcProp);
                     continue;
                 }
 
                 if (IsEnumerable(srcProp.PropertyType))
                 {
-                    var sourceArray = (IList)GetValue(source, srcProp);
-                    var targetArray = (IList)targetProperty.GetValue(destination, null);
-
-                    if (sourceArray == null)
-                    {
-                        targetProperty.SetValue(destination, null);
-                        continue;
-                    }
-                    
-                    if (targetArray == null)
-                    {
-                        targetArray = CreateInstance(srcProp.PropertyType);
-                        targetProperty.SetValue(destination, targetArray);
-                    }
-
-                    var targetPropertyType = targetProperty.PropertyType;
-                    var type = IsGenericListOrCollection(targetPropertyType) ? targetPropertyType.GetGenericArguments()[0] : targetPropertyType.GetElementType();
-
-                    for (var i = 0; i < sourceArray.Count; i++)
-                    {
-                        var sourceValue = sourceArray[i];
-
-                        if (sourceValue == null)
-                            continue;
-
-                        if (targetArray.Count - 1 < i)
-                        {
-                            var newTargetItem = CreateInstance(type);
-                            targetArray.Add(newTargetItem);
-                        }
-
-                        if (type.GetTypeInfo().IsValueType || type == typeof(string))
-                            targetArray[i] = sourceValue;
-                        else
-                            CopyProperties(sourceValue, targetArray[i]);
-                    }
-
+                    HandleTypedEnumerable(source, destination, srcProp, targetProperty);
                     continue;
                 }
 
@@ -263,6 +211,60 @@ namespace JsonFlatFileDataStore
             }
         }
 
+        private static void HandleTypedEnumerable(object source, object destination, dynamic srcProp, PropertyInfo targetProperty)
+        {
+            var sourceArray = (IList)GetValue(source, srcProp);
+            var targetArray = (IList)targetProperty.GetValue(destination, null);
+
+            if (sourceArray == null)
+            {
+                targetProperty.SetValue(destination, null);
+                return;
+            }
+
+            if (targetArray == null)
+            {
+                targetArray = CreateInstance(srcProp.PropertyType);
+                targetProperty.SetValue(destination, targetArray);
+            }
+
+            var targetPropertyType = targetProperty.PropertyType;
+            var type = IsGenericListOrCollection(targetPropertyType) ? targetPropertyType.GetGenericArguments()[0] : targetPropertyType.GetElementType();
+
+            for (var i = 0; i < sourceArray.Count; i++)
+            {
+                var sourceValue = sourceArray[i];
+
+                if (sourceValue == null)
+                    continue;
+
+                if (targetArray.Count - 1 < i)
+                {
+                    var newTargetItem = CreateInstance(type);
+                    targetArray.Add(newTargetItem);
+                }
+
+                if (type.GetTypeInfo().IsValueType || type == typeof(string))
+                    targetArray[i] = sourceValue;
+                else
+                    CopyProperties(sourceValue, targetArray[i]);
+            }
+        }
+
+        private static void HandleTypedDictionary(object source, object destination, PropertyInfo targetProperty, dynamic srcProp)
+        {
+            var targetDict = (IDictionary)targetProperty.GetValue(destination, null);
+            var sourceDict = (IDictionary)GetValue(source, srcProp);
+
+            targetDict.Clear();
+
+            foreach (var item in sourceDict)
+            {
+                var kvp = (DictionaryEntry)item;
+                targetDict.Add(kvp.Key, kvp.Value);
+            }
+        }
+
         private static string SwitchFirstChar(string name)
         {
             if (string.IsNullOrEmpty(name))
@@ -281,98 +283,113 @@ namespace JsonFlatFileDataStore
             {
                 if (srcProp.PropertyType == typeof(ExpandoObject))
                 {
-                    var destExpandoDict = ((IDictionary<string, object>)destination);
-
-                    if (!destExpandoDict.ContainsKey(srcProp.Name))
-                        destExpandoDict.Add(srcProp.Name, CreateInstance(srcProp.PropertyType));
-
-                    var sourceValue = GetValue(source, srcProp);
-                    HandleExpando(sourceValue, destExpandoDict[srcProp.Name]);
+                    HandleExpandoObject(source, destination, srcProp);
                 }
                 else if (IsDictionary(srcProp.PropertyType))
                 {
-                    var destExpandoDict = ((IDictionary<string, object>)destination);
-
-                    if (!destExpandoDict.ContainsKey(srcProp.Name))
-                        destExpandoDict.Add(srcProp.Name, CreateInstance(srcProp.PropertyType));
-
-                    var targetDict = (IDictionary)destExpandoDict[srcProp.Name];
-                    var sourceDict = (IDictionary)GetValue(source, srcProp);
-
-                    targetDict.Clear();
-
-                    foreach (var item in sourceDict)
-                    {
-                        var kvp = (DictionaryEntry)item;
-                        targetDict.Add(kvp.Key, kvp.Value);
-                    }
+                    HandleExpandoDictionary(source, destination, srcProp);
                 }
                 else if (IsEnumerable(srcProp.PropertyType))
                 {
-                    var destExpandoDict = ((IDictionary<string, object>)destination);
-
-                    if (!destExpandoDict.ContainsKey(srcProp.Name))
-                        destExpandoDict.Add(srcProp.Name, CreateInstance(srcProp.PropertyType));
-
-                    var targetArray = (IList)destExpandoDict[srcProp.Name];
-                    var sourceArray = (IList)GetValue(source, srcProp);
-
-                    if (sourceArray == null)
-                    {
-                        destExpandoDict[srcProp.Name] = null;
-                        continue;
-                    }
-                    
-                    if (targetArray == null)
-                    {
-                        targetArray = CreateInstance(srcProp.PropertyType);
-                        destExpandoDict[srcProp.Name] = targetArray;
-                    }
-
-                    Type GetTypeFromTargetItem(IList target, int index)
-                    {
-                        if (index <= target.Count - 1) return target[index].GetType();
-
-                        var targetType = target.GetType();
-                        return IsGenericListOrCollection(targetType) ? targetType.GetGenericArguments()[0] : targetType;
-                    }
-
-                    for (var i = 0; i < sourceArray.Count; i++)
-                    {
-                        var sourceValue = sourceArray[i];
-
-                        if (sourceValue == null)
-                            continue;
-
-                        var targetType = GetTypeFromTargetItem(targetArray, i);
-
-                        if (targetType != typeof(ExpandoObject))
-                        {
-                            if (targetArray.Count - 1 < i)
-                            {
-                                targetArray.Add(CreateInstance(targetType));
-                            }
-
-                            if (targetType.GetTypeInfo().IsValueType || targetType == typeof(string))
-                                targetArray[i] = sourceValue;
-                            else
-                                CopyProperties(sourceValue, targetArray[i]);
-                        }
-                        else
-                        {
-                            if (targetArray.Count - 1 < i)
-                            {
-                                targetArray.Add(new ExpandoObject());
-                            }
-
-                            HandleExpando(sourceValue, targetArray[i]);
-                        }
-                    }
+                    HandleExpandoEnumerable(source, destination, srcProp);
                 }
                 else
                 {
                     ((IDictionary<string, object>)destination)[srcProp.Name] = GetValue(source, srcProp);
                 }
+            }
+        }
+
+        private static void HandleExpandoEnumerable(object source, object destination, dynamic srcProp)
+        {
+            var destExpandoDict = ((IDictionary<string, object>)destination);
+
+            if (!destExpandoDict.ContainsKey(srcProp.Name))
+                destExpandoDict.Add(srcProp.Name, CreateInstance(srcProp.PropertyType));
+
+            var targetArray = (IList)destExpandoDict[srcProp.Name];
+            var sourceArray = (IList)GetValue(source, srcProp);
+
+            if (sourceArray == null)
+            {
+                destExpandoDict[srcProp.Name] = null;
+                return;
+            }
+
+            if (targetArray == null)
+            {
+                targetArray = CreateInstance(srcProp.PropertyType);
+                destExpandoDict[srcProp.Name] = targetArray;
+            }
+
+            Type GetTypeFromTargetItem(IList target, int index)
+            {
+                if (index <= target.Count - 1) return target[index].GetType();
+
+                var targetType = target.GetType();
+                return IsGenericListOrCollection(targetType) ? targetType.GetGenericArguments()[0] : targetType;
+            }
+
+            for (var i = 0; i < sourceArray.Count; i++)
+            {
+                var sourceValue = sourceArray[i];
+
+                if (sourceValue == null)
+                    continue;
+
+                var targetType = GetTypeFromTargetItem(targetArray, i);
+
+                if (targetType != typeof(ExpandoObject))
+                {
+                    if (targetArray.Count - 1 < i)
+                    {
+                        targetArray.Add(CreateInstance(targetType));
+                    }
+
+                    if (targetType.GetTypeInfo().IsValueType || targetType == typeof(string))
+                        targetArray[i] = sourceValue;
+                    else
+                        CopyProperties(sourceValue, targetArray[i]);
+                }
+                else
+                {
+                    if (targetArray.Count - 1 < i)
+                    {
+                        targetArray.Add(new ExpandoObject());
+                    }
+
+                    HandleExpando(sourceValue, targetArray[i]);
+                }
+            }
+        }
+
+        private static void HandleExpandoObject(object source, object destination, dynamic srcProp)
+        {
+            var destExpandoDict = ((IDictionary<string, object>)destination);
+
+            if (!destExpandoDict.ContainsKey(srcProp.Name))
+                destExpandoDict.Add(srcProp.Name, CreateInstance(srcProp.PropertyType));
+
+            var sourceValue = GetValue(source, srcProp);
+            HandleExpando(sourceValue, destExpandoDict[srcProp.Name]);
+        }
+
+        private static void HandleExpandoDictionary(object source, object destination, dynamic srcProp)
+        {
+            var destExpandoDict = ((IDictionary<string, object>)destination);
+
+            if (!destExpandoDict.ContainsKey(srcProp.Name))
+                destExpandoDict.Add(srcProp.Name, CreateInstance(srcProp.PropertyType));
+
+            var targetDict = (IDictionary)destExpandoDict[srcProp.Name];
+            var sourceDict = (IDictionary)GetValue(source, srcProp);
+
+            targetDict.Clear();
+
+            foreach (var item in sourceDict)
+            {
+                var kvp = (DictionaryEntry)item;
+                targetDict.Add(kvp.Key, kvp.Value);
             }
         }
 
@@ -393,19 +410,17 @@ namespace JsonFlatFileDataStore
 
         private static IEnumerable<dynamic> GetProperties(object source)
         {
-            if (source is ExpandoObject)
+            if (source is ExpandoObject expandoObject)
             {
-                return ((IDictionary<string, object>)source)
+                return expandoObject
                        .Select(i => new
                        {
                            Name = i.Key, Value = i.Value, PropertyType = i.Value?.GetType()
                        })
                        .ToList();
             }
-            else
-            {
-                return source.GetType().GetProperties();
-            }
+
+            return source.GetType().GetProperties();
         }
 
         private static bool IsEnumerable(Type toTest)
