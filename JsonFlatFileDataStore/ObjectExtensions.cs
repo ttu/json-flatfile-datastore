@@ -410,19 +410,17 @@ namespace JsonFlatFileDataStore
 
         private static IEnumerable<dynamic> GetProperties(object source)
         {
-            if (source is ExpandoObject)
+            if (source is ExpandoObject expandoObject)
             {
-                return ((IDictionary<string, object>)source)
+                return expandoObject
                        .Select(i => new
                        {
                            Name = i.Key, Value = i.Value, PropertyType = i.Value?.GetType()
                        })
                        .ToList();
             }
-            else
-            {
-                return source.GetType().GetProperties();
-            }
+
+            return source.GetType().GetProperties();
         }
 
         private static bool IsEnumerable(Type toTest)
