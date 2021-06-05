@@ -124,20 +124,13 @@ namespace JsonFlatFileDataStore
         {
             var idProp = typeof(T).GetProperties().FirstOrDefault(p => string.Equals(p.Name, fieldName, StringComparison.OrdinalIgnoreCase));
 
-            switch (idProp)
+            return idProp switch
             {
-                case null:
-                    return 0;
-
-                case var p when p.PropertyType.IsValueType:
-                    return Activator.CreateInstance(p.PropertyType);
-
-                case var p when p.PropertyType == typeof(string):
-                    return "0";
-
-                default:
-                    return null;
-            }
+                null => 0,
+                var p when p.PropertyType.IsValueType => Activator.CreateInstance(p.PropertyType),
+                var p when p.PropertyType == typeof(string) => "0",
+                _ => null
+            };
         }
 
         internal static dynamic GetFieldValue(object source, string fieldName)
