@@ -81,41 +81,35 @@ namespace JsonFlatFileDataStore
         {
             var compareFunc = caseSensitive
                 ? new Func<string, string, bool>((a, b) => a.IndexOf(b, StringComparison.Ordinal) >= 0)
-                : new Func<string, string, bool>((a, b) => a.IndexOf(b, StringComparison.OrdinalIgnoreCase) >= 0);
+                : (a, b) => a.IndexOf(b, StringComparison.OrdinalIgnoreCase) >= 0;
 
             bool AnyPropertyHasValue(dynamic current)
             {
                 if (current == null)
                     return false;
 
-                if (IsValueReferenceType(current.GetType()))
+                if (!IsValueReferenceType(current.GetType()))
+                    return compareFunc(current.ToString(), text);
+
+                foreach (var srcProp in GetProperties(current))
                 {
-                    foreach (var srcProp in GetProperties(current))
+                    var propValue = GetValue(current, srcProp);
+
+                    if (propValue == null)
+                        continue;
+
+                    if (IsEnumerable(srcProp.PropertyType) && srcProp.PropertyType != typeof(ExpandoObject))
                     {
-                        if (IsEnumerable(srcProp.PropertyType) && srcProp.PropertyType != typeof(ExpandoObject))
+                        foreach (var i in propValue as IEnumerable)
                         {
-                            var collection = GetValue(current, srcProp);
-
-                            if (collection == null)
-                                continue;
-
-                            foreach (var i in collection as IEnumerable)
-                            {
-                                if (AnyPropertyHasValue(i))
-                                    return true;
-                            }
-                        }
-                        else
-                        {
-                            if (AnyPropertyHasValue(GetValue(current, srcProp)))
+                            if (AnyPropertyHasValue(i))
                                 return true;
                         }
                     }
-                }
-                else
-                {
-                    if (compareFunc(current.ToString(), text))
+                    else if (AnyPropertyHasValue(propValue))
+                    {
                         return true;
+                    }
                 }
 
                 return false;
