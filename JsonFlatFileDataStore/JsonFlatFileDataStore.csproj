@@ -15,6 +15,7 @@
     <FileVersion>2.2.2.0</FileVersion>
     <Product>JsonFlatFileDataStore</Product>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <LangVersion>8</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
