@@ -1,6 +1,8 @@
 # Changelog
 
 ### [Unreleased]
+
+### [2.2.3] - 2021-06-13
 * FIXED: Update of typed arrays
 * FIXED: Update of dynamic arrays in dynamic objects
 * FIXED: Updates and full text search for objects with null collections
