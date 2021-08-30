@@ -28,11 +28,13 @@ namespace JsonFlatFileDataStore
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly ExpandoObjectConverter _converter = new ExpandoObjectConverter();
         private readonly JsonSerializerSettings _serializerSettings = new JsonSerializerSettings() { ContractResolver = new CamelCasePropertyNamesContractResolver() };
+        private readonly Aes256 _aes256;
+        private readonly string _encryptionKey = null;
 
         private JObject _jsonData;
         private bool _executingJsonUpdate;
 
-        public DataStore(string path, bool useLowerCamelCase = true, string keyProperty = null, bool reloadBeforeGetCollection = false)
+        public DataStore(string path, bool useLowerCamelCase = true, string keyProperty = null, bool reloadBeforeGetCollection = false, string encryptionKey = null)
         {
             _filePath = path;
 
@@ -53,6 +55,12 @@ namespace JsonFlatFileDataStore
             _keyProperty = keyProperty ?? (useLowerCamelCase ? "id" : "Id");
 
             _reloadBeforeGetCollection = reloadBeforeGetCollection;
+
+            if (encryptionKey != null)
+            {
+                _encryptionKey = encryptionKey;
+                _aes256 = new Aes256();
+            }
 
             _jsonData = JObject.Parse(ReadJsonFromFile(path));
 
@@ -459,6 +467,10 @@ namespace JsonFlatFileDataStore
                 }
                 catch (FileNotFoundException)
                 {
+                    if (_encryptionKey != null)
+                    {
+                        json = _aes256.Encrypt(json, _encryptionKey);
+                    }
                     File.WriteAllText(path, json);
                     break;
                 }
@@ -471,12 +483,22 @@ namespace JsonFlatFileDataStore
                 }
             }
 
+            if (_encryptionKey != null)
+            {
+                if (!json.Equals("{}")) { return _aes256.Decrypt(json, _encryptionKey); }
+            }
+
             return json;
         }
 
         private bool WriteJsonToFile(string path, string content)
         {
             Stopwatch sw = null;
+
+            if (_encryptionKey != null)
+            {
+                content = _aes256.Encrypt(content, _encryptionKey);
+            }
 
             while (true)
             {
