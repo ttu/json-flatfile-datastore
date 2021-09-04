@@ -28,8 +28,8 @@ namespace JsonFlatFileDataStore
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly ExpandoObjectConverter _converter = new ExpandoObjectConverter();
         private readonly JsonSerializerSettings _serializerSettings = new JsonSerializerSettings() { ContractResolver = new CamelCasePropertyNamesContractResolver() };
-        private readonly Aes256 _aes256;
-        private readonly string _encryptionKey = null;
+        private readonly Func<string, string> _encryptJson;
+        private readonly Func<string, string> _decryptJson;
 
         private JObject _jsonData;
         private bool _executingJsonUpdate;
@@ -56,10 +56,16 @@ namespace JsonFlatFileDataStore
 
             _reloadBeforeGetCollection = reloadBeforeGetCollection;
 
-            if (encryptionKey != null)
+            if (string.IsNullOrWhiteSpace(encryptionKey))
             {
-                _encryptionKey = encryptionKey;
-                _aes256 = new Aes256();
+                _encryptJson = new Func<string, string>(json => json);
+                _decryptJson = new Func<string, string>(json => json);
+            }
+            else
+            {
+                var aes256 = new Aes256();
+                _encryptJson = new Func<string, string>(json => aes256.Encrypt(json, encryptionKey));
+                _decryptJson = new Func<string, string>(json => aes256.Decrypt(json, encryptionKey));
             }
 
             _jsonData = JObject.Parse(ReadJsonFromFile(path));
@@ -467,11 +473,7 @@ namespace JsonFlatFileDataStore
                 }
                 catch (FileNotFoundException)
                 {
-                    if (_encryptionKey != null)
-                    {
-                        json = _aes256.Encrypt(json, _encryptionKey);
-                    }
-                    File.WriteAllText(path, json);
+                    File.WriteAllText(path, _encryptJson(json));
                     break;
                 }
                 catch (IOException e) when (e.Message.Contains("because it is being used by another process"))
@@ -483,28 +485,17 @@ namespace JsonFlatFileDataStore
                 }
             }
 
-            if (_encryptionKey != null)
-            {
-                if (!json.Equals("{}")) { return _aes256.Decrypt(json, _encryptionKey); }
-            }
-
-            return json;
+            return _decryptJson(json);
         }
 
         private bool WriteJsonToFile(string path, string content)
         {
             Stopwatch sw = null;
-
-            if (_encryptionKey != null)
-            {
-                content = _aes256.Encrypt(content, _encryptionKey);
-            }
-
             while (true)
             {
                 try
                 {
-                    File.WriteAllText(path, content);
+                    File.WriteAllText(path, _encryptJson(content));
                     return true;
                 }
                 catch (IOException e) when (e.Message.Contains("because it is being used by another process"))
