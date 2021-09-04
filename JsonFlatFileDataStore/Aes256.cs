@@ -7,6 +7,9 @@ namespace JsonFlatFileDataStore
 {
     /// <summary>
     /// AES256 class implements the OpenSSL compatible cipher AES/256/CBC/PKCS7
+    /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.rijndaelmanaged?view=net-5.0">RijndaelManaged</see>
+    /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.aes?redirectedfrom=MSDN&view=net-5.0">AES</see>
+    /// <see href="https://github.com/mervick/aes-everywhere">mervick/aes-everywhere</see>
     /// </summary>
     class Aes256
     {
