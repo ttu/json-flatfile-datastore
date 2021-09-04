@@ -19,11 +19,7 @@ namespace JsonFlatFileDataStore.Test
         public static string Up([CallerMemberName] string name = "", string encryptionKey = null)
         {
             var newFilePath = Path.Combine(_dir, $"{name}.json");
-            var dbContent = _originalContent.Value;
-            if (encryptionKey != null)
-            {
-                dbContent = _aes256.Encrypt(_originalContent.Value, encryptionKey);
-            }
+            var dbContent = string.IsNullOrEmpty(encryptionKey) ? _originalContent.Value : _aes256.Encrypt(_originalContent.Value, encryptionKey);
             File.WriteAllText(newFilePath, dbContent);
             return newFilePath;
         }
