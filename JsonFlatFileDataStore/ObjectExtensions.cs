@@ -100,7 +100,8 @@ namespace JsonFlatFileDataStore
 
                     if (IsEnumerable(srcProp.PropertyType) && srcProp.PropertyType != typeof(ExpandoObject))
                     {
-                        foreach (var i in propValue as IEnumerable)
+                        // propValue is IEnumerable, suppress compiler warning with null-forgiving operator
+                        foreach (var i in (propValue as IEnumerable)!)
                         {
                             if (AnyPropertyHasValue(i))
                                 return true;
