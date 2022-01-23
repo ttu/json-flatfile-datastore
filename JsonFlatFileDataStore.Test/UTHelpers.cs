@@ -8,6 +8,7 @@ namespace JsonFlatFileDataStore.Test
     public static class UTHelpers
     {
         private static readonly string _dir = Path.GetDirectoryName(typeof(DataStoreTests).GetTypeInfo().Assembly.Location);
+        private static readonly Aes256 _aes256 = new Aes256();
 
         private static readonly Lazy<string> _originalContent = new Lazy<string>(() =>
         {
@@ -15,10 +16,11 @@ namespace JsonFlatFileDataStore.Test
             return File.ReadAllText(path);
         });
 
-        public static string Up([CallerMemberName] string name = "")
+        public static string Up([CallerMemberName] string name = "", string encryptionKey = null)
         {
             var newFilePath = Path.Combine(_dir, $"{name}.json");
-            File.WriteAllText(newFilePath, _originalContent.Value);
+            var dbContent = string.IsNullOrEmpty(encryptionKey) ? _originalContent.Value : _aes256.Encrypt(_originalContent.Value, encryptionKey);
+            File.WriteAllText(newFilePath, dbContent);
             return newFilePath;
         }
 
