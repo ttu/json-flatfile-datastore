@@ -1,6 +1,7 @@
 # Changelog
 
 ### [Unreleased]
+* ADDED: Optional encryption for JSON-file content
 
 ### [2.2.3] - 2021-06-13
 * FIXED: Update of typed arrays

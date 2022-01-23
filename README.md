@@ -19,6 +19,7 @@ Simple data store that saves the data in JSON format to a single file.
   * Easy to initialize
   * Easy to edit
   * Perfect for small apps and prototyping
+  * Optional encryption for file content
 * [.NET Standard 2.0](https://github.com/dotnet/standard/blob/master/docs/versions/netstandard2.0.md)
   * .NET Core 2.0 & .NET Framework 4.6.1
 
@@ -518,6 +519,15 @@ var result = await store.UpdateItemAsync("myUser", new { name = "Harold" });
 var result = store.DeleteItem("counter");
 // Async
 var result = await store.DeleteItemAsync("counter");
+```
+
+## Encrypt JSON file content
+
+It is possible to encrypt the written JSON-data. When `encryptionKey`-parameter is passed to constructor, data will be encypted with `Aes256`.
+
+```c#
+var secretKey = "Key used for encryption";
+var store = new DataStore(newFilePath, encryptionKey: secretKey);
 ```
 
 ## DataStore and Collection lifecycle
