@@ -465,6 +465,6 @@ namespace JsonFlatFileDataStore
             }
         }
 
-        private Predicate<T> GetFilterPredicate(dynamic id) => new Predicate<T>(e => ObjectExtensions.GetFieldValue(e, _idField) == id);
+        private Predicate<T> GetFilterPredicate(dynamic id) => (e => ObjectExtensions.GetFieldValue(e, _idField) == id);
     }
 }
