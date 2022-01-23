@@ -476,7 +476,7 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void ReplaceOne__Preditacte_Id_TypedUser()
+        public void ReplaceOne__Predicate_Id_TypedUser()
         {
             var newFilePath = UTHelpers.Up();
 

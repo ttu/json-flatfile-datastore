@@ -46,11 +46,11 @@ namespace JsonFlatFileDataStore
                             var jObject = JsonConvert.DeserializeObject<ExpandoObject>(data.ToString());
                             return JsonConvert.SerializeObject(jObject, Formatting.Indented, _serializerSettings);
                         })
-                        : new Func<JObject, string>(s => s.ToString());
+                        : (s => s.ToString());
 
             _convertPathToCorrectCamelCase = useLowerCamelCase
                                 ? new Func<string, string>(s => string.Concat(s.Select((x, i) => i == 0 ? char.ToLower(x).ToString() : x.ToString())))
-                                : new Func<string, string>(s => s);
+                                : s => s;
 
             _keyProperty = keyProperty ?? (useLowerCamelCase ? "id" : "Id");
 
@@ -58,14 +58,14 @@ namespace JsonFlatFileDataStore
 
             if (string.IsNullOrWhiteSpace(encryptionKey))
             {
-                _encryptJson = new Func<string, string>(json => json);
-                _decryptJson = new Func<string, string>(json => json);
+                _encryptJson = (json => json);
+                _decryptJson = (json => json);
             }
             else
             {
                 var aes256 = new Aes256();
-                _encryptJson = new Func<string, string>(json => aes256.Encrypt(json, encryptionKey));
-                _decryptJson = new Func<string, string>(json => aes256.Decrypt(json, encryptionKey));
+                _encryptJson = (json => aes256.Encrypt(json, encryptionKey));
+                _decryptJson = (json => aes256.Decrypt(json, encryptionKey));
             }
 
             _jsonData = JObject.Parse(ReadJsonFromFile(path));
@@ -372,7 +372,7 @@ namespace JsonFlatFileDataStore
         {
             var commitAction = new CommitAction();
 
-            commitAction.HandleAction = new Func<JObject, (bool success, string json)>(currentJson =>
+            commitAction.HandleAction = (currentJson =>
             {
                 var (success, newJson) = commitOperation();
                 return success ? (true, _toJsonFunc(newJson)) : (false, string.Empty);
@@ -385,7 +385,7 @@ namespace JsonFlatFileDataStore
         {
             var commitAction = new CommitAction();
 
-            commitAction.HandleAction = new Func<JObject, (bool success, string json)>(currentJson =>
+            commitAction.HandleAction = (currentJson =>
             {
                 var updatedJson = string.Empty;
 
@@ -415,7 +415,7 @@ namespace JsonFlatFileDataStore
             bool actionSuccess = false;
             Exception actionException = null;
 
-            commitAction.Ready = new Action<bool, Exception>((isSuccess, exception) =>
+            commitAction.Ready = ((isSuccess, exception) =>
             {
                 actionSuccess = isSuccess;
                 actionException = exception;

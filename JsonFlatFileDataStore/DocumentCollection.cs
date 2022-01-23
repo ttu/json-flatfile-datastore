@@ -44,7 +44,7 @@ namespace JsonFlatFileDataStore
                 var itemToInsert = GetItemToInsert(GetNextIdValue(data, item), item, _insertConvert);
                 data.Add(itemToInsert);
                 return true;
-            };
+            }
 
             ExecuteLocked(UpdateAction, _data.Value);
 
@@ -58,7 +58,7 @@ namespace JsonFlatFileDataStore
                 var itemToInsert = GetItemToInsert(GetNextIdValue(data, item), item, _insertConvert);
                 data.Add(itemToInsert);
                 return true;
-            };
+            }
 
             ExecuteLocked(UpdateAction, _data.Value);
 
@@ -76,7 +76,7 @@ namespace JsonFlatFileDataStore
                 }
 
                 return true;
-            };
+            }
 
             ExecuteLocked(UpdateAction, _data.Value);
 
@@ -94,7 +94,7 @@ namespace JsonFlatFileDataStore
                 }
 
                 return true;
-            };
+            }
 
             ExecuteLocked(UpdateAction, _data.Value);
 
@@ -122,7 +122,7 @@ namespace JsonFlatFileDataStore
                 data[index] = item;
 
                 return true;
-            };
+            }
 
             if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
@@ -148,7 +148,7 @@ namespace JsonFlatFileDataStore
                 }
 
                 return true;
-            };
+            }
 
             if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
@@ -177,7 +177,7 @@ namespace JsonFlatFileDataStore
                 data[index] = item;
 
                 return true;
-            };
+            }
 
             if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
@@ -203,7 +203,7 @@ namespace JsonFlatFileDataStore
                 }
 
                 return true;
-            };
+            }
 
             if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
@@ -224,7 +224,7 @@ namespace JsonFlatFileDataStore
                 ObjectExtensions.CopyProperties(item, toUpdate);
 
                 return true;
-            };
+            }
 
             if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
@@ -247,7 +247,7 @@ namespace JsonFlatFileDataStore
                 ObjectExtensions.CopyProperties(item, toUpdate);
 
                 return true;
-            };
+            }
 
             if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
@@ -272,7 +272,7 @@ namespace JsonFlatFileDataStore
                 }
 
                 return true;
-            };
+            }
 
             if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
@@ -295,7 +295,7 @@ namespace JsonFlatFileDataStore
                 }
 
                 return true;
-            };
+            }
 
             if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
@@ -313,7 +313,7 @@ namespace JsonFlatFileDataStore
                     return false;
 
                 return data.Remove(remove);
-            };
+            }
 
             if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
@@ -333,7 +333,7 @@ namespace JsonFlatFileDataStore
                     return false;
 
                 return data.Remove(remove);
-            };
+            }
 
             if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
@@ -349,7 +349,7 @@ namespace JsonFlatFileDataStore
             {
                 int removed = data.RemoveAll(filter);
                 return removed > 0;
-            };
+            }
 
             if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
@@ -363,7 +363,7 @@ namespace JsonFlatFileDataStore
             {
                 int removed = data.RemoveAll(filter);
                 return removed > 0;
-            };
+            }
 
             if (!ExecuteLocked(UpdateAction, _data.Value))
                 return false;
@@ -465,6 +465,6 @@ namespace JsonFlatFileDataStore
             }
         }
 
-        private Predicate<T> GetFilterPredicate(dynamic id) => new Predicate<T>(e => ObjectExtensions.GetFieldValue(e, _idField) == id);
+        private Predicate<T> GetFilterPredicate(dynamic id) => (e => ObjectExtensions.GetFieldValue(e, _idField) == id);
     }
 }
