@@ -28,7 +28,7 @@ namespace JsonFlatFileDataStore
         /// </summary>
         /// <param name="text">Search text</param>
         /// <param name="caseSensitive">Is the search case sensitive</param>
-        /// <returns>Items mathcing the search text</returns>
+        /// <returns>Items matching the search text</returns>
         IEnumerable<T> Find(string text, bool caseSensitive = false);
 
         /// <summary>
@@ -68,7 +68,7 @@ namespace JsonFlatFileDataStore
         /// <summary>
         /// Replace the first item matching the filter
         /// </summary>
-        /// <param name="filter">First item mathcing the predicate will be replaced</param>
+        /// <param name="filter">First item matching the predicate will be replaced</param>
         /// <param name="item">New content</param>
         /// <param name="upsert">Will item be inserted if not found</param>
         /// <returns>true if item found for replacement</returns>
@@ -77,7 +77,7 @@ namespace JsonFlatFileDataStore
         /// <summary>
         /// Replace the item matching the id
         /// </summary>
-        /// <param name="id">The item mathcing the id-value will be replaced</param>
+        /// <param name="id">The item matching the id-value will be replaced</param>
         /// <param name="item">New content</param>
         /// <param name="upsert">Will item be inserted if not found</param>
         /// <returns>true if item found for replacement</returns>
@@ -189,7 +189,7 @@ namespace JsonFlatFileDataStore
         /// <summary>
         /// Delete the item matching the id
         /// </summary>
-        /// <param name="id">The item matching the id-vvalue will be deleted</param>
+        /// <param name="id">The item matching the id-value will be deleted</param>
         /// <returns>true if item found for deletion</returns>
         Task<bool> DeleteOneAsync(dynamic id);
 

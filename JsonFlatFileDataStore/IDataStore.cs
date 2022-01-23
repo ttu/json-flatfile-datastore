@@ -10,7 +10,7 @@ namespace JsonFlatFileDataStore
     public interface IDataStore : IDisposable
     {
         /// <summary>
-        /// Has the background thread update actions in the queue or is the update excuting
+        /// Has the background thread update actions in the queue or is the update executing
         /// </summary>
         bool IsUpdating { get; }
 
