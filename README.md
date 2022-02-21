@@ -456,6 +456,16 @@ var counter = store.GetItem<int>("counter");
 var user = store.GetItem("myUser");
 ```
 
+`GetRoot` will return the dynamic root object and `GetRoot<T>` will return the root object of type T.
+
+```csharp
+var store = new DataStore(pathToJson);
+// Dynamic data
+var settingsDynamic = store.GetRoot();
+// Typed data
+var settings = store.GetRoot<Settings>("myUser");
+```
+
 Typed data will throw `KeyNotFoundException` if key is not found. Dynamic data and nullable types will return null.
 
 ```csharp

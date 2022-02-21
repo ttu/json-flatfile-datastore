@@ -420,6 +420,41 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
+        public void GetRoot_Dynamic()
+        {
+            var pathToJson = UTHelpers.Up();
+
+            var store = new DataStore(pathToJson);
+
+            // Get root
+            var root = store.GetRoot();
+
+            Assert.Equal(1, root.user[0].id);
+            Assert.Equal(2.1, root.myValue);
+            Assert.Equal("Carrillo", root.family[0].parents[0].name);
+
+            UTHelpers.Down(pathToJson);
+        }
+
+        [Fact]
+        public void GetRoot_Typed()
+        {
+            var pathToJson = UTHelpers.Up();
+
+            // Open database (create new if file doesn't exist)
+            var store = new DataStore(pathToJson);
+
+            // Get root
+            var root = store.GetRoot<Store>();
+
+            Assert.Equal(1, root.User.First().Id);
+            Assert.Equal(2.1, root.MyValue);
+            Assert.Equal("Carrillo", root.Family.First().Parents.First().Name);
+
+            UTHelpers.Down(pathToJson);
+        }
+
+        [Fact]
         public async Task Readme_Example3()
         {
             var pathToJson = UTHelpers.Up();

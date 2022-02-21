@@ -438,6 +438,41 @@ namespace JsonFlatFileDataStore
             return actionSuccess;
         }
 
+        public dynamic GetRoot()
+        {
+            if (_reloadBeforeGetCollection)
+            {
+                _jsonData = JObject.Parse(ReadJsonFromFile(_filePath));
+            }
+
+            if (_jsonData == null)
+                return null;
+
+            return SingleDynamicItemReadConverter(_jsonData);
+        }
+
+        public T GetRoot<T>()
+        {
+            if (_reloadBeforeGetCollection)
+            {
+                _jsonData = JObject.Parse(ReadJsonFromFile(_filePath));
+            }
+
+            if (_jsonData == null)
+            {
+                if (Nullable.GetUnderlyingType(typeof(T)) != null)
+                {
+                    return default(T);
+                }
+
+                throw new KeyNotFoundException();
+            }
+
+            var temp = _jsonData.ToObject<T>();
+
+            return temp;
+        }
+
         private dynamic SingleDynamicItemReadConverter(JToken e)
         {
             switch (e)
