@@ -468,9 +468,7 @@ namespace JsonFlatFileDataStore
                 throw new KeyNotFoundException();
             }
 
-            var temp = _jsonData.ToObject<T>();
-
-            return temp;
+            return _jsonData.ToObject<T>();
         }
 
         private dynamic SingleDynamicItemReadConverter(JToken e)
