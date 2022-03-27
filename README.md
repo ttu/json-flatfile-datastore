@@ -20,8 +20,8 @@ Simple data store that saves the data in JSON format to a single file.
   * Easy to edit
   * Perfect for small apps and prototyping
   * Optional encryption for file content
-* [.NET Standard 2.0](https://github.com/dotnet/standard/blob/master/docs/versions/netstandard2.0.md)
-  * .NET Core 2.0 & .NET Framework 4.6.1
+* .NET implementation & version support: [.NET Standard 2.0](https://docs.microsoft.com/en-us/dotnet/standard/net-standard?tabs=net-standard-2-0#select-net-standard-version)
+  * e.g. .NET 5, .NET Core 2.0, .NET Framework 4.6.1
 
 ## Installation
 
