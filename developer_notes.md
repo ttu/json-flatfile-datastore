@@ -8,10 +8,10 @@
 $ git tag x.x.x
 $ git push origin --tags
 ```
-3. Create new Nuget release. Check API key from [Nuget](https://www.nuget.org/account/apikeys)
+3. Build new release. Check API key from [Nuget](https://www.nuget.org/account/apikeys)
 ```sh
-$ dotnet pack --configuration Release
-$ dotnet nuget push .\bin\Release\JsonFlatFileDataStore.x.x.x.nupkg --source https://api.nuget.org/v3/index.json --api-key xxxxx
+$ dotnet build --configuration Release
+$ dotnet nuget push .\JsonFlatFileDataStore\bin\Release\JsonFlatFileDataStore.x.x.x.nupkg --source https://api.nuget.org/v3/index.json --api-key xxxxx
 ```
 
 
