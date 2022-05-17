@@ -1,6 +1,8 @@
 # Changelog
 
 ### [Unreleased]
+
+### [2.3.0] - 2022-05-17
 * ADDED: Optional encryption for JSON-file content
 
 ### [2.2.3] - 2021-06-13
