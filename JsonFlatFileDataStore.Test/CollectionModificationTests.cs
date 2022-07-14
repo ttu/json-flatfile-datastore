@@ -581,6 +581,40 @@ namespace JsonFlatFileDataStore.Test
 
             UTHelpers.Down(newFilePath);
         }
+        
+        [Fact]
+        public async Task ReplaceOne_Upsert_Custom_Id_Dynamic()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath, keyProperty:"CustomId");
+
+            var collection = store.GetCollection("questions");
+
+            var item = new
+            {
+                CustomId = "54ccb8f2-5f2c-4cfa-b525-f0871eca787c",
+                Name = "First_Tester"
+            };
+            
+            var itemTwo = new
+            {
+                CustomId = "ee314079-7d18-405b-9bb7-9248c672b3f5",
+                Name = "Second_Tester"
+            };
+            
+            var success = await collection.ReplaceOneAsync(item.CustomId, item, true);
+            Assert.True(success);
+            
+            success = await collection.ReplaceOneAsync(itemTwo.CustomId, itemTwo, true);
+            Assert.True(success);
+            
+            var fromDb = collection.AsQueryable().SingleOrDefault(e => e.CustomId == itemTwo.CustomId);
+            Assert.NotNull(fromDb);
+            Assert.Equal("Second_Tester", fromDb.Name);
+            
+            UTHelpers.Down(newFilePath);
+        }
 
         [Fact]
         public void ReplaceMany_TypedUser()
