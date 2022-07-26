@@ -2,7 +2,7 @@ language: csharp
 os: linux
 dist: focal
 mono: none
-dotnet: 5.0.102
+dotnet: 6.0.302
 solution: JsonFlatFileDataStore.sln
 script:
   - dotnet restore
