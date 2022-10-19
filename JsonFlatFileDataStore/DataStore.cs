@@ -34,7 +34,7 @@ namespace JsonFlatFileDataStore
         private JObject _jsonData;
         private bool _executingJsonUpdate;
 
-        public DataStore(string path, bool useLowerCamelCase = true, string keyProperty = null, bool reloadBeforeGetCollection = false, string encryptionKey = null)
+        public DataStore(string path, bool useLowerCamelCase = true, string keyProperty = null, bool reloadBeforeGetCollection = false, string encryptionKey = null, bool minifyJson = false)
         {
             _filePath = path;
 
@@ -44,7 +44,7 @@ namespace JsonFlatFileDataStore
                             // Serializing JObject ignores SerializerSettings, so we have to first deserialize to ExpandoObject and then serialize
                             // http://json.codeplex.com/workitem/23853
                             var jObject = JsonConvert.DeserializeObject<ExpandoObject>(data.ToString());
-                            return JsonConvert.SerializeObject(jObject, Formatting.Indented, _serializerSettings);
+                            return JsonConvert.SerializeObject(jObject, minifyJson ? Formatting.None: Formatting.Indented, _serializerSettings);
                         })
                         : (s => s.ToString());
 
