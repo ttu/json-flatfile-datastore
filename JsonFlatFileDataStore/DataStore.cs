@@ -474,7 +474,7 @@ namespace JsonFlatFileDataStore
                 catch (FileNotFoundException)
                 {
                     File.WriteAllText(path, _encryptJson(json));
-                    break;
+                    return json;
                 }
                 catch (IOException e) when (e.Message.Contains("because it is being used by another process"))
                 {
