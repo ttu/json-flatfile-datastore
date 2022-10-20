@@ -456,6 +456,22 @@ namespace JsonFlatFileDataStore.Test
             UTHelpers.Down(pathToJson);
         }
 
+        [Fact]
+        public void FileNotFound_CreateNewFile()
+        {
+            var path = UTHelpers.GetFullFilePath($"CreateNewFile_{DateTime.UtcNow.Ticks}");
+
+            var storeFileNotFound = new DataStore(path);
+            var collectionKeys = storeFileNotFound.GetKeys();
+            Assert.Equal(0, collectionKeys.Count);
+            
+            var storeFileFound = new DataStore(path);
+            var collectionKeysFileFound = storeFileNotFound.GetKeys();
+            Assert.Equal(0, collectionKeysFileFound.Count);
+
+            UTHelpers.Down(path);
+        }
+
         public class Employee
         {
             public int Id { get; set; }
