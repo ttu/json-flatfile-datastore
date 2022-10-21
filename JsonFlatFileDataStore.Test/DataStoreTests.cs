@@ -471,6 +471,23 @@ namespace JsonFlatFileDataStore.Test
 
             UTHelpers.Down(path);
         }
+        
+        [Fact]
+        public async Task FileContent_DefaultFormat()
+        {
+            var path = UTHelpers.GetFullFilePath($"FileContent_DefaultFormat_{DateTime.UtcNow.Ticks}");
+
+            var store = new DataStore(path);
+            var collection = store.GetCollection<Movie>("movie");
+            await collection.InsertOneAsync(new Movie{Name = "Test", Rating = 5});
+
+            var content = UTHelpers.GetFileContent(path);
+            
+            var expected = "{\r\n  \"movie\": [\r\n    {\r\n      \"name\": \"Test\",\r\n      \"rating\": 5.0\r\n    }\r\n  ]\r\n}";
+            Assert.Equal(expected.Length, content.Length);
+            
+            UTHelpers.Down(path);
+        }
 
         public class Employee
         {

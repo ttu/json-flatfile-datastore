@@ -17,6 +17,8 @@ namespace JsonFlatFileDataStore.Test
         });
 
         public static string GetFullFilePath(string name) => Path.Combine(_dir, $"{name}.json");
+        
+        public static string GetFileContent(string fullPath) => File.ReadAllText(fullPath);
 
         public static string Up([CallerMemberName] string name = "", string encryptionKey = null)
         {
