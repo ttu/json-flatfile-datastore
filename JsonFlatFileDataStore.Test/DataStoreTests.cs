@@ -484,13 +484,14 @@ namespace JsonFlatFileDataStore.Test
             var content = UTHelpers.GetFileContent(path);
             
             // NOTE: File format is different depending on used OS. Windows uses \r\n and Linux \r
+            // Length on Windows is 81 and on Linux 74
             var expected = new[]
             {
                 "{\r\n  \"movie\": [\r\n    {\r\n      \"name\": \"Test\",\r\n      \"rating\": 5.0\r\n    }\r\n  ]\r\n}",
                 "{\r  \"movie\": [\r    {\r      \"name\": \"Test\",\r      \"rating\": 5.0\r    }\r  ]\r}"
             };
 
-            Assert.Contains(expected, i => i == content);
+            Assert.Contains(expected, i => i.Length == content.Length);
             
             UTHelpers.Down(path);
         }
