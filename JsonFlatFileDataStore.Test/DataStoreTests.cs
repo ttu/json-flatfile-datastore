@@ -512,22 +512,6 @@ namespace JsonFlatFileDataStore.Test
             UTHelpers.Down(path);
         }
 
-        [Fact]
-        public void FileNotFound_CreateNewFile_Encrypted()
-        {
-            var path = UTHelpers.GetFullFilePath($"CreateNewFile_Encrypted_{DateTime.UtcNow.Ticks}");
-
-            var storeFileNotFound = new DataStore(path, encryptionKey:"53cr3t");
-            var collectionKeys = storeFileNotFound.GetKeys();
-            Assert.Equal(0, collectionKeys.Count);
-
-            var storeFileFound = new DataStore(path, encryptionKey: "53cr3t");
-            var collectionKeysFileFound = storeFileNotFound.GetKeys();
-            Assert.Equal(0, collectionKeysFileFound.Count);
-
-            UTHelpers.Down(path);
-        }
-
         public class Employee
         {
             public int Id { get; set; }
