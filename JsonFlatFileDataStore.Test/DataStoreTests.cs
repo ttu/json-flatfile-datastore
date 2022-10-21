@@ -472,26 +472,26 @@ namespace JsonFlatFileDataStore.Test
             UTHelpers.Down(path);
         }
         
-        [Fact]
-        public async Task FileContent_DefaultFormat()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task FileContent_DefaultFormat(bool useLowerCamelCase)
         {
             var path = UTHelpers.GetFullFilePath($"FileContent_DefaultFormat_{DateTime.UtcNow.Ticks}");
 
-            var store = new DataStore(path);
+            var store = new DataStore(path, useLowerCamelCase: useLowerCamelCase);
             var collection = store.GetCollection<Movie>("movie");
             await collection.InsertOneAsync(new Movie{Name = "Test", Rating = 5});
 
             var content = UTHelpers.GetFileContent(path);
             
             // NOTE: File format is different depending on used OS. Windows uses \r\n and Linux \r
+            //   - "{\r\n  \"movie\": [\r\n    {\r\n      \"name\": \"Test\",\r\n      \"rating\": 5.0\r\n    }\r\n  ]\r\n}",
+            //   - "{\r  \"movie\": [\r    {\r      \"name\": \"Test\",\r      \"rating\": 5.0\r    }\r  ]\r}"
             // Length on Windows is 81 and on Linux 74
-            var expected = new[]
-            {
-                "{\r\n  \"movie\": [\r\n    {\r\n      \"name\": \"Test\",\r\n      \"rating\": 5.0\r\n    }\r\n  ]\r\n}",
-                "{\r  \"movie\": [\r    {\r      \"name\": \"Test\",\r      \"rating\": 5.0\r    }\r  ]\r}"
-            };
+            var allowedLengths = new[] { 81, 74 };
 
-            Assert.Contains(expected, i => i.Length == content.Length);
+            Assert.Contains(allowedLengths, i => i == content.Length);
             
             UTHelpers.Down(path);
         }
