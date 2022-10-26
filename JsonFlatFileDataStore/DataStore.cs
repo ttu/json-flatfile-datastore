@@ -38,15 +38,17 @@ namespace JsonFlatFileDataStore
         {
             _filePath = path;
 
+            var usedFormatting = minifyJson ? Formatting.None : Formatting.Indented;
+
             _toJsonFunc = useLowerCamelCase
                         ? new Func<JObject, string>(data =>
                         {
                             // Serializing JObject ignores SerializerSettings, so we have to first deserialize to ExpandoObject and then serialize
                             // http://json.codeplex.com/workitem/23853
                             var jObject = JsonConvert.DeserializeObject<ExpandoObject>(data.ToString());
-                            return JsonConvert.SerializeObject(jObject, minifyJson ? Formatting.None: Formatting.Indented, _serializerSettings);
+                            return JsonConvert.SerializeObject(jObject, usedFormatting, _serializerSettings);
                         })
-                        : (s => s.ToString(minifyJson ? Formatting.None : Formatting.Indented));
+                        : (s => s.ToString(usedFormatting));
 
             _convertPathToCorrectCamelCase = useLowerCamelCase
                                 ? new Func<string, string>(s => string.Concat(s.Select((x, i) => i == 0 ? char.ToLower(x).ToString() : x.ToString())))
