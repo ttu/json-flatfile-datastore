@@ -628,6 +628,12 @@ var store = new DataStore(newFilePath);
 var store = new DataStore(newFilePath, false);
 ```
 
+Additionaly the output of the file can be minfied. The default is an intended output.
+
+```csharp
+var store = new DataStore(newFilePath, minifyJson: true);
+```
+
 ## Dynamic and error CS1977
 
 When __Dynamic type__ is used with lambdas, compiler will give you error __CS1977__:
