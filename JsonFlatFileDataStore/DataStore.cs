@@ -65,6 +65,7 @@ namespace JsonFlatFileDataStore
             }
             else
             {
+                usedFormatting = Formatting.None;
                 var aes256 = new Aes256();
                 _encryptJson = (json => aes256.Encrypt(json, encryptionKey));
                 _decryptJson = (json => aes256.Decrypt(json, encryptionKey));
