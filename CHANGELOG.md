@@ -2,6 +2,7 @@
 
 ### [Unreleased]
 * FIXED: Initial encrypted file creation if file doesn't exist
+* ADDED: Output of the file can be minified
 
 ### [2.3.0] - 2022-05-17
 * ADDED: Optional encryption for JSON-file content
