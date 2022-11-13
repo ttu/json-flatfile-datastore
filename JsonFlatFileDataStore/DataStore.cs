@@ -38,7 +38,8 @@ namespace JsonFlatFileDataStore
         {
             _filePath = path;
 
-            var usedFormatting = minifyJson ? Formatting.None : Formatting.Indented;
+            var useEncryption = !string.IsNullOrWhiteSpace(encryptionKey);
+            var usedFormatting = minifyJson || useEncryption ? Formatting.None : Formatting.Indented;
 
             _toJsonFunc = useLowerCamelCase
                         ? new Func<JObject, string>(data =>
@@ -58,16 +59,16 @@ namespace JsonFlatFileDataStore
 
             _reloadBeforeGetCollection = reloadBeforeGetCollection;
 
-            if (string.IsNullOrWhiteSpace(encryptionKey))
-            {
-                _encryptJson = (json => json);
-                _decryptJson = (json => json);
-            }
-            else
-            {
+            if (useEncryption)
+            {    
                 var aes256 = new Aes256();
                 _encryptJson = (json => aes256.Encrypt(json, encryptionKey));
                 _decryptJson = (json => aes256.Decrypt(json, encryptionKey));
+            }
+            else
+            {
+                _encryptJson = (json => json);
+                _decryptJson = (json => json);
             }
 
             _jsonData = JObject.Parse(ReadJsonFromFile(path));

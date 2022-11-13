@@ -527,6 +527,20 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
+        public void FileContent_AlwaysMinify_Encrypted()
+        {
+            var path = UTHelpers.GetFullFilePath($"{nameof(FileContent_AlwaysMinify_Encrypted)}");
+
+            var storeFileEncrypted = new DataStore(path, encryptionKey: "53cr3t");
+            storeFileEncrypted.InsertItem<Movie>("movie", new Movie { Name = "Matrix", Rating = 5 });
+            var content = UTHelpers.GetFileContent(path);
+
+            Assert.Equal(88, content.Length);
+
+            UTHelpers.Down(path);
+        }
+
+        [Fact]
         public void FileNotFound_CreateNewFile_Encrypted()
         {
             var path = UTHelpers.GetFullFilePath($"CreateNewFile_Encrypted_{DateTime.UtcNow.Ticks}");
