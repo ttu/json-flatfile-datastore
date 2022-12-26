@@ -1,6 +1,8 @@
 # Changelog
 
 ### [Unreleased]
+
+### [2.4.0] - 2022-12-26
 * FIXED: Initial encrypted file creation if file doesn't exist
 * ADDED: Output of the file can be minified
 * FIXED: Always minify output when encryption is used
