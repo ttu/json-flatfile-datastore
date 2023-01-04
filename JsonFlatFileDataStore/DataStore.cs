@@ -86,17 +86,24 @@ namespace JsonFlatFileDataStore
                     batch.Clear();
                     callbacks.Clear();
 
-                    var updateAction = _updates.Take(token);
-
-                    _executingJsonUpdate = true;
-
-                    batch.Enqueue(updateAction);
-
-                    while (_updates.Count > 0 && batch.Count < CommitBatchMaxSize)
+                    try
                     {
-                        batch.Enqueue(_updates.Take(token));
+                        var updateAction = _updates.Take(token);
+                        _executingJsonUpdate = true;
+                        batch.Enqueue(updateAction);
+                        
+                        while (_updates.Count > 0 && batch.Count < CommitBatchMaxSize)
+                        {
+                            batch.Enqueue(_updates.Take(token));
+                        }
                     }
-
+                    catch (OperationCanceledException)
+                    {
+                        // BlockingCollection will throw OperationCanceledException when token is cancelled
+                        // Ignore this and exit
+                        break;
+                    }
+                    
                     var jsonText = ReadJsonFromFile(_filePath);
 
                     foreach (var action in batch)
