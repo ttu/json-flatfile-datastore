@@ -1,6 +1,7 @@
 # Changelog
 
 ### [Unreleased]
+* FIXED: Ignore OperationCanceledException during dispose
 
 ### [2.4.0] - 2022-12-26
 * FIXED: Initial encrypted file creation if file doesn't exist
