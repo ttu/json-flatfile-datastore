@@ -1,6 +1,8 @@
 # Changelog
 
 ### [Unreleased]
+
+### [2.4.1] - 2023-01-15
 * FIXED: Ignore OperationCanceledException during dispose
 
 ### [2.4.0] - 2022-12-26
