@@ -9,6 +9,7 @@ JSON Flat File Data Store
 |-------------|----------------|-------------|
 | AppVeyor    | Windows        |[![Build status](https://ci.appveyor.com/api/projects/status/adq9as6ruraln8tn?svg=true&branch=master)](https://ci.appveyor.com/project/ttu/json-flatfile-datastore)|
 | Travis      | Linux / macOS  |[![Build Status](https://api.travis-ci.com/ttu/json-flatfile-datastore.svg?branch=master)](https://app.travis-ci.com/ttu/json-flatfile-datastore)|
+| GH Actions  | Linux          |[![Build Status](https://github.com/ttu/json-flatfile-datastore/actions/workflows/ci.yml/badge.svg?branch=master)]
 
 Simple data store that saves the data in JSON format to a single file.
 
