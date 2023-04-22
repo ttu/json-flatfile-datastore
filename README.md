@@ -5,12 +5,11 @@ JSON Flat File Data Store
 [![NuGetCount](https://img.shields.io/nuget/dt/JsonFlatFileDataStore.svg
 )](https://www.nuget.org/packages/JsonFlatFileDataStore/)
 
-| Build server| Platform       | Build status      |
-|-------------|----------------|-------------|
-| AppVeyor    | Windows        |[![Build status](https://ci.appveyor.com/api/projects/status/adq9as6ruraln8tn?svg=true&branch=master)](https://ci.appveyor.com/project/ttu/json-flatfile-datastore)|
-| Travis      | Linux / macOS  |[![Build Status](https://api.travis-ci.com/ttu/json-flatfile-datastore.svg?branch=master)](https://app.travis-ci.com/ttu/json-flatfile-datastore)|
-| GH Actions  | Linux          |[![Build Status](https://github.com/ttu/json-flatfile-datastore/actions/workflows/ci.yml/badge.svg?branch=master)]
-| GH Actions  | Windows        |[![Build Status](https://github.com/ttu/json-flatfile-datastore/actions/workflows/ci_win.yml/badge.svg?branch=master)]
+| Build server| Platform       | Build status                                                                                                                                                                                     |
+|-------------|----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| GH Actions  | Linux          | [![Build Status](https://github.com/ttu/json-flatfile-datastore/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/ttu/json-flatfile-datastore/actions/workflows/ci.yml)      |
+| GH Actions  | Windows        | [![Build Status](https://github.com/ttu/json-flatfile-datastore/actions/workflows/ci_win.yml/badge.svg?branch=master)](https://github.com/ttu/json-flatfile-datastore/actions/workflows/ci_win.yml) |
+
 Simple data store that saves the data in JSON format to a single file.
 
 * Small API with basic functionality that is needed for handling data
