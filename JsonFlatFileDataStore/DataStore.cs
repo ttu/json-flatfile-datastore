@@ -5,10 +5,8 @@ using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Dynamic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -71,7 +69,7 @@ namespace JsonFlatFileDataStore
                 _decryptJson = (json => json);
             }
 
-            _jsonData = JObject.Parse(ReadJsonFromFile(path));
+            _jsonData = GetJsonObjectFromFile();
 
             // Run updates on a background thread and use BlockingCollection to prevent multiple updates to run simultaneously
             Task.Run(() =>
@@ -103,8 +101,8 @@ namespace JsonFlatFileDataStore
                         // Ignore this and exit
                         break;
                     }
-                    
-                    var jsonText = ReadJsonFromFile(_filePath);
+
+                    var jsonText = GetJsonTextFromFile();
 
                     foreach (var action in batch)
                     {
@@ -121,7 +119,7 @@ namespace JsonFlatFileDataStore
 
                     try
                     {
-                        writeSuccess = WriteJsonToFile(_filePath, jsonText);
+                        writeSuccess = FileAccess.WriteJsonToFile(_filePath, _encryptJson, jsonText);
 
                         lock (_jsonData)
                         {
@@ -165,14 +163,14 @@ namespace JsonFlatFileDataStore
                 _jsonData = JObject.Parse(jsonData);
             }
 
-            WriteJsonToFile(_filePath, jsonData);
+            FileAccess.WriteJsonToFile(_filePath, _encryptJson, jsonData);
         }
 
         public void Reload()
         {
             lock (_jsonData)
             {
-                _jsonData = JObject.Parse(ReadJsonFromFile(_filePath));
+                _jsonData = GetJsonObjectFromFile();
             }
         }
 
@@ -181,7 +179,7 @@ namespace JsonFlatFileDataStore
             if (_reloadBeforeGetCollection)
             {
                 // This might be a bad idea especially if the file is in use, as this can take a long time
-                _jsonData = JObject.Parse(ReadJsonFromFile(_filePath));
+                _jsonData = GetJsonObjectFromFile();
             }
 
             var token = _jsonData[key];
@@ -204,7 +202,7 @@ namespace JsonFlatFileDataStore
             if (_reloadBeforeGetCollection)
             {
                 // This might be a bad idea especially if the file is in use, as this can take a long time
-                _jsonData = JObject.Parse(ReadJsonFromFile(_filePath));
+                _jsonData = GetJsonObjectFromFile();
             }
 
             var token = _jsonData[key];
@@ -358,7 +356,7 @@ namespace JsonFlatFileDataStore
                     if (_reloadBeforeGetCollection)
                     {
                         // This might be a bad idea especially if the file is in use, as this can take a long time
-                        _jsonData = JObject.Parse(ReadJsonFromFile(_filePath));
+                        _jsonData = GetJsonObjectFromFile();
                     }
 
                     return _jsonData[path]?
@@ -469,59 +467,9 @@ namespace JsonFlatFileDataStore
             }
         }
 
-        private string ReadJsonFromFile(string path)
-        {
-            Stopwatch sw = null;
-            string json = "{}";
+        private string GetJsonTextFromFile() => FileAccess.ReadJsonFromFile(_filePath, _encryptJson, _decryptJson);
 
-            while (true)
-            {
-                try
-                {
-                    json = File.ReadAllText(path);
-                    break;
-                }
-                catch (FileNotFoundException)
-                {
-                    json = _encryptJson(json);
-                    File.WriteAllText(path, json);
-                    break;
-                }
-                catch (IOException e) when (e.Message.Contains("because it is being used by another process"))
-                {
-                    // If some other process is using this file, retry operation unless elapsed times is greater than 10sec
-                    sw = sw ?? Stopwatch.StartNew();
-                    if (sw.ElapsedMilliseconds > 10000)
-                        throw;
-                }
-            }
-
-            return _decryptJson(json);
-        }
-
-        private bool WriteJsonToFile(string path, string content)
-        {
-            Stopwatch sw = null;
-            while (true)
-            {
-                try
-                {
-                    File.WriteAllText(path, _encryptJson(content));
-                    return true;
-                }
-                catch (IOException e) when (e.Message.Contains("because it is being used by another process"))
-                {
-                    // If some other process is using this file, retry operation unless elapsed times is greater than 10sec
-                    sw = sw ?? Stopwatch.StartNew();
-                    if (sw.ElapsedMilliseconds > 10000)
-                        return false;
-                }
-                catch (Exception)
-                {
-                    return false;
-                }
-            }
-        }
+        private JObject GetJsonObjectFromFile() => JObject.Parse(GetJsonTextFromFile());
 
         private class CommitAction
         {
