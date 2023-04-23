@@ -9,7 +9,7 @@ namespace JsonFlatFileDataStore
         public static string ReadJsonFromFile(string path, Func<string, string> encryptJson, Func<string, string> decryptJson)
         {
             Stopwatch sw = null;
-            string json = "{}";
+            var json = "{}";
 
             while (true)
             {
@@ -27,7 +27,7 @@ namespace JsonFlatFileDataStore
                 catch (IOException e) when (e.Message.Contains("because it is being used by another process"))
                 {
                     // If some other process is using this file, retry operation unless elapsed times is greater than 10sec
-                    sw = sw ?? Stopwatch.StartNew();
+                    sw ??= Stopwatch.StartNew();
                     if (sw.ElapsedMilliseconds > 10000)
                         throw;
                 }
@@ -39,6 +39,7 @@ namespace JsonFlatFileDataStore
         public static bool WriteJsonToFile(string path, Func<string, string> encryptJson, string content)
         {
             Stopwatch sw = null;
+
             while (true)
             {
                 try
@@ -49,7 +50,7 @@ namespace JsonFlatFileDataStore
                 catch (IOException e) when (e.Message.Contains("because it is being used by another process"))
                 {
                     // If some other process is using this file, retry operation unless elapsed times is greater than 10sec
-                    sw = sw ?? Stopwatch.StartNew();
+                    sw ??= Stopwatch.StartNew();
                     if (sw.ElapsedMilliseconds > 10000)
                         return false;
                 }
