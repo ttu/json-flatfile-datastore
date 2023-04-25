@@ -36,7 +36,7 @@ namespace JsonFlatFileDataStore
             return decryptJson(json);
         }
 
-        public static bool WriteJsonToFile(string path, Func<string, string> encryptJson, string content)
+        internal static bool WriteJsonToFile(string path, Func<string, string> encryptJson, string content)
         {
             Stopwatch sw = null;
 
