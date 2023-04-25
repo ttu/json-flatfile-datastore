@@ -4,9 +4,9 @@ using System.IO;
 
 namespace JsonFlatFileDataStore
 {
-    public static class FileAccess
+    internal static class FileAccess
     {
-        public static string ReadJsonFromFile(string path, Func<string, string> encryptJson, Func<string, string> decryptJson)
+        internal static string ReadJsonFromFile(string path, Func<string, string> encryptJson, Func<string, string> decryptJson)
         {
             Stopwatch sw = null;
             var json = "{}";
@@ -36,7 +36,7 @@ namespace JsonFlatFileDataStore
             return decryptJson(json);
         }
 
-        public static bool WriteJsonToFile(string path, Func<string, string> encryptJson, string content)
+        internal static bool WriteJsonToFile(string path, Func<string, string> encryptJson, string content)
         {
             Stopwatch sw = null;
 
