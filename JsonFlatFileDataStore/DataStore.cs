@@ -15,8 +15,6 @@ namespace JsonFlatFileDataStore
 {
     public class DataStore : IDataStore
     {
-        private const int CommitBatchMaxSize = 50;
-
         private readonly string _filePath;
         private readonly string _keyProperty;
         private readonly bool _reloadBeforeGetCollection;
@@ -74,70 +72,19 @@ namespace JsonFlatFileDataStore
             // Run updates on a background thread and use BlockingCollection to prevent multiple updates to run simultaneously
             Task.Run(() =>
             {
-                var token = _cts.Token;
-
-                var batch = new Queue<CommitAction>();
-                var callbacks = new Queue<(CommitAction action, bool success)>();
-
-                while (!token.IsCancellationRequested)
-                {
-                    batch.Clear();
-                    callbacks.Clear();
-
-                    try
+                CommitActionHandler.HandleStoreCommitActions(_cts.Token,
+                    _updates,
+                    executionState => _executingJsonUpdate = executionState,
+                    jsonText =>
                     {
-                        var updateAction = _updates.Take(token);
-                        _executingJsonUpdate = true;
-                        batch.Enqueue(updateAction);
-                        
-                        while (_updates.Count > 0 && batch.Count < CommitBatchMaxSize)
-                        {
-                            batch.Enqueue(_updates.Take(token));
-                        }
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        // BlockingCollection will throw OperationCanceledException when token is cancelled
-                        // Ignore this and exit
-                        break;
-                    }
-
-                    var jsonText = GetJsonTextFromFile();
-
-                    foreach (var action in batch)
-                    {
-                        var (actionSuccess, updatedJson) = action.HandleAction(JObject.Parse(jsonText));
-
-                        callbacks.Enqueue((action, actionSuccess));
-
-                        if (actionSuccess)
-                            jsonText = updatedJson;
-                    }
-
-                    var writeSuccess = false;
-                    Exception actionException = null;
-
-                    try
-                    {
-                        writeSuccess = FileAccess.WriteJsonToFile(_filePath, _encryptJson, jsonText);
-
                         lock (_jsonData)
                         {
                             _jsonData = JObject.Parse(jsonText);
                         }
-                    }
-                    catch (Exception e)
-                    {
-                        actionException = e;
-                    }
-
-                    foreach (var (cbAction, cbSuccess) in callbacks)
-                    {
-                        cbAction.Ready(writeSuccess ? cbSuccess : false, actionException);
-                    }
-
-                    _executingJsonUpdate = false;
-                }
+                        
+                        return FileAccess.WriteJsonToFile(_filePath, _encryptJson, jsonText);
+                    },
+                    GetJsonTextFromFile);
             });
         }
 
@@ -471,7 +418,8 @@ namespace JsonFlatFileDataStore
 
         private JObject GetJsonObjectFromFile() => JObject.Parse(GetJsonTextFromFile());
 
-        private class CommitAction
+        
+        internal class CommitAction
         {
             public Action<bool, Exception> Ready { get; set; }
 
