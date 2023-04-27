@@ -25,7 +25,9 @@ namespace JsonFlatFileDataStore.Test
 
             WeakReference storeRef = null;
 
+#pragma warning disable CS4014
             Task.Run(() => RunDataStore(out storeRef, newFilePath, itemCount, useDispose));
+#pragma warning restore CS4014
 
             var store = new DataStore(newFilePath, reloadBeforeGetCollection: true);
 
