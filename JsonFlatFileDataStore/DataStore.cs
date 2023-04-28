@@ -1,8 +1,4 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -10,6 +6,10 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 
 namespace JsonFlatFileDataStore
 {
@@ -23,14 +23,18 @@ namespace JsonFlatFileDataStore
         private readonly BlockingCollection<CommitAction> _updates = new BlockingCollection<CommitAction>();
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly ExpandoObjectConverter _converter = new ExpandoObjectConverter();
-        private readonly JsonSerializerSettings _serializerSettings = new JsonSerializerSettings() { ContractResolver = new CamelCasePropertyNamesContractResolver() };
+
+        private readonly JsonSerializerSettings _serializerSettings = new JsonSerializerSettings()
+            { ContractResolver = new CamelCasePropertyNamesContractResolver() };
+
         private readonly Func<string, string> _encryptJson;
         private readonly Func<string, string> _decryptJson;
 
         private JObject _jsonData;
         private bool _executingJsonUpdate;
 
-        public DataStore(string path, bool useLowerCamelCase = true, string keyProperty = null, bool reloadBeforeGetCollection = false, string encryptionKey = null, bool minifyJson = false)
+        public DataStore(string path, bool useLowerCamelCase = true, string keyProperty = null, bool reloadBeforeGetCollection = false,
+            string encryptionKey = null, bool minifyJson = false)
         {
             _filePath = path;
 
@@ -38,25 +42,25 @@ namespace JsonFlatFileDataStore
             var usedFormatting = minifyJson || useEncryption ? Formatting.None : Formatting.Indented;
 
             _toJsonFunc = useLowerCamelCase
-                        ? new Func<JObject, string>(data =>
-                        {
-                            // Serializing JObject ignores SerializerSettings, so we have to first deserialize to ExpandoObject and then serialize
-                            // http://json.codeplex.com/workitem/23853
-                            var jObject = JsonConvert.DeserializeObject<ExpandoObject>(data.ToString());
-                            return JsonConvert.SerializeObject(jObject, usedFormatting, _serializerSettings);
-                        })
-                        : (s => s.ToString(usedFormatting));
+                ? new Func<JObject, string>(data =>
+                {
+                    // Serializing JObject ignores SerializerSettings, so we have to first deserialize to ExpandoObject and then serialize
+                    // http://json.codeplex.com/workitem/23853
+                    var jObject = JsonConvert.DeserializeObject<ExpandoObject>(data.ToString());
+                    return JsonConvert.SerializeObject(jObject, usedFormatting, _serializerSettings);
+                })
+                : (s => s.ToString(usedFormatting));
 
             _convertPathToCorrectCamelCase = useLowerCamelCase
-                                ? new Func<string, string>(s => string.Concat(s.Select((x, i) => i == 0 ? char.ToLower(x).ToString() : x.ToString())))
-                                : s => s;
+                ? new Func<string, string>(s => string.Concat(s.Select((x, i) => i == 0 ? char.ToLower(x).ToString() : x.ToString())))
+                : s => s;
 
             _keyProperty = keyProperty ?? (useLowerCamelCase ? "id" : "Id");
 
             _reloadBeforeGetCollection = reloadBeforeGetCollection;
 
             if (useEncryption)
-            {    
+            {
                 var aes256 = new Aes256();
                 _encryptJson = (json => aes256.Encrypt(json, encryptionKey));
                 _decryptJson = (json => aes256.Decrypt(json, encryptionKey));
@@ -81,7 +85,7 @@ namespace JsonFlatFileDataStore
                         {
                             _jsonData = JObject.Parse(jsonText);
                         }
-                        
+
                         return FileAccess.WriteJsonToFile(_filePath, _encryptJson, jsonText);
                     },
                     GetJsonTextFromFile);
@@ -307,10 +311,10 @@ namespace JsonFlatFileDataStore
                     }
 
                     return _jsonData[path]?
-                                .Children()
-                                .Select(e => readConvert(e))
-                                .ToList()
-                                ?? new List<T>();
+                           .Children()
+                           .Select(e => readConvert(e))
+                           .ToList()
+                        ?? new List<T>();
                 }
             });
 
@@ -345,10 +349,10 @@ namespace JsonFlatFileDataStore
                 var updatedJson = string.Empty;
 
                 var selectedData = currentJson[dataPath]?
-                                        .Children()
-                                        .Select(e => readConvert(e))
-                                        .ToList()
-                                        ?? new List<T>();
+                                   .Children()
+                                   .Select(e => readConvert(e))
+                                   .ToList()
+                                ?? new List<T>();
 
                 var success = commitOperation(selectedData);
 
@@ -418,7 +422,7 @@ namespace JsonFlatFileDataStore
 
         private JObject GetJsonObjectFromFile() => JObject.Parse(GetJsonTextFromFile());
 
-        
+
         internal class CommitAction
         {
             public Action<bool, Exception> Ready { get; set; }

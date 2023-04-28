@@ -6,7 +6,8 @@ namespace JsonFlatFileDataStore.Benchmark
     {
         private static void Main(string[] args)
         {
-            var switcher = new BenchmarkSwitcher(new[] {
+            var switcher = new BenchmarkSwitcher(new[]
+            {
                 typeof(TypedCollectionBenchmark),
                 typeof(DynamicCollectionBenchmark),
                 typeof(ObjectExtensionsBenchmark)

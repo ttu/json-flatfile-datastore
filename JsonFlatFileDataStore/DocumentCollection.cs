@@ -1,10 +1,10 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace JsonFlatFileDataStore
 {
@@ -17,7 +17,8 @@ namespace JsonFlatFileDataStore
         private readonly Func<T, T> _insertConvert;
         private readonly Func<T> _createNewInstance;
 
-        public DocumentCollection(Func<string, Func<List<T>, bool>, bool, Task<bool>> commit, Lazy<List<T>> data, string path, string idField, Func<T, T> insertConvert, Func<T> createNewInstance)
+        public DocumentCollection(Func<string, Func<List<T>, bool>, bool, Task<bool>> commit, Lazy<List<T>> data, string path, string idField,
+            Func<T, T> insertConvert, Func<T> createNewInstance)
         {
             _path = path;
             _idField = idField;

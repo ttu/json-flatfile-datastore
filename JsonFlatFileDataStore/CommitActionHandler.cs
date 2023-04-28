@@ -10,8 +10,8 @@ namespace JsonFlatFileDataStore
     {
         private const int CommitBatchMaxSize = 50;
 
-        internal static void HandleStoreCommitActions(CancellationToken token, BlockingCollection<DataStore.CommitAction> updates, Action<bool> setExecutingState,
-            Func<string, bool> updateState, Func<string> getLatestJson)
+        internal static void HandleStoreCommitActions(CancellationToken token, BlockingCollection<DataStore.CommitAction> updates,
+            Action<bool> setExecutingState, Func<string, bool> updateState, Func<string> getLatestJson)
         {
             var batch = new Queue<DataStore.CommitAction>();
             var callbacks = new Queue<(DataStore.CommitAction action, bool success)>();

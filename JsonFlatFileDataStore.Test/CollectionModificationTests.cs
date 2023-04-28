@@ -1,10 +1,10 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace JsonFlatFileDataStore.Test
@@ -225,8 +225,8 @@ namespace JsonFlatFileDataStore.Test
                 Type = "filled",
                 Fragments = new List<string>
                 {
-                     Guid.NewGuid().ToString(),
-                     Guid.NewGuid().ToString()
+                    Guid.NewGuid().ToString(),
+                    Guid.NewGuid().ToString()
                 }
             };
 
@@ -276,8 +276,8 @@ namespace JsonFlatFileDataStore.Test
                 Type = "filled",
                 Fragments = new List<int>
                 {
-                     2,
-                     3
+                    2,
+                    3
                 }
             };
 
@@ -360,7 +360,8 @@ namespace JsonFlatFileDataStore.Test
             var collection = store.GetCollection("user");
             Assert.Equal(3, collection.Count);
 
-            var newUsers = new[] {
+            var newUsers = new[]
+            {
                 new { id = 20, name = "A1", age = 55 },
                 new { id = 21, name = "A2", age = 55 },
                 new { id = 22, name = "A3", age = 55 }
@@ -500,7 +501,7 @@ namespace JsonFlatFileDataStore.Test
             var collection3 = store3.GetCollection<User>("user");
             var updated = collection3.Find(e => e.Id == newUser.Id).First();
             Assert.Equal("Theodor", updated.Name);
-            
+
             collection3.ReplaceOne(newUser.Id, new User { Id = newUser.Id, Name = "Theodor_2" });
 
             var store4 = new DataStore(newFilePath);
@@ -576,18 +577,20 @@ namespace JsonFlatFileDataStore.Test
 
             var collection = store.GetCollection("sensor");
 
-            var success = collection.ReplaceOne(e => e.id == 11, JToken.Parse("{ 'id': 11, 'mac': 'F4:A5:74:89:16:57', 'data': { 'temperature': 20.5 } }"), true);
+            var success = collection.ReplaceOne(e => e.id == 11,
+                JToken.Parse("{ 'id': 11, 'mac': 'F4:A5:74:89:16:57', 'data': { 'temperature': 20.5 } }"),
+                true);
             Assert.True(success);
 
             UTHelpers.Down(newFilePath);
         }
-        
+
         [Fact]
         public async Task ReplaceOne_Upsert_Custom_Id_Dynamic()
         {
             var newFilePath = UTHelpers.Up();
 
-            var store = new DataStore(newFilePath, keyProperty:"CustomId");
+            var store = new DataStore(newFilePath, keyProperty: "CustomId");
 
             var collection = store.GetCollection("questions");
 
@@ -596,23 +599,23 @@ namespace JsonFlatFileDataStore.Test
                 CustomId = "54ccb8f2-5f2c-4cfa-b525-f0871eca787c",
                 Name = "First_Tester"
             };
-            
+
             var itemTwo = new
             {
                 CustomId = "ee314079-7d18-405b-9bb7-9248c672b3f5",
                 Name = "Second_Tester"
             };
-            
+
             var success = await collection.ReplaceOneAsync(item.CustomId, item, true);
             Assert.True(success);
-            
+
             success = await collection.ReplaceOneAsync(itemTwo.CustomId, itemTwo, true);
             Assert.True(success);
-            
+
             var fromDb = collection.AsQueryable().SingleOrDefault(e => e.CustomId == itemTwo.CustomId);
             Assert.NotNull(fromDb);
             Assert.Equal("Second_Tester", fromDb.Name);
-            
+
             UTHelpers.Down(newFilePath);
         }
 
@@ -864,8 +867,8 @@ namespace JsonFlatFileDataStore.Test
             var collection = store.GetCollection<Family>();
 
             var family = collection
-                             .Find(p => p.Id == 4)
-                             .First();
+                         .Find(p => p.Id == 4)
+                         .First();
 
             Assert.Null(family.Children[1].Friends);
 
@@ -881,8 +884,8 @@ namespace JsonFlatFileDataStore.Test
             var collection2 = store2.GetCollection<Family>();
 
             var family_updated = collection2
-                            .Find(p => p.Id == 4)
-                            .First();
+                                 .Find(p => p.Id == 4)
+                                 .First();
 
             Assert.Equal(originalCount, family_updated.Children[1].Friends.Count);
             Assert.Null(family_updated.Children[0].Friends);
@@ -900,8 +903,8 @@ namespace JsonFlatFileDataStore.Test
             var collection = store.GetCollection("family");
 
             var family = collection
-                             .Find(p => p.id == 4)
-                             .First();
+                         .Find(p => p.id == 4)
+                         .First();
 
             Assert.Null(family.children[1].friends);
 
@@ -917,15 +920,15 @@ namespace JsonFlatFileDataStore.Test
             var collection2 = store2.GetCollection<Family>();
 
             var family_updated = collection2
-                            .Find(p => p.Id == 4)
-                            .First();
+                                 .Find(p => p.Id == 4)
+                                 .First();
 
             Assert.Equal(origCount, family_updated.Children[1].Friends.Count);
             Assert.Null(family_updated.Children[0].Friends);
 
             UTHelpers.Down(newFilePath);
         }
-        
+
         [Fact]
         public async Task UpdateInnerFloatArray_DynamicWorld()
         {
@@ -936,19 +939,19 @@ namespace JsonFlatFileDataStore.Test
             var collection = store.GetCollection("worlds");
             Assert.Equal(1, collection.Count);
 
-            var original = collection.Find(e=> e.id == 0).First();
+            var original = collection.Find(e => e.id == 0).First();
             Assert.Equal(3.6640577, original.position[0]);
 
             await collection.UpdateOneAsync(e => e.id == 0, new { cameraRotationX = 5.2 });
-            
+
             var collection2 = store.GetCollection("worlds");
-            var updated = collection2.Find(e=> e.id == 0).First();
+            var updated = collection2.Find(e => e.id == 0).First();
             Assert.Equal(5.2, updated.cameraRotationX);
-              
-            await collection.UpdateOneAsync(e => e.id == 0, new { position = new float[] { 10, 11, 12 } } );
-            
+
+            await collection.UpdateOneAsync(e => e.id == 0, new { position = new float[] { 10, 11, 12 } });
+
             var collection3 = store.GetCollection("worlds");
-            var updated2 = collection3.Find(e=> e.id == 0).First();
+            var updated2 = collection3.Find(e => e.id == 0).First();
             Assert.Equal(10, updated2.position[0]);
             Assert.Equal(11, updated2.position[1]);
             Assert.Equal(12, updated2.position[2]);
@@ -969,13 +972,13 @@ namespace JsonFlatFileDataStore.Test
             var original = collection.Find(e => e.Id == 0).First();
             Assert.InRange(original.Position[0], 3.66, 3.67);
 
-            await collection.UpdateOneAsync(e => e.Id == 0, new {CameraRotationX = 5.2f});
+            await collection.UpdateOneAsync(e => e.Id == 0, new { CameraRotationX = 5.2f });
 
             var collection2 = store.GetCollection<World>("worlds");
             var updated = collection2.Find(e => e.Id == 0).First();
             Assert.InRange(updated.CameraRotationX, 5.19, 5.2);
 
-            await collection.UpdateOneAsync(e => e.Id == 0, new {Position = new float[] {10, 11, 12}});
+            await collection.UpdateOneAsync(e => e.Id == 0, new { Position = new float[] { 10, 11, 12 } });
 
             var collection3 = store.GetCollection<World>("worlds");
             var updated2 = collection3.Find(e => e.Id == 0).First();
