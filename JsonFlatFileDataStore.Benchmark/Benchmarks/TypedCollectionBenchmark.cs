@@ -1,8 +1,8 @@
-﻿using BenchmarkDotNet.Attributes;
+﻿using System.Linq;
+using System.Threading.Tasks;
+using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Engines;
 using JsonFlatFileDataStore.Test;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace JsonFlatFileDataStore.Benchmark
 {

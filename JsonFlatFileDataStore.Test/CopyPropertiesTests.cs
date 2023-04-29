@@ -1,8 +1,8 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Dynamic;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace JsonFlatFileDataStore.Test
@@ -75,8 +75,8 @@ namespace JsonFlatFileDataStore.Test
             {
                 Parents = new List<Parent>
                 {
-                    new Parent {  Name = "Jim", Age = 52 },
-                    new Parent {  Name = "Theodor", Age = 14 }
+                    new Parent { Name = "Jim", Age = 52 },
+                    new Parent { Name = "Theodor", Age = 14 }
                 },
                 Address = new Address { City = "Helsinki" }
             };
@@ -230,7 +230,7 @@ namespace JsonFlatFileDataStore.Test
             {
                 Parents = new List<Parent>
                 {
-                    new Parent {  Name = "Jim", Age = 52 }
+                    new Parent { Name = "Jim", Age = 52 }
                 },
                 Address = new Address { City = "Helsinki" }
             };
@@ -294,7 +294,8 @@ namespace JsonFlatFileDataStore.Test
             dynamic sensor = new ExpandoObject();
             sensor.mac = "F4:A5:74:89:16:57";
             sensor.timestamp = null;
-            sensor.data = new Dictionary<string, object> {
+            sensor.data = new Dictionary<string, object>
+            {
                 { "temperature", 24.3 },
                 { "identifier", null }
             };

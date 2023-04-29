@@ -46,6 +46,7 @@ namespace JsonFlatFileDataStore
             DeriveKeyAndIv(passphrase, salt);
 
             byte[] encrypted;
+
             using (RijndaelManaged aes = new RijndaelManaged())
             {
                 aes.BlockSize = BlockSize * 8;
@@ -83,6 +84,7 @@ namespace JsonFlatFileDataStore
         public byte[] DecryptToBytes(string encrypted, string passphrase)
         {
             byte[] ct = Convert.FromBase64String(encrypted);
+
             if (ct == null || ct.Length <= 0)
             {
                 return Array.Empty<byte>();
@@ -105,6 +107,7 @@ namespace JsonFlatFileDataStore
             DeriveKeyAndIv(passphrase, salt);
 
             byte[] decrypted;
+
             using (var aes = new RijndaelManaged())
             {
                 aes.BlockSize = BlockSize * 8;
@@ -158,10 +161,12 @@ namespace JsonFlatFileDataStore
         private static byte[] Concat(byte[] a, byte[] b)
         {
             byte[] output = new byte[a.Length + b.Length];
+
             for (int i = 0; i < a.Length; i++)
             {
                 output[i] = a[i];
             }
+
             for (int j = 0; j < b.Length; j++)
             {
                 output[a.Length + j] = b[j];

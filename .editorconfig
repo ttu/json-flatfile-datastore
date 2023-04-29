@@ -1,0 +1,38 @@
+
+[*]
+
+# Microsoft .NET properties
+csharp_new_line_before_members_in_object_initializers = false
+csharp_style_namespace_declarations = block_scoped:suggestion
+dotnet_sort_system_directives_first = true
+
+# ReSharper properties
+resharper_align_multiline_calls_chain = true
+resharper_blank_lines_after_block_statements = 0
+resharper_blank_lines_after_control_transfer_statements = 1
+resharper_blank_lines_after_using_list = 0
+resharper_blank_lines_before_case = 1
+resharper_braces_for_for = required
+resharper_braces_for_foreach = required
+resharper_braces_for_ifelse = not_required
+resharper_braces_for_while = required
+resharper_braces_redundant = false
+resharper_csharp_blank_lines_around_single_line_invocable = 1
+resharper_csharp_empty_block_style = together
+resharper_csharp_max_line_length = 160
+resharper_csharp_wrap_arguments_style = chop_if_long
+resharper_default_value_when_type_evident = default_expression
+resharper_default_value_when_type_not_evident = default_expression
+resharper_instance_members_qualify_declared_in = base_class
+resharper_local_function_body = expression_body
+resharper_max_initializer_elements_on_line = 2
+resharper_method_or_operator_body = expression_body
+resharper_object_creation_when_type_evident = explicitly_typed
+resharper_outdent_binary_ops = true
+resharper_parentheses_redundancy_style = remove
+resharper_place_expr_method_on_single_line = true
+resharper_place_expr_property_on_single_line = true
+resharper_place_simple_embedded_statement_on_same_line = false
+resharper_place_simple_initializer_on_single_line = false
+resharper_wrap_array_initializer_style = chop_if_long
+resharper_wrap_object_and_collection_initializer_style = wrap_if_long

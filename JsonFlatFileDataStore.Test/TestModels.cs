@@ -156,11 +156,11 @@ namespace JsonFlatFileDataStore.Test
     public class World
     {
         public int Id { get; set; }
-        
+
         public float[] Position { get; set; }
-        
+
         public float CameraRotationX { get; set; }
-        
+
         public float CameraRotationY { get; set; }
     }
 }

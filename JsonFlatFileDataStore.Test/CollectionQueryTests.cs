@@ -1,5 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
-using System.Linq;
+﻿using System.Linq;
+using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace JsonFlatFileDataStore.Test
@@ -14,16 +14,16 @@ namespace JsonFlatFileDataStore.Test
             var store = new DataStore(newFilePath);
 
             var itemDynamic = store.GetCollection("user")
-                                .AsQueryable()
-                                .Single(p => p.name == "Phil");
+                                   .AsQueryable()
+                                   .Single(p => p.name == "Phil");
 
             var itemTyped1 = store.GetCollection<User>()
-                                .AsQueryable()
-                                .Single(p => p.Name == "Phil");
+                                  .AsQueryable()
+                                  .Single(p => p.Name == "Phil");
 
             var itemTyped2 = store.GetCollection<User>()
-                                .Find(p => p.Name == "Phil")
-                                .First();
+                                  .Find(p => p.Name == "Phil")
+                                  .First();
 
             Assert.Equal("Phil", itemDynamic.name);
             Assert.Equal("Phil", itemTyped1.Name);
@@ -41,9 +41,9 @@ namespace JsonFlatFileDataStore.Test
 
             var collection = store.GetCollection("user");
             var lastItem = collection
-                            .AsQueryable()
-                            .OrderBy(e => e.id)
-                            .Last();
+                           .AsQueryable()
+                           .OrderBy(e => e.id)
+                           .Last();
 
             Assert.Equal(3, lastItem.id);
 
@@ -175,12 +175,12 @@ namespace JsonFlatFileDataStore.Test
             var store = new DataStore(newFilePath);
 
             var itemDynamic = store.GetCollection("family")
-                                .AsQueryable()
-                                .Single(p => p.id == 12);
+                                   .AsQueryable()
+                                   .Single(p => p.id == 12);
 
             var itemTyped = store.GetCollection<Family>()
-                              .Find(p => p.Id == 12)
-                              .First();
+                                 .Find(p => p.Id == 12)
+                                 .First();
 
             Assert.Equal("Naomi", itemDynamic.parents[0].name);
             Assert.Equal("Naomi", itemTyped.Parents[0].Name);

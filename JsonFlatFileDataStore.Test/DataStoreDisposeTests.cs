@@ -68,9 +68,9 @@ namespace JsonFlatFileDataStore.Test
             var collection = store.GetCollection("random");
 
             var tasks = Enumerable.Range(0, count)
-             .AsParallel()
-             .Select(i => collection.InsertOneAsync(new User { Id = i, Name = $"Teddy_{i}" }))
-             .ToList();
+                                  .AsParallel()
+                                  .Select(i => collection.InsertOneAsync(new User { Id = i, Name = $"Teddy_{i}" }))
+                                  .ToList();
 
             if (dispose)
                 store.Dispose();

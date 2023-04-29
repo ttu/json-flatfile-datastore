@@ -1,11 +1,11 @@
-﻿using Newtonsoft.Json.Linq;
-using NSubstitute;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
+using NSubstitute;
 using Xunit;
 
 namespace JsonFlatFileDataStore.Test
@@ -194,8 +194,8 @@ namespace JsonFlatFileDataStore.Test
             var dynamicCollection = store.GetCollection("user");
 
             var userDynamic = dynamicCollection
-                                .AsQueryable()
-                                .Single(p => p.name == "Phil");
+                              .AsQueryable()
+                              .Single(p => p.name == "Phil");
 
             await dynamicCollection.InsertOneAsync(new { id = 14, name = "Raymond", age = 32 });
             await dynamicCollection.ReplaceOneAsync(e => e.id == 14, new { id = 14, name = "Barry", age = 32 });
@@ -204,8 +204,8 @@ namespace JsonFlatFileDataStore.Test
             var typedCollection = store.GetCollection<User>();
 
             var userTyped = typedCollection
-                                .AsQueryable()
-                                .Single(p => p.Name == "Phil");
+                            .AsQueryable()
+                            .Single(p => p.Name == "Phil");
 
             typedCollection.InsertOne(new User { Id = 15, Name = "Jim", Age = 52 });
             typedCollection.ReplaceOne(e => e.Id == 15, new User { Id = 15, Name = "Barry", Age = 52 });
@@ -464,14 +464,14 @@ namespace JsonFlatFileDataStore.Test
             var storeFileNotFound = new DataStore(path);
             var collectionKeys = storeFileNotFound.GetKeys();
             Assert.Equal(0, collectionKeys.Count);
-            
+
             var storeFileFound = new DataStore(path);
             var collectionKeysFileFound = storeFileNotFound.GetKeys();
             Assert.Equal(0, collectionKeysFileFound.Count);
 
             UTHelpers.Down(path);
         }
-        
+
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -481,10 +481,10 @@ namespace JsonFlatFileDataStore.Test
 
             var store = new DataStore(path, useLowerCamelCase: useLowerCamelCase);
             var collection = store.GetCollection<Movie>("movie");
-            await collection.InsertOneAsync(new Movie{Name = "Test", Rating = 5});
+            await collection.InsertOneAsync(new Movie { Name = "Test", Rating = 5 });
 
             var content = UTHelpers.GetFileContent(path);
-            
+
 
             // NOTE: File format is different depending on used OS. Windows uses \r\n and Linux \r
             //   - "{\r\n  \"movie\": [\r\n    {\r\n      \"name\": \"Test\",\r\n      \"rating\": 5.0\r\n    }\r\n  ]\r\n}",
@@ -493,7 +493,7 @@ namespace JsonFlatFileDataStore.Test
             var allowedLengths = new[] { 81, 74 };
 
             Assert.Contains(allowedLengths, i => i == content.Length);
-            
+
 
             UTHelpers.Down(path);
         }
@@ -545,7 +545,7 @@ namespace JsonFlatFileDataStore.Test
         {
             var path = UTHelpers.GetFullFilePath($"CreateNewFile_Encrypted_{DateTime.UtcNow.Ticks}");
 
-            var storeFileNotFound = new DataStore(path, encryptionKey:"53cr3t");
+            var storeFileNotFound = new DataStore(path, encryptionKey: "53cr3t");
             var collectionKeys = storeFileNotFound.GetKeys();
             Assert.Equal(0, collectionKeys.Count);
 

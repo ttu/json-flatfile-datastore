@@ -17,7 +17,7 @@ namespace JsonFlatFileDataStore.Test
         });
 
         public static string GetFullFilePath(string name) => Path.Combine(_dir, $"{name}.json");
-        
+
         public static string GetFileContent(string fullPath) => File.ReadAllText(fullPath);
 
         public static string Up([CallerMemberName] string name = "", string encryptionKey = null)
@@ -27,7 +27,7 @@ namespace JsonFlatFileDataStore.Test
             File.WriteAllText(newFilePath, dbContent);
             return newFilePath;
         }
-        
+
         public static void Down(string fullPath)
         {
             File.Delete(fullPath);
