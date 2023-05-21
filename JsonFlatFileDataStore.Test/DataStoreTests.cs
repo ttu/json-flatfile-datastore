@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using NSubstitute;
@@ -554,6 +555,75 @@ namespace JsonFlatFileDataStore.Test
             Assert.Equal(0, collectionKeysFileFound.Count);
 
             UTHelpers.Down(path);
+        }
+
+        [Fact]
+        public void File_Has_Correct_PropertyNames_DynamicCollection()
+        {
+            var path = UTHelpers.GetFullFilePath($"CreateNewFile_{DateTime.UtcNow.Ticks}");
+
+            var store = new DataStore(path);
+
+            var collection = store.GetCollection("User");
+            collection.InsertOne(new { id = 1, name = "Test" });
+            var collection2 = store.GetCollection("User");
+            collection2.InsertOne(new { id = 2, name = "Test2" });
+
+            var content = UTHelpers.GetFileContent(path);
+            /* Currently:
+            {
+              "user": [],
+              "user": []
+            }
+             */
+            var propCount = Regex.Matches(content, "user").Count;
+            Assert.Equal(2, propCount);
+        }
+
+        [Fact]
+        public void File_Has_Correct_PropertyNames_TypedCollection()
+        {
+            var path = UTHelpers.GetFullFilePath($"CreateNewFile_{DateTime.UtcNow.Ticks}");
+
+            var store = new DataStore(path);
+
+            var collection = store.GetCollection<Employee>();
+            collection.InsertOne(new Employee { Id = 1, Name = "first" });
+            var collection2 = store.GetCollection("Employee");
+            collection2.InsertOne(new Employee { Id = 2, Name = "second" });
+
+            var content = UTHelpers.GetFileContent(path);
+            /* Currently:
+            {
+              "employee": [],
+              "employee": []
+            }
+             */
+            var propCount = Regex.Matches(content, "employee").Count;
+            Assert.Equal(1, propCount);
+        }
+
+        [Fact]
+        public void File_Has_Correct_PropertyNames_Single_Item()
+        {
+            var path = UTHelpers.GetFullFilePath($"CreateNewFile_{DateTime.UtcNow.Ticks}");
+
+            var store = new DataStore(path);
+
+            store.ReplaceItem("TestOkIsThis1", 1, true);
+            store.ReplaceItem("TestOkIsThis2", 2, true);
+            store.ReplaceItem("TestOkIsThis2", 3, true);
+
+            var content = UTHelpers.GetFileContent(path);
+            /* Currently:
+            {
+              "testOkIsThis1": 1,
+              "testOkIsThis2": 2,
+              "testOkIsThis2": 3,
+            }
+            */
+            var propCount = Regex.Matches(content, "testOkIsThis2").Count;
+            Assert.Equal(2, propCount);
         }
 
         public class Employee
