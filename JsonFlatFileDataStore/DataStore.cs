@@ -251,7 +251,7 @@ namespace JsonFlatFileDataStore
             var insertConvert = new Func<T, T>(e => e);
             var createNewInstance = new Func<T>(() => Activator.CreateInstance<T>());
 
-            return GetCollection(name ?? _convertPathToCorrectCamelCase(typeof(T).Name), readConvert, insertConvert, createNewInstance);
+            return GetCollection(name ?? typeof(T).Name, readConvert, insertConvert, createNewInstance);
         }
 
         public IDocumentCollection<dynamic> GetCollection(string name)
