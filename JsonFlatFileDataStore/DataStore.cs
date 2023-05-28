@@ -251,7 +251,7 @@ namespace JsonFlatFileDataStore
             var insertConvert = new Func<T, T>(e => e);
             var createNewInstance = new Func<T>(() => Activator.CreateInstance<T>());
 
-            return GetCollection(name ?? _convertPathToCorrectCamelCase(typeof(T).Name), readConvert, insertConvert, createNewInstance);
+            return GetCollection(name ?? typeof(T).Name, readConvert, insertConvert, createNewInstance);
         }
 
         public IDocumentCollection<dynamic> GetCollection(string name)
@@ -300,6 +300,8 @@ namespace JsonFlatFileDataStore
 
         private IDocumentCollection<T> GetCollection<T>(string path, Func<JToken, T> readConvert, Func<T, T> insertConvert, Func<T> createNewInstance)
         {
+            var pathWithConfiguredCase = _convertPathToCorrectCamelCase(path);
+            
             var data = new Lazy<List<T>>(() =>
             {
                 lock (_jsonData)
@@ -310,7 +312,7 @@ namespace JsonFlatFileDataStore
                         _jsonData = GetJsonObjectFromFile();
                     }
 
-                    return _jsonData[path]?
+                    return _jsonData[pathWithConfiguredCase]?
                            .Children()
                            .Select(e => readConvert(e))
                            .ToList()
@@ -321,7 +323,7 @@ namespace JsonFlatFileDataStore
             return new DocumentCollection<T>(
                 (sender, dataToUpdate, isOperationAsync) => Commit(sender, dataToUpdate, isOperationAsync, readConvert),
                 data,
-                path,
+                pathWithConfiguredCase,
                 _keyProperty,
                 insertConvert,
                 createNewInstance);

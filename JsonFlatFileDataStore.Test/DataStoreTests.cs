@@ -98,7 +98,7 @@ namespace JsonFlatFileDataStore.Test
             var store2 = new DataStore(newFilePath);
 
             var collectionUppercase = store2.GetCollection<PrivateOwner>("PrivateOwner");
-            Assert.Equal(0, collectionUppercase.Count);
+            Assert.Equal(1, collectionUppercase.Count);
 
             var collectionLowercase = store2.GetCollection<PrivateOwner>("privateOwner");
             Assert.Equal(1, collectionLowercase.Count);
