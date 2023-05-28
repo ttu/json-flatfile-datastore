@@ -568,16 +568,15 @@ namespace JsonFlatFileDataStore.Test
             collection.InsertOne(new { id = 1, name = "Test" });
             var collection2 = store.GetCollection("User");
             collection2.InsertOne(new { id = 2, name = "Test2" });
+            var collection3 = store.GetCollection("user");
+            collection3.InsertOne(new { id = 3, name = "Test3" });
 
             var content = UTHelpers.GetFileContent(path);
-            /* Currently:
-            {
-              "user": [],
-              "user": []
-            }
-             */
             var propCount = Regex.Matches(content, "user").Count;
-            Assert.Equal(2, propCount);
+            Assert.Equal(1, propCount);
+            
+            var assertCollection = store.GetCollection("user");
+            Assert.Equal(3, assertCollection.Count);
         }
 
         [Fact]
@@ -591,16 +590,15 @@ namespace JsonFlatFileDataStore.Test
             collection.InsertOne(new Employee { Id = 1, Name = "first" });
             var collection2 = store.GetCollection("Employee");
             collection2.InsertOne(new Employee { Id = 2, Name = "second" });
-
+            var collection3 = store.GetCollection("employee");
+            collection3.InsertOne(new Employee { Id = 3, Name = "third" });
+            
             var content = UTHelpers.GetFileContent(path);
-            /* Currently:
-            {
-              "employee": [],
-              "employee": []
-            }
-             */
             var propCount = Regex.Matches(content, "employee").Count;
             Assert.Equal(1, propCount);
+            
+            var assertCollection = store.GetCollection<Employee>();
+            Assert.Equal(3, assertCollection.Count);
         }
 
         [Fact]
@@ -615,15 +613,8 @@ namespace JsonFlatFileDataStore.Test
             store.ReplaceItem("TestOkIsThis2", 3, true);
 
             var content = UTHelpers.GetFileContent(path);
-            /* Currently:
-            {
-              "testOkIsThis1": 1,
-              "testOkIsThis2": 2,
-              "testOkIsThis2": 3,
-            }
-            */
             var propCount = Regex.Matches(content, "testOkIsThis2").Count;
-            Assert.Equal(2, propCount);
+            Assert.Equal(1, propCount);
         }
 
         public class Employee
