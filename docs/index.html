@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -12,15 +12,7 @@
     <div id="app"></div>
     <script>
       window.$docsify = {
-        name: '<a id="home-link" class="app-name-link" data-nosearch href="/">JSON Flat File Data Store</a>' +
-        '<select id="version-selector" name="version">' +
-          '<option value="development">Development</value>' +
-          '<option value="2.4.3">2.4.3</value>' +
-          '<option value="2.4.2">2.4.2</value>' +
-          '<option value="2.4.1">2.4.1</value>' +
-          '<option value="2.4.0">2.4.0</value>' +
-          '<option value="2.3.0">2.3.0</value>' +
-        "</select>",
+        name: '<a id="home-link" class="app-name-link" data-nosearch href="/">JSON Flat File Data Store</a>' + '<select id="version-selector" name="version">' + '<option value="development">Development</value>' + '<option value="2.4.3">2.4.3</value>' + '<option value="2.4.2">2.4.2</value>' + '<option value="2.4.1">2.4.1</value>' + '<option value="2.4.0">2.4.0</value>' + '<option value="2.3.0">2.3.0</value>' + "</select>",
         nameLink: false,
         repo: "https://github.com/ttu/json-flatfile-datastore",
         alias: {
@@ -48,5 +40,16 @@
     <script src="https://unpkg.com/prismjs/components/prism-csharp.min.js"></script>
     <script src="https://unpkg.com/prismjs/components/prism-json.min.js"></script>
     <script src="https://unpkg.com/prismjs/components/prism-bash.min.js"></script>
+    <!-- GA -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-N86WXKPG4G"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "G-N86WXKPG4G");
+    </script>
   </body>
 </html>
