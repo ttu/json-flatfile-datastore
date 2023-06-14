@@ -23,6 +23,12 @@ Simple data store that saves the data in JSON format to a single file.
 * .NET implementation & version support: [.NET Standard 2.0](https://docs.microsoft.com/en-us/dotnet/standard/net-standard?tabs=net-standard-2-0#select-net-standard-version)
   * e.g. .NET 6, .NET Core 2.0, .NET Framework 4.6.1
 
+**Docs website**
+
+[https://ttu.github.io/json-flatfile-datastore/](https://ttu.github.io/json-flatfile-datastore/)
+
+---
+
 ## Installation
 
 You can install the latest version via [NuGet](https://www.nuget.org/packages/JsonFlatFileDataStore/).
