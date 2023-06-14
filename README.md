@@ -35,13 +35,9 @@ $ dotnet add package JsonFlatFileDataStore
 PM> Install-Package JsonFlatFileDataStore
 ```
 
-## Example project
-
-[Fake JSON Server](https://github.com/ttu/dotnet-fake-json-server) is an ASP.NET Core Web App which uses JSON Flat File Data Store with dynamic data.
-
 ## Example
 
-#### Typed data
+### Typed data
 
 ```csharp
 public class Employee
@@ -80,7 +76,7 @@ await store.InsertItemAsync("counter", 1);
 var counter = await store.GetItem<int>("counter");
 ```
 
-#### Dynamically typed data
+### Dynamically typed data
 
 Dynamic data can be `Anonymous type`, `ExpandoObject`, JSON objects (`JToken`, `JObject`, `JArray`) or `Dictionary<string, object>`. Internally dynamic data is serialized to `ExpandoObject`.
 
@@ -128,11 +124,15 @@ await collection.UpdateOneAsync(e => e.id == 3, updateDict);
 var results = collection.AsQueryable().Where(x => x.age > 30);
 ```
 
+### Example project
+
+[Fake JSON Server](https://github.com/ttu/dotnet-fake-json-server) is an ASP.NET Core Web App which uses JSON Flat File Data Store with dynamic data.
+
 ## Functionality
 
 ### Collections
 
-Example user collection in JSON:
+Example user collection in JSON
 
 ```json
 {
@@ -406,7 +406,7 @@ await collection.DeleteManyAsync(e => e.city == "NY");
 await collection.DeleteManyAsync(e => e.City == "NY");
 ```
 
-#### Id-field value
+#### Get next Id-field value
 
 
 If incrementing Id-field values is used, `GetNextIdValue` returns next Id-field value. If Id-property is integer, last item's value is incremented by one. If field is not an integer, it is converted to a string and number is parsed from the end of the string and incremented by one.
@@ -521,7 +521,7 @@ var result = store.DeleteItem("counter");
 var result = await store.DeleteItemAsync("counter");
 ```
 
-## Encrypt JSON file content
+## Encrypt JSON-file content
 
 It is possible to encrypt the written JSON-data. When `encryptionKey`-parameter is passed to constructor, data will be encypted with `Aes256`.
 
@@ -530,7 +530,7 @@ var secretKey = "Key used for encryption";
 var store = new DataStore(newFilePath, encryptionKey: secretKey);
 ```
 
-## DataStore and Collection lifecycle
+## Data Store and collection lifecycle
 
 When the data store is created, it reads the JSON file to the memory. Data store starts a new background thread that handles the file access.
 
@@ -583,7 +583,7 @@ var collection1_2 = store.GetCollection("hello");
 
 If JSON Flat File Data Store is used with e.g. `ASP.NET`, add the `DataStore` to the DI container as a singleton. This way DataStore's internal state is correct and application does not have to rely on the state on the file as read operation is pretty slow. Reload can be triggered if needed.
 
-#### Dispose
+## Disposing Data Store
 
 Data store should be disposed after it is not needed anymore. Dispose will wait that all writes to the file are completed and after that it will stop the background thread. Then Garabge Collector can collect the data store that is not used anymore.
 
@@ -614,7 +614,7 @@ var collection = store.GetCollection<Movie>();
 var collection = store.GetCollection<Movie>("movies");
 ```
 
-## Writing to file
+## Writing data to a file
 
 By default JSON is written in lower camel case. This can be changed with `useLowerCamelCase` parameter in DataStore's constructor.
 
@@ -634,7 +634,7 @@ Additionaly the output of the file can be minfied. The default is an intended ou
 var store = new DataStore(newFilePath, minifyJson: true);
 ```
 
-## Dynamic and error CS1977
+## Dynamic types and error CS1977
 
 When __Dynamic type__ is used with lambdas, compiler will give you error __CS1977__:
 
@@ -655,7 +655,7 @@ collection2.ReplaceOne(e => e.id == 11, dynamicUser as object);
 collection2.ReplaceOne((Predicate<dynamic>)(e => e.id == 11), dynamicUser);
 ```
 
-## Unit Tests & Benchmarks
+## Unit tests & benchmarks
 
 `JsonFlatFileDataStore.Test` and `JsonFlatFileDataStore.Benchmark` are _.NET 6_ projects.
 
