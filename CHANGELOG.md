@@ -1,6 +1,7 @@
 # Changelog
 
 ### [Unreleased]
+* FIXED: Duplicate collection data to JSON on save when configured case was not used with collection name
 
 ### [2.4.1] - 2023-01-15
 * FIXED: Ignore OperationCanceledException during dispose
