@@ -132,8 +132,10 @@ namespace JsonFlatFileDataStore
                 // This might be a bad idea especially if the file is in use, as this can take a long time
                 _jsonData = GetJsonObjectFromFile();
             }
+            
+            var convertedKey = _convertPathToCorrectCamelCase(key);
 
-            var token = _jsonData[key];
+            var token = _jsonData[convertedKey];
 
             if (token == null)
             {
@@ -156,7 +158,9 @@ namespace JsonFlatFileDataStore
                 _jsonData = GetJsonObjectFromFile();
             }
 
-            var token = _jsonData[key];
+            var convertedKey = _convertPathToCorrectCamelCase(key);
+
+            var token = _jsonData[convertedKey];
 
             if (token == null)
                 return null;
@@ -170,12 +174,14 @@ namespace JsonFlatFileDataStore
 
         private Task<bool> Insert<T>(string key, T item, bool isAsync = false)
         {
+            var convertedKey = _convertPathToCorrectCamelCase(key);
+
             (bool, JObject) UpdateAction()
             {
-                if (_jsonData[key] != null)
+                if (_jsonData[convertedKey] != null)
                     return (false, _jsonData);
 
-                _jsonData[key] = JToken.FromObject(item);
+                _jsonData[convertedKey] = JToken.FromObject(item);
                 return (true, _jsonData);
             }
 
@@ -188,12 +194,14 @@ namespace JsonFlatFileDataStore
 
         private Task<bool> Replace<T>(string key, T item, bool upsert = false, bool isAsync = false)
         {
+            var convertedKey = _convertPathToCorrectCamelCase(key);
+            
             (bool, JObject) UpdateAction()
             {
-                if (_jsonData[key] == null && upsert == false)
+                if (_jsonData[convertedKey] == null && upsert == false)
                     return (false, _jsonData);
 
-                _jsonData[key] = JToken.FromObject(item);
+                _jsonData[convertedKey] = JToken.FromObject(item);
                 return (true, _jsonData);
             }
 
@@ -206,21 +214,23 @@ namespace JsonFlatFileDataStore
 
         private Task<bool> Update(string key, dynamic item, bool isAsync = false)
         {
+            var convertedKey = _convertPathToCorrectCamelCase(key);
+
             (bool, JObject) UpdateAction()
             {
-                if (_jsonData[key] == null)
+                if (_jsonData[convertedKey] == null)
                     return (false, _jsonData);
 
-                var toUpdate = SingleDynamicItemReadConverter(_jsonData[key]);
+                var toUpdate = SingleDynamicItemReadConverter(_jsonData[convertedKey]);
 
                 if (ObjectExtensions.IsReferenceType(item) && ObjectExtensions.IsReferenceType(toUpdate))
                 {
                     ObjectExtensions.CopyProperties(item, toUpdate);
-                    _jsonData[key] = JToken.FromObject(toUpdate);
+                    _jsonData[convertedKey] = JToken.FromObject(toUpdate);
                 }
                 else
                 {
-                    _jsonData[key] = JToken.FromObject(item);
+                    _jsonData[convertedKey] = JToken.FromObject(item);
                 }
 
                 return (true, _jsonData);
@@ -235,9 +245,11 @@ namespace JsonFlatFileDataStore
 
         private Task<bool> Delete(string key, bool isAsync = false)
         {
+            var convertedKey = _convertPathToCorrectCamelCase(key);
+
             (bool, JObject) UpdateAction()
             {
-                var result = _jsonData.Remove(key);
+                var result = _jsonData.Remove(convertedKey);
                 return (result, _jsonData);
             }
 

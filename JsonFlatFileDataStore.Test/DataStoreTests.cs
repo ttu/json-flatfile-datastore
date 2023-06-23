@@ -604,6 +604,22 @@ namespace JsonFlatFileDataStore.Test
             var assertCollection = store.GetCollection<Employee>();
             Assert.Equal(3, assertCollection.Count);
         }
+        
+        [Fact]
+        public void File_Has_Correct_PropertyNames_Single_Item()
+        {
+            var path = UTHelpers.GetFullFilePath($"CreateNewFile_{DateTime.UtcNow.Ticks}");
+
+            var store = new DataStore(path);
+
+            store.ReplaceItem("TestOkIsThis1", 1, true);
+            store.ReplaceItem("TestOkIsThis2", 2, true);
+            store.ReplaceItem("TestOkIsThis2", 3, true);
+
+            var content = UTHelpers.GetFileContent(path);
+            var propCount = Regex.Matches(content, "testOkIsThis2").Count;
+            Assert.Equal(1, propCount);
+        }
 
         public class Employee
         {
