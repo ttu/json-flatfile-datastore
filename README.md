@@ -608,12 +608,16 @@ using(var store = new DataStore())
 
 ## Collection naming
 
-Collection name must be always defined when dynamic collections are used. If collection name is not defined with a typed collection, class-name is converted to lower camel case. E.g. User is user, UserFamily is userfamily etc.
+Collection name must be always defined when dynamic collections are used. Collection name is converted to selected case.
+
+If collection name is not defined with a typed collection, class-name is converted to selected case. E.g. with lower camel case `User` is `user`, `UserFamily` is `userFamily` etc.
 
 ```csharp
 var store = new DataStore(newFilePath);
 // JSON { "movie": [] };
 var collection = store.GetCollection("movie");
+// JSON { "movie": [] };
+var collection = store.GetCollection("Movie");
 // JSON { "movie": [] };
 var collection = store.GetCollection<Movie>();
 // JSON { "movies": [] };
