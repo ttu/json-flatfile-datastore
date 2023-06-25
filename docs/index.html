@@ -15,6 +15,7 @@
       name: '<a id="home-link" class="app-name-link" data-nosearch href="/">JSON Flat File Data Store</a>' +
             '<select id="version-selector" name="version">' +
               '<option value="development">Development</value>' +
+              '<option value="2.4.2">2.4.2</value>' +
               '<option value="2.4.1">2.4.1</value>' +
               '<option value="2.4.0">2.4.0</value>' +
               '<option value="2.3.0">2.3.0</value>' +
@@ -23,6 +24,7 @@
       repo: 'https://github.com/ttu/json-flatfile-datastore',
       alias: {
         '/development/(.*)': 'https://raw.githubusercontent.com/ttu/json-flatfile-datastore/master/',
+        '/2.4.2/(.*)': 'https://raw.githubusercontent.com/ttu/json-flatfile-datastore/2.4.2/README.md',
         '/2.4.1/(.*)': 'https://raw.githubusercontent.com/ttu/json-flatfile-datastore/2.4.1/README.md',
         '/2.4.0/(.*)': 'https://raw.githubusercontent.com/ttu/json-flatfile-datastore/2.4.0/README.md',
         '/2.3.0/(.*)': 'https://raw.githubusercontent.com/ttu/json-flatfile-datastore/2.3.0/README.md',
@@ -30,8 +32,8 @@
       namespaces: [ 
         {
           id: "version",
-          values: ["development", "2.4.1", "2.4.0", "2.3.0"],
-          default: "development",
+          values: ["development", "2.4.2", "2.4.1", "2.4.0", "2.3.0"],
+          default: "2.4.2",
           optional: true,
           selector: "#version-selector",
         }
