@@ -3,21 +3,21 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Authors>Tomi Tuhkanen</Authors>
-    <AssemblyVersion>2.4.1.0</AssemblyVersion>
+    <AssemblyVersion>2.4.2.0</AssemblyVersion>
     <PackageProjectUrl>https://ttu.github.io/json-flatfile-datastore/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/ttu/json-flatfile-datastore</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <Version>2.4.1</Version>
+    <Version>2.4.2</Version>
     <Company />
     <Description>Simple JSON flat file data store</Description>
     <PackageTags>json flat file data store database linq</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <FileVersion>2.4.1.0</FileVersion>
+    <FileVersion>2.4.2.0</FileVersion>
     <Product>JsonFlatFileDataStore</Product>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <LangVersion>8</LangVersion>
-    <PackageVersion>2.4.1</PackageVersion>
+    <PackageVersion>2.4.2</PackageVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
