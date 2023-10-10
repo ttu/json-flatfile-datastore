@@ -4,9 +4,7 @@ using System.Collections.ObjectModel;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 
 namespace JsonFlatFileDataStore;
 
@@ -22,8 +20,15 @@ internal static class ObjectExtensions
         if (source == null || destination == null)
             throw new Exception("source or/and destination objects are null");
 
-        if (source is JToken || IsDictionary(source.GetType()))
-            source = JsonConvert.DeserializeObject<ExpandoObject>(JsonConvert.SerializeObject(source), new ExpandoObjectConverter());
+        if (source is JsonNode || IsDictionary(source.GetType()))
+        {
+            var options = new JsonSerializerOptions
+            {
+                Converters = { new SystemExpandoObjectConverter() },
+                PropertyNameCaseInsensitive = true
+            };
+            source = JsonSerializer.Deserialize<ExpandoObject>(JsonSerializer.Serialize(source), options);
+        }
 
         if (destination is ExpandoObject)
             HandleExpando(source, destination);
@@ -33,10 +38,13 @@ internal static class ObjectExtensions
 
     internal static void AddDataToField(object item, string fieldName, dynamic data)
     {
-        if (item is JToken)
+        if (item is JsonNode jsonNode)
         {
-            dynamic jTokenItem = item;
-            jTokenItem[fieldName] = data;
+            // JsonNode from System.Text.Json
+            if (jsonNode is JsonObject jsonObject)
+            {
+                jsonObject[fieldName] = JsonValue.Create(data);
+            }
         }
         else if (item is ExpandoObject)
         {
@@ -288,7 +296,23 @@ internal static class ObjectExtensions
             }
             else
             {
-                ((IDictionary<string, object>)destination)[srcProp.Name] = GetValue(source, srcProp);
+                // Find the property key with case-insensitive comparison
+                // Newtonsoft.Json: Had built-in case-insensitive property matching
+                // System.Text.Json: Requires custom implementation for backward compatibility
+                // This ensures updating "Age" correctly updates "age" in the destination
+                var destDict = (IDictionary<string, object>)destination;
+                var existingKey = destDict.Keys.FirstOrDefault(k => string.Equals(k, srcProp.Name, StringComparison.OrdinalIgnoreCase));
+
+                if (existingKey != null)
+                {
+                    // Update the existing property (preserving the original casing)
+                    destDict[existingKey] = GetValue(source, srcProp);
+                }
+                else
+                {
+                    // Add new property with the source property name
+                    destDict[srcProp.Name] = GetValue(source, srcProp);
+                }
             }
         }
     }
@@ -297,22 +321,30 @@ internal static class ObjectExtensions
     {
         var destExpandoDict = ((IDictionary<string, object>)destination);
 
-        if (!destExpandoDict.ContainsKey(srcProp.Name))
-            destExpandoDict.Add(srcProp.Name, CreateInstance(srcProp.PropertyType));
+        // Find existing key with case-insensitive comparison
+        // Newtonsoft.Json: Built-in case-insensitive matching
+        // System.Text.Json: Custom implementation for backward compatibility
+        var existingKey = destExpandoDict.Keys.FirstOrDefault(k => string.Equals(k, srcProp.Name, StringComparison.OrdinalIgnoreCase));
 
-        var targetArray = (IList)destExpandoDict[srcProp.Name];
+        if (existingKey == null)
+        {
+            existingKey = srcProp.Name;
+            destExpandoDict.Add(existingKey, CreateInstance(srcProp.PropertyType));
+        }
+
+        var targetArray = (IList)destExpandoDict[existingKey];
         var sourceArray = (IList)GetValue(source, srcProp);
 
         if (sourceArray == null)
         {
-            destExpandoDict[srcProp.Name] = null;
+            destExpandoDict[existingKey] = null;
             return;
         }
 
         if (targetArray == null)
         {
             targetArray = CreateInstance(srcProp.PropertyType);
-            destExpandoDict[srcProp.Name] = targetArray;
+            destExpandoDict[existingKey] = targetArray;
         }
 
         Type GetTypeFromTargetItem(IList target, int index)
@@ -361,21 +393,37 @@ internal static class ObjectExtensions
     {
         var destExpandoDict = ((IDictionary<string, object>)destination);
 
-        if (!destExpandoDict.ContainsKey(srcProp.Name))
-            destExpandoDict.Add(srcProp.Name, CreateInstance(srcProp.PropertyType));
+        // Find existing key with case-insensitive comparison
+        // Newtonsoft.Json: Built-in case-insensitive matching
+        // System.Text.Json: Custom implementation for backward compatibility
+        var existingKey = destExpandoDict.Keys.FirstOrDefault(k => string.Equals(k, srcProp.Name, StringComparison.OrdinalIgnoreCase));
+
+        if (existingKey == null)
+        {
+            existingKey = srcProp.Name;
+            destExpandoDict.Add(existingKey, CreateInstance(srcProp.PropertyType));
+        }
 
         var sourceValue = GetValue(source, srcProp);
-        HandleExpando(sourceValue, destExpandoDict[srcProp.Name]);
+        HandleExpando(sourceValue, destExpandoDict[existingKey]);
     }
 
     private static void HandleExpandoDictionary(object source, object destination, dynamic srcProp)
     {
         var destExpandoDict = ((IDictionary<string, object>)destination);
 
-        if (!destExpandoDict.ContainsKey(srcProp.Name))
-            destExpandoDict.Add(srcProp.Name, CreateInstance(srcProp.PropertyType));
+        // Find existing key with case-insensitive comparison
+        // Newtonsoft.Json: Built-in case-insensitive matching
+        // System.Text.Json: Custom implementation for backward compatibility
+        var existingKey = destExpandoDict.Keys.FirstOrDefault(k => string.Equals(k, srcProp.Name, StringComparison.OrdinalIgnoreCase));
 
-        var targetDict = (IDictionary)destExpandoDict[srcProp.Name];
+        if (existingKey == null)
+        {
+            existingKey = srcProp.Name;
+            destExpandoDict.Add(existingKey, CreateInstance(srcProp.PropertyType));
+        }
+
+        var targetDict = (IDictionary)destExpandoDict[existingKey];
         var sourceDict = (IDictionary)GetValue(source, srcProp);
 
         targetDict.Clear();
