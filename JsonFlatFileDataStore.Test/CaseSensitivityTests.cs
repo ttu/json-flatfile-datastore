@@ -1,6 +1,5 @@
 using System.IO;
-using System.Linq;
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 
 namespace JsonFlatFileDataStore.Test;
 
@@ -84,12 +83,11 @@ public class CaseSensitivityTests
 
         // The existing "User" collection must be updated in place, not shadowed by a second
         // camelCased "user" key. A JSON object with two keys differing only by case is corrupt.
-        var root = JObject.Parse(File.ReadAllText(path));
-        var userKeys = root.Properties()
-                           .Where(p => string.Equals(p.Name, "user", StringComparison.OrdinalIgnoreCase))
+        var root = JsonNode.Parse(File.ReadAllText(path)).AsObject();
+        var userKeys = root.Where(p => string.Equals(p.Key, "user", StringComparison.OrdinalIgnoreCase))
                            .ToList();
         Assert.Single(userKeys);
-        Assert.Equal(2, userKeys[0].Value.Count());
+        Assert.Equal(2, userKeys[0].Value.AsArray().Count);
 
         // Reopening finds both items through the collection API.
         var store2 = new DataStore(path, useLowerCamelCase: true);
