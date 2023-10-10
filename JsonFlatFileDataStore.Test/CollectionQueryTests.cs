@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using System.Text.Json.Nodes;
 
 namespace JsonFlatFileDataStore.Test;
 
@@ -132,22 +132,22 @@ public class CollectionQueryTests
         var collection = store.GetCollection("collectionWithStringId");
 
         // Insert seed value with upsert
-        collection.ReplaceOne(e => e, JToken.Parse("{ 'myId': 'test1' }"), true);
+        collection.ReplaceOne(e => e, JsonNode.Parse("{ \"myId\": \"test1\" }"), true);
 
         var nextId = collection.GetNextIdValue();
         Assert.Equal("test2", nextId);
 
-        var nextUpdate = JToken.Parse("{ 'myId': 'somethingWrong2' }");
+        var nextUpdate = JsonNode.Parse("{ \"myId\": \"somethingWrong2\" }");
         collection.InsertOne(nextUpdate);
-        Assert.Equal(nextId, nextUpdate["myId"]);
+        Assert.Equal(nextId, nextUpdate["myId"].ToString());
 
         nextId = collection.GetNextIdValue();
         Assert.Equal("test3", nextId);
 
-        nextUpdate = JToken.Parse("{ 'xxx': 111 }");
+        nextUpdate = JsonNode.Parse("{ \"xxx\": 111 }");
         collection.InsertOne(nextUpdate);
-        Assert.Equal(nextId, nextUpdate["myId"]);
-        Assert.Equal(111, nextUpdate["xxx"]);
+        Assert.Equal(nextId, nextUpdate["myId"].GetValue<string>());
+        Assert.Equal(111, nextUpdate["xxx"].GetValue<int>());
 
         nextId = collection.GetNextIdValue();
         Assert.Equal("test4", nextId);

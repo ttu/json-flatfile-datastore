@@ -23,10 +23,10 @@ public class FileContentTests
     }
 
     [Theory]
-    [InlineData(true, true, new[] { 40 })]
-    [InlineData(false, true, new[] { 40 })]
-    [InlineData(true, false, new[] { 81, 74 })]
-    [InlineData(false, false, new[] { 81, 74 })]
+    [InlineData(true, true, new[] { 40, 38 })]  // Minified, lowerCamelCase: Newtonsoft=40, System.Text.Json=38
+    [InlineData(false, true, new[] { 40, 38 })]  // Minified, UpperCamelCase: Newtonsoft=40, System.Text.Json=38
+    [InlineData(true, false, new[] { 81, 79, 74, 72 })]  // Formatted, lowerCamelCase: Newtonsoft=81(Win)/74(Unix), System.Text.Json=79(Win)/72(Unix)
+    [InlineData(false, false, new[] { 81, 79, 74, 72 })]  // Formatted, UpperCamelCase: Newtonsoft=81(Win)/74(Unix), System.Text.Json=79(Win)/72(Unix)
     public async Task AllFormats_CorrectLength(bool useLowerCamelCase, bool useMinifiedJson, int[] allowedLengths)
     {
         var path = UTHelpers.GetFullFilePath($"AllFormats_CorrectLength_{DateTime.UtcNow.Ticks}");
@@ -37,13 +37,19 @@ public class FileContentTests
 
         var content = UTHelpers.GetFileContent(path);
 
-        // NOTE: File format is different depending on used OS. Windows uses \r\n and Linux/macOS \r
-        //   - "{\r\n  \"movie\": [\r\n    {\r\n      \"name\": \"Test\",\r\n      \"rating\": 5.0\r\n    }\r\n  ]\r\n}",
-        //   - "{\r  \"movie\": [\r    {\r      \"name\": \"Test\",\r      \"rating\": 5.0\r    }\r  ]\r}"
-        // Length on Windows is 81 and on Linux/macOS 74
+        // NOTE: File format is different depending on used OS and serializer:
         //
-        // Minified length: 40
-        //  - "{\"movie\":\"name\":\"Test\",\"rating\":5.0}]}"
+        // Newtonsoft.Json (formatted with "rating": 5.0):
+        //   - Windows (CRLF): 81 bytes
+        //   - Linux/macOS (LF): 74 bytes
+        //
+        // System.Text.Json (formatted with "rating": 5):
+        //   - Windows (CRLF): 79 bytes
+        //   - Linux/macOS (LF): 72 bytes
+        //
+        // Minified (both serializers):
+        //   - Newtonsoft.Json: 40 bytes (with 5.0)
+        //   - System.Text.Json: 38 bytes (with 5)
 
         Assert.Contains(allowedLengths, i => i == content.Length);
 
