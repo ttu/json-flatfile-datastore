@@ -1,7 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
-using Newtonsoft.Json.Linq;
 
 namespace JsonFlatFileDataStore;
 
@@ -42,7 +41,9 @@ internal static class CommitActionHandler
 
             foreach (var action in batch)
             {
-                var (actionSuccess, updatedJson) = action.HandleAction(JObject.Parse(jsonText));
+                using var jsonDocument = JsonDocument.Parse(jsonText);
+                var rootElement = jsonDocument.RootElement.Clone();
+                var (actionSuccess, updatedJson) = action.HandleAction(rootElement);
 
                 callbacks.Enqueue((action, actionSuccess));
 
