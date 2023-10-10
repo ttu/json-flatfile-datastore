@@ -1047,25 +1047,29 @@ namespace JsonFlatFileDataStore.Test
 
             var collection = store.GetCollection("employee");
 
-            var ja = new JArray { "Hello World!" };
-
-            var jObj = new JObject()
+            var data = new
             {
-                ["custom_id"] = 11,
-                ["nestedArray"] = new JArray { ja },
+                custom_id = 11,
+                nestedArray = new[]
+                {
+                    new[] { "Hello World!" }
+                }
             };
 
-            await collection.InsertOneAsync(jObj);
+            await collection.InsertOneAsync(data);
 
             var original = collection.Find(e => e.custom_id == 11).First();
             Assert.Equal(0, original.id);
             Assert.Equal(11, original.custom_id);
             Assert.Equal("Hello World!", original.nestedArray[0][0]);
 
-            var update = new JObject()
+            var update = new
             {
-                ["custom_id"] = 12,
-                ["nestedArray"] = new JArray { new JArray { "Other text" } },
+                custom_id = 12,
+                nestedArray = new[]
+                {
+                    new[] { "Other text" }
+                }
             };
 
             await collection.UpdateOneAsync(e => e.custom_id == 11, update);
