@@ -81,14 +81,23 @@ namespace JsonFlatFileDataStore.Test
 
             var test = DateTime.Now.ToShortDateString();
 
-            var itemDynamic = store.GetItem("myDate_string");
+            // Typed: System.Text.Json deserializes date strings to DateTime
             var itemTyped = store.GetItem<DateTime>("myDate_string");
             Assert.Equal(2009, itemTyped.Year);
 
-            var itemDynamic2 = store.GetItem("myDate_date");
+            // Dynamic: Now automatically parses date strings to DateTime (Newtonsoft.Json compatibility)
+            var itemDynamic = store.GetItem("myDate_string");
+            Assert.IsType<DateTime>(itemDynamic);
+            Assert.Equal(2009, itemDynamic.Year);
+
+            // Typed: System.Text.Json deserializes ISO date strings to DateTime
             var itemTyped2 = store.GetItem<DateTime>("myDate_date");
-            Assert.Equal(2015, itemDynamic2.Year);
             Assert.Equal(2015, itemTyped2.Year);
+
+            // Dynamic: Now automatically parses ISO date strings to DateTime (Newtonsoft.Json compatibility)
+            var itemDynamic2 = store.GetItem("myDate_date");
+            Assert.IsType<DateTime>(itemDynamic2);
+            Assert.Equal(2015, itemDynamic2.Year);
 
             UTHelpers.Down(newFilePath);
         }
@@ -411,6 +420,88 @@ namespace JsonFlatFileDataStore.Test
 
             user = store.GetItem("myUser2");
             Assert.Null(user);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData(EncryptionPassword)]
+        public void InsertItem_ComplexTypes_VerifiesJsonElementSerialization(string encryptionPassword)
+        {
+            // This test verifies that SetJsonDataElement and RemoveJsonDataElement work correctly
+            // with Dictionary<string, JsonElement> serialization/deserialization in System.Text.Json
+            var (newFilePath, store) = InitializeFileAndStore(encryptionPassword);
+
+            // Test 1: Insert nested object
+            var nestedUser = new
+            {
+                id = 100,
+                name = "Complex User",
+                metadata = new
+                {
+                    tags = new[] { "admin", "developer" },
+                    settings = new Dictionary<string, object>
+                    {
+                        { "theme", "dark" },
+                        { "notifications", true },
+                        { "maxItems", 50 }
+                    }
+                }
+            };
+
+            var result1 = store.InsertItem("complexUser", nestedUser);
+            Assert.True(result1);
+
+            var retrieved1 = store.GetItem("complexUser");
+            Assert.Equal("Complex User", retrieved1.name);
+            Assert.Equal("admin", retrieved1.metadata.tags[0]);
+            Assert.Equal("dark", retrieved1.metadata.settings.theme);
+            Assert.True(retrieved1.metadata.settings.notifications);
+
+            // Test 2: Insert array
+            var arrayData = new[] { 1, 2, 3, 4, 5 };
+            var result2 = store.InsertItem("numbers", arrayData);
+            Assert.True(result2);
+
+            var retrieved2 = store.GetItem("numbers");
+            Assert.Equal(5, retrieved2.Count);
+            Assert.Equal(3, (int)retrieved2[2]);
+
+            // Test 3: Insert mixed type object
+            var mixedData = new
+            {
+                stringVal = "test",
+                intVal = 42,
+                doubleVal = 3.14,
+                boolVal = true,
+                nullVal = (string)null,
+                dateVal = new DateTime(2023, 1, 15)
+            };
+
+            var result3 = store.InsertItem("mixedTypes", mixedData);
+            Assert.True(result3);
+
+            var retrieved3 = store.GetItem("mixedTypes");
+            Assert.Equal("test", retrieved3.stringVal);
+            Assert.Equal(42, retrieved3.intVal);
+            Assert.Equal(3.14, (double)retrieved3.doubleVal);
+            Assert.True(retrieved3.boolVal);
+            Assert.Null(retrieved3.nullVal);
+            Assert.Equal(2023, ((DateTime)retrieved3.dateVal).Year);
+
+            // Test 4: Delete items (tests RemoveJsonDataElement)
+            var deleteResult1 = store.DeleteItem("complexUser");
+            Assert.True(deleteResult1);
+            Assert.Null(store.GetItem("complexUser"));
+
+            var deleteResult2 = store.DeleteItem("numbers");
+            Assert.True(deleteResult2);
+            Assert.Null(store.GetItem("numbers"));
+
+            var deleteResult3 = store.DeleteItem("mixedTypes");
+            Assert.True(deleteResult3);
+            Assert.Null(store.GetItem("mixedTypes"));
 
             UTHelpers.Down(newFilePath);
         }

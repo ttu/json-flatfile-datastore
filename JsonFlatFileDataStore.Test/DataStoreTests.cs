@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 using NSubstitute;
 using Xunit;
 
@@ -20,7 +21,7 @@ namespace JsonFlatFileDataStore.Test
 
             var store = new DataStore(newFilePath);
 
-            store.UpdateAll("{ 'tasks': [ { 'id': 0, 'task': 'Commit'} ] }");
+            store.UpdateAll("{ \"tasks\": [ { \"id\": 0, \"task\": \"Commit\"} ] }");
 
             var collection = store.GetCollection("tasks");
             Assert.Equal(1, collection.Count);
@@ -187,7 +188,7 @@ namespace JsonFlatFileDataStore.Test
             };
 
             // Example with JSON object
-            var employeeJson = JToken.Parse("{ 'id': 2, 'name': 'Raymond', 'age': 32 }");
+            var employeeJson = JsonNode.Parse("{ \"id\": 2, \"name\": \"Raymond\", \"age\": 32 }");
 
             // Example with JSON object
             var employeeDict = new Dictionary<string, object>
@@ -213,7 +214,7 @@ namespace JsonFlatFileDataStore.Test
             var updateData = new { name = "John Doe" };
             await collection.UpdateOneAsync(e => e.id == employee.id, updateData);
 
-            var updateJson = JObject.Parse("{ 'name': 'Raymond Doe' }");
+            var updateJson = JsonNode.Parse("{ \"name\": \"Raymond Doe\" }");
             await collection.UpdateOneAsync(e => e.id == 1, updateJson);
 
             var updateDict = new Dictionary<string, object> { ["name"] = "Andy Doe" };
@@ -248,7 +249,7 @@ namespace JsonFlatFileDataStore.Test
             };
 
             // Example with JSON object
-            var employeeJson = JToken.Parse("{ 'id': 200, 'name': 'Raymond', 'age': 32 }");
+            var employeeJson = JsonNode.Parse("{ \"id\": 200, \"name\": \"Raymond\", \"age\": 32 }");
 
             // Example with JSON object
             var employeeDict = new Dictionary<string, object>
@@ -271,7 +272,7 @@ namespace JsonFlatFileDataStore.Test
             await collection.InsertOneAsync(employeeExpando);
 
             Assert.Equal(20, employee.id);
-            Assert.Equal(21, employeeJson["id"]);
+            Assert.Equal(21, employeeJson["id"].GetValue<int>());
             Assert.Equal(22, employeeDict["id"]);
             Assert.Equal(23, ((IDictionary<string, object>)employeeExpando)["id"]);
 
@@ -295,7 +296,7 @@ namespace JsonFlatFileDataStore.Test
             };
 
             // Example with JSON object
-            var employeeJson = JToken.Parse("{ 'name': 'Raymond', 'age': 32 }");
+            var employeeJson = JsonNode.Parse("{ \"name\": \"Raymond\", \"age\": 32 }");
 
             // Example with JSON object
             var employeeDict = new Dictionary<string, object>
@@ -315,7 +316,10 @@ namespace JsonFlatFileDataStore.Test
             await collection.InsertOneAsync(employeeDict);
             await collection.InsertOneAsync(employeeExpando);
 
-            Assert.Equal(1, employeeJson["acc"]);
+            // System.Text.Json: JsonNode indexer returns JsonNode, requires explicit GetValue<T>()
+            // Newtonsoft.Json: JToken had implicit conversion operators, allowed direct comparison
+            Assert.Equal(1, employeeJson["acc"].GetValue<int>());
+            // Dictionary and ExpandoObject return 'object' (boxed int), which Assert.Equal handles directly
             Assert.Equal(2, employeeDict["acc"]);
             Assert.Equal(3, ((IDictionary<string, object>)employeeExpando)["acc"]);
 
@@ -340,7 +344,7 @@ namespace JsonFlatFileDataStore.Test
             };
 
             // Example with JSON object
-            var employeeJson = JToken.Parse("{ 'name': 'Raymond', 'age': 32 }");
+            var employeeJson = JsonNode.Parse("{ \"name\": \"Raymond\", \"age\": 32 }");
 
             // Example with JSON object
             var employeeDict = new Dictionary<string, object>
@@ -361,7 +365,10 @@ namespace JsonFlatFileDataStore.Test
             await collection.InsertOneAsync(employeeExpando);
 
             Assert.Equal("hello", employee.acc);
-            Assert.Equal("hello0", employeeJson["acc"]);
+            // System.Text.Json: JsonNode indexer returns JsonNode, requires explicit GetValue<T>()
+            // Newtonsoft.Json: JToken had implicit conversion operators, allowed direct comparison
+            Assert.Equal("hello0", employeeJson["acc"].GetValue<string>());
+            // Dictionary and ExpandoObject return 'object' (boxed string), which Assert.Equal handles directly
             Assert.Equal("hello1", employeeDict["acc"]);
             Assert.Equal("hello2", ((IDictionary<string, object>)employeeExpando)["acc"]);
 
