@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
@@ -79,6 +80,31 @@ namespace JsonFlatFileDataStore.Test
 
             nextId = collection.GetNextIdValue();
             Assert.Equal("SomeValue1", nextId);
+        }
+
+        [Fact]
+        public void GetNextIdValue_GuidType()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath, keyProperty: "helloField");
+
+            var collection = store.GetCollection("collectionWithGuidId");
+
+            var shouldBeNone = collection.GetNextIdValue();
+            Assert.Equal(0, shouldBeNone);
+
+            collection.InsertOne(new { helloField = Guid.NewGuid() });
+
+            var inserted = collection.AsQueryable().First();
+
+            var nextId = collection.GetNextIdValue();
+            Assert.IsType<Guid>(nextId);
+
+            collection.InsertOne(new { helloField = nextId });
+
+            nextId = collection.GetNextIdValue();
+            Assert.IsType<Guid>(nextId);
         }
 
         [Fact]

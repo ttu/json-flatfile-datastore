@@ -394,6 +394,9 @@ namespace JsonFlatFileDataStore
                         if (primaryKeyValue is Int64)
                             return (int)primaryKeyValue;
 
+                        if (Guid.TryParse(primaryKeyValue, out Guid guidValue))
+                            return guidValue;
+
                         return primaryKeyValue;
                     }
                 }
@@ -410,6 +413,9 @@ namespace JsonFlatFileDataStore
 
             if (keyValue is Int64)
                 return (int)keyValue + 1;
+
+            if (keyValue is Guid)
+                return Guid.NewGuid();
 
             return ParseNextIntegerToKeyValue(keyValue.ToString());
         }

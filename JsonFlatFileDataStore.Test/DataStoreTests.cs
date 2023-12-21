@@ -556,7 +556,7 @@ namespace JsonFlatFileDataStore.Test
 
             UTHelpers.Down(path);
         }
-        
+
         [Fact]
         public void File_Has_Correct_PropertyNames_DynamicCollection()
         {
@@ -604,7 +604,7 @@ namespace JsonFlatFileDataStore.Test
             var assertCollection = store.GetCollection<Employee>();
             Assert.Equal(3, assertCollection.Count);
         }
-        
+
         [Fact]
         public void File_Has_Correct_PropertyNames_Single_Item()
         {
@@ -619,6 +619,34 @@ namespace JsonFlatFileDataStore.Test
             var content = UTHelpers.GetFileContent(path);
             var propCount = Regex.Matches(content, "testOkIsThis2").Count;
             Assert.Equal(1, propCount);
+        }
+
+        [Fact]
+        public void Model_With_Guids()
+        {
+            var pathToJson = UTHelpers.Up();
+
+            var store = new DataStore(pathToJson);
+
+            var typedCollection = store.GetCollection<TestModelWithGuid>();
+
+            var itemId = Guid.NewGuid();
+            var secondGuid = Guid.NewGuid();
+            var thirdGuid = Guid.NewGuid();
+
+            typedCollection.InsertOne(new TestModelWithGuid { Id = itemId, Name = "Jim", OtherGuid = secondGuid });
+            typedCollection.ReplaceOne(e => e.Id == itemId, new TestModelWithGuid { Id = itemId, Name = "Barry", OtherGuid = secondGuid });
+            typedCollection.UpdateOne(e => e.Id == itemId, new { Name = "Sandels" });
+            typedCollection.UpdateOne(e => e.Id == itemId, new { OtherGuid = thirdGuid });
+
+            var userTyped = typedCollection
+                            .AsQueryable()
+                            .Single(p => p.Name == "Sandels");
+
+            Assert.Equal("Sandels", userTyped.Name);
+            Assert.Equal(thirdGuid, userTyped.OtherGuid);
+
+            UTHelpers.Down(pathToJson);
         }
 
         public class Employee

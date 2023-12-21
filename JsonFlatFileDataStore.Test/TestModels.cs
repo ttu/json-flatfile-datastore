@@ -163,4 +163,14 @@ namespace JsonFlatFileDataStore.Test
 
         public float CameraRotationY { get; set; }
     }
+
+    public class TestModelWithGuid
+    {
+        public Guid Id { get; set; }
+
+        public string Name { get; set; }
+
+        public Guid OtherGuid { get; set; }
+
+    }
 }
