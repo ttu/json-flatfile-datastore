@@ -50,6 +50,11 @@ namespace JsonFlatFileDataStore
                 dynamic dictionaryItem = item;
                 dictionaryItem[fieldName] = data;
             }
+            else if (IsAnonymousType(item))
+            {
+                // Do we need to write anything ever on anynonymous types?
+                return;
+            }
             else
             {
                 var idProperty = item.GetType().GetProperties().FirstOrDefault(p => string.Equals(p.Name, fieldName, StringComparison.OrdinalIgnoreCase));
@@ -75,6 +80,15 @@ namespace JsonFlatFileDataStore
                                  .FirstOrDefault(p => string.Equals(p.Name, idField, StringComparison.OrdinalIgnoreCase));
 
             return idProperty != null;
+        }
+
+        internal static Type GetFieldType<T>(string fieldName)
+        {
+            var idProperty = typeof(T)
+                                .GetProperties()
+                                .FirstOrDefault(p => string.Equals(p.Name, fieldName, StringComparison.OrdinalIgnoreCase));
+
+            return idProperty?.PropertyType;
         }
 
         internal static bool FullTextSearch(dynamic source, string text, bool caseSensitive = false)
@@ -409,7 +423,9 @@ namespace JsonFlatFileDataStore
                 return expandoObject
                        .Select(i => new
                        {
-                           Name = i.Key, Value = i.Value, PropertyType = i.Value?.GetType()
+                           Name = i.Key,
+                           Value = i.Value,
+                           PropertyType = i.Value?.GetType()
                        })
                        .ToList();
             }

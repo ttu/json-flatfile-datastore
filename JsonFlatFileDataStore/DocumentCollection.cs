@@ -394,8 +394,17 @@ namespace JsonFlatFileDataStore
                         if (primaryKeyValue is Int64)
                             return (int)primaryKeyValue;
 
-                        if (Guid.TryParse(primaryKeyValue, out Guid guidValue))
-                            return guidValue;
+                        // Note: ExpandoObjectConverter doesn't convert Guids to Guids, but to strings
+
+                        if (Guid.TryParse(primaryKeyValue, out Guid guid))
+                        {
+                            if (item is ExpandoObject)
+                                return primaryKeyValue;
+
+                            var fieldType = ObjectExtensions.GetFieldType<T>(_idField);
+                            if (fieldType == typeof(Guid))
+                                return guid;
+                        }
 
                         return primaryKeyValue;
                     }
@@ -414,8 +423,16 @@ namespace JsonFlatFileDataStore
             if (keyValue is Int64)
                 return (int)keyValue + 1;
 
-            if (keyValue is Guid)
-                return Guid.NewGuid();
+            // Note: ExpandoObjectConverter doesn't convert Guids to Guids, but to strings
+            if (Guid.TryParse(keyValue, out Guid _))
+            {
+                if (lastItem is ExpandoObject)
+                    return Guid.NewGuid().ToString();
+
+                var fieldType = ObjectExtensions.GetFieldType<T>(_idField);
+                if (fieldType == typeof(Guid))
+                    return Guid.NewGuid();
+            }
 
             return ParseNextIntegerToKeyValue(keyValue.ToString());
         }

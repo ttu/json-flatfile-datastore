@@ -83,28 +83,61 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
-        public void GetNextIdValue_GuidType()
+        public void GetNextIdValue_Typed_GuidType()
         {
             var newFilePath = UTHelpers.Up();
 
-            var store = new DataStore(newFilePath, keyProperty: "helloField");
+            var store = new DataStore(newFilePath);
 
-            var collection = store.GetCollection("collectionWithGuidId");
+            var collection = store.GetCollection<TestModelWithGuid>("collectionWithGuidId");
 
             var shouldBeNone = collection.GetNextIdValue();
-            Assert.Equal(0, shouldBeNone);
+            Assert.Equal(Guid.Empty, shouldBeNone);
 
-            collection.InsertOne(new { helloField = Guid.NewGuid() });
+            collection.InsertOne(new TestModelWithGuid { Id = Guid.NewGuid(), Name = "Simon" });
 
             var inserted = collection.AsQueryable().First();
+            Assert.IsType<Guid>(inserted.Id);
 
             var nextId = collection.GetNextIdValue();
             Assert.IsType<Guid>(nextId);
+            Assert.NotEqual(Guid.Empty, nextId);
 
-            collection.InsertOne(new { helloField = nextId });
+            collection.InsertOne(new TestModelWithGuid { Name = "Simon2" });
+
+            var last = collection.AsQueryable().Last();
+            Assert.NotEqual(Guid.Empty, last.Id);
+
+            var collection2 = store.GetCollection<TestModelWithGuid>("collectionWithGuidId");
+            var last2 = collection2.AsQueryable().Last();
+
+            Assert.Equal(last.Id, last2.Id);
+        }
+
+        [Fact]
+        public void GetNextIdValue_Dynamic_GuidType()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath, keyProperty: "idAsGuid");
+
+            var collection = store.GetCollection("collectionWithGuidId");
+
+            var shouldBeZero = collection.GetNextIdValue();
+            Assert.Equal(0, shouldBeZero);
+
+            collection.InsertOne(new { idAsGuid = Guid.NewGuid(), payload = 2, updatedAt = DateTime.UtcNow });
+
+            var inserted = collection.AsQueryable().First();
+            Assert.IsType<string>(inserted.idAsGuid);
+
+            var nextId = collection.GetNextIdValue();
+            Assert.IsType<string>(nextId);
+
+            collection.InsertOne(new { idAsGuid = nextId, payload = 3, updatedAt = DateTime.UtcNow });
 
             nextId = collection.GetNextIdValue();
-            Assert.IsType<Guid>(nextId);
+            Assert.IsType<string>(nextId);
         }
 
         [Fact]

@@ -646,6 +646,14 @@ namespace JsonFlatFileDataStore.Test
             Assert.Equal("Sandels", userTyped.Name);
             Assert.Equal(thirdGuid, userTyped.OtherGuid);
 
+            typedCollection.InsertOne(new TestModelWithGuid { Name = "Jim_No_Id", OtherGuid = secondGuid });
+
+            var userTypedNoId = typedCollection
+                            .AsQueryable()
+                            .Single(p => p.Name == "Jim_No_Id");
+
+            Assert.NotEqual(Guid.Empty, userTypedNoId.Id);
+
             UTHelpers.Down(pathToJson);
         }
 
