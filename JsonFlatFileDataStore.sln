@@ -9,7 +9,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JsonFlatFileDataStore.Test"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E02F2E47-379D-441C-9B98-40F7BABDDC64}"
 	ProjectSection(SolutionItems) = preProject
-		.travis.yml = .travis.yml
 		CHANGELOG.md = CHANGELOG.md
 		LICENSE = LICENSE
 		README.md = README.md
