@@ -988,5 +988,35 @@ namespace JsonFlatFileDataStore.Test
 
             UTHelpers.Down(newFilePath);
         }
+
+        [Fact]
+        public async Task UpdateComplexObject_Dynamic()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection("employee");
+
+            var ja = new JArray { "Hello World!", 77, true, 0.17, null };
+            var jo = new JObject { ["_id"] = "jo", ["aString"] = "Hello World!", ["anInt"] = 77, ["aBool"] = true, ["aDouble"] = 0.17, ["aNull"] = null };
+
+            var jObj = new JObject()
+            {
+                ["_id"] = 11,
+                ["anArray"] = new JArray(ja),
+                ["anotherArray"] = new JArray() { new JObject(jo), null, 1, "hi", new JArray(ja) },
+                ["anObject"] = new JObject(jo),
+                ["anotherObject"] = new JObject() { ["x"] = new JObject(jo), ["y"] = null, ["z"] = 1, ["a"] = "hi", ["b"] = new JArray(ja) },
+            };
+
+            await collection.InsertOneAsync(jObj);
+
+            jObj["anArray"][1] = 14;
+
+            await collection.UpdateOneAsync(e => e._id == 11, jObj);
+
+            UTHelpers.Down(newFilePath);
+        }
     }
 }
