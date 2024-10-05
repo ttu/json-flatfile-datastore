@@ -295,6 +295,55 @@ namespace JsonFlatFileDataStore.Test
         }
 
         [Fact]
+        public async Task UpdateOneAsync_TypedModel_NestedArrays()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection<TestModelWithNestedArray>();
+            Assert.Equal(0, collection.Count);
+
+            var newModel = new TestModelWithNestedArray
+            {
+                Id = Guid.NewGuid().ToString(),
+                Type = "empty",
+                NestedLists = new List<List<int>> { new List<int> { 1 }, new List<int> { 2 }, new List<int> { 3 } }
+            };
+
+            var insertResult = collection.InsertOne(newModel);
+            Assert.True(insertResult);
+            Assert.Equal(1, collection.Count);
+
+            var store2 = new DataStore(newFilePath);
+            var collection2 = store2.GetCollection<TestModelWithNestedArray>();
+            Assert.Equal(1, collection2.Count);
+
+            var updateData = new
+            {
+                Type = "filled",
+                NestedLists = new List<List<int>>
+                {
+                    null,
+                    new List<int> { 4 },
+                }
+            };
+
+            await collection2.UpdateOneAsync(e => e.Id == newModel.Id, updateData);
+
+            var store3 = new DataStore(newFilePath);
+            var collection3 = store3.GetCollection<TestModelWithNestedArray>();
+            var updated = collection3.Find(e => e.Id == newModel.Id).First();
+            Assert.Equal(3, updated.NestedLists.Count());
+            Assert.Equal(1, updated.NestedLists[0].First());
+            Assert.Equal(4, updated.NestedLists[1].First());
+            Assert.Equal(3, updated.NestedLists[2].First());
+            Assert.Equal("filled", updated.Type);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
         public async Task UpdateOneAsync_Predicate_Id_DynamicUser()
         {
             var newFilePath = UTHelpers.Up();
@@ -985,6 +1034,44 @@ namespace JsonFlatFileDataStore.Test
             Assert.Equal(10, updated2.Position[0]);
             Assert.Equal(11, updated2.Position[1]);
             Assert.Equal(12, updated2.Position[2]);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public async Task UpdateComplexObject_Dynamic()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection("employee");
+
+            var ja = new JArray { "Hello World!" };
+
+            var jObj = new JObject()
+            {
+                ["custom_id"] = 11,
+                ["nestedArray"] = new JArray { ja },
+            };
+
+            await collection.InsertOneAsync(jObj);
+
+            var original = collection.Find(e => e.custom_id == 11).First();
+            Assert.Equal(0, original.id);
+            Assert.Equal(11, original.custom_id);
+            Assert.Equal("Hello World!", original.nestedArray[0][0]);
+
+            var update = new JObject()
+            {
+                ["custom_id"] = 12,
+                ["nestedArray"] = new JArray { new JArray { "Other text" } },
+            };
+
+            await collection.UpdateOneAsync(e => e.custom_id == 11, update);
+
+            var updated = collection.Find(e => e.custom_id == 12).First();
+            Assert.Equal("Other text", updated.nestedArray[0][0]);
 
             UTHelpers.Down(newFilePath);
         }

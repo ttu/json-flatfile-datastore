@@ -17,6 +17,13 @@ namespace JsonFlatFileDataStore.Test
         public List<int> Fragments { get; set; }
     }
 
+    public class TestModelWithNestedArray
+    {
+        public string Id { get; set; }
+        public string Type { get; set; }
+        public List<List<int>> NestedLists { get; set; }
+    }
+
     public class User
     {
         public int Id { get; set; }

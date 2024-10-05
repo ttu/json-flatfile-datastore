@@ -223,7 +223,7 @@ namespace JsonFlatFileDataStore
             }
 
             var targetPropertyType = targetProperty.PropertyType;
-            var type = IsGenericListOrCollection(targetPropertyType) ? targetPropertyType.GetGenericArguments()[0] : targetPropertyType.GetElementType();
+            var targetType = IsGenericListOrCollection(targetPropertyType) ? targetPropertyType.GetGenericArguments()[0] : targetPropertyType.GetElementType();
 
             for (var i = 0; i < sourceArray.Count; i++)
             {
@@ -234,11 +234,11 @@ namespace JsonFlatFileDataStore
 
                 if (targetArray.Count - 1 < i)
                 {
-                    var newTargetItem = CreateInstance(type);
+                    var newTargetItem = CreateInstance(targetType);
                     targetArray.Add(newTargetItem);
                 }
 
-                if (type.GetTypeInfo().IsValueType || type == typeof(string))
+                if (targetType.GetTypeInfo().IsValueType || targetType == typeof(string) || IsDictionary(targetType) || IsEnumerable(targetType))
                     targetArray[i] = sourceValue;
                 else
                     CopyProperties(sourceValue, targetArray[i]);
@@ -340,7 +340,7 @@ namespace JsonFlatFileDataStore
                         targetArray.Add(CreateInstance(targetType));
                     }
 
-                    if (targetType.GetTypeInfo().IsValueType || targetType == typeof(string))
+                    if (targetType.GetTypeInfo().IsValueType || targetType == typeof(string) || IsDictionary(targetType) || IsEnumerable(targetType))
                         targetArray[i] = sourceValue;
                     else
                         CopyProperties(sourceValue, targetArray[i]);
