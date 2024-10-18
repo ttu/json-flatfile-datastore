@@ -170,4 +170,14 @@ namespace JsonFlatFileDataStore.Test
 
         public float CameraRotationY { get; set; }
     }
+
+    public class Store
+    {
+        public List<User> User { get; set; }
+        public List<Movie> Movies { get; set; }
+        public List<Family> Family { get; set; }
+        public List<World> Worlds { get; set; }
+        public Double MyValue { get; set; }
+        public List<Double> MyValues { get; set; }
+    }
 }

@@ -129,6 +129,19 @@ namespace JsonFlatFileDataStore
         /// <param name="key">Item key</param>
         /// <returns>true if items found for deletion</returns>
         Task<bool> DeleteItemAsync(string key);
+
+        /// <summary>
+        /// Get root item
+        /// </summary>
+        /// <returns>Dynamic item</returns>
+        dynamic GetRoot();
+
+        /// <summary>
+        /// Get root item
+        /// </summary>
+        /// <typeparam name="T">Item type</typeparam>
+        /// <returns>Typed item</returns>
+        T GetRoot<T>();
     }
 
     public enum ValueType
