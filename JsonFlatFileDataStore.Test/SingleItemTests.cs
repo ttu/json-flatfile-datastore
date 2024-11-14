@@ -16,9 +16,9 @@ namespace JsonFlatFileDataStore.Test
             var store = new DataStore(newFilePath, encryptionKey: encryptionKey, reloadBeforeGetCollection: reloadBeforeGetCollection);
             return (newFilePath, store);
         }
-        
+
         private DataStore CreateStore(string filePath, string encryptionKey = null) => new DataStore(filePath, encryptionKey: encryptionKey);
-        
+
         [Theory]
         [InlineData(null)]
         [InlineData(EncryptionPassword)]

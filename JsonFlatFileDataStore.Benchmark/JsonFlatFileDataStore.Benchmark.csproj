@@ -6,12 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.2" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.2"/>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\JsonFlatFileDataStore.Test\JsonFlatFileDataStore.Test.csproj" />
-    <ProjectReference Include="..\JsonFlatFileDataStore\JsonFlatFileDataStore.csproj" />
+    <ProjectReference Include="..\JsonFlatFileDataStore.Test\JsonFlatFileDataStore.Test.csproj"/>
+    <ProjectReference Include="..\JsonFlatFileDataStore\JsonFlatFileDataStore.csproj"/>
   </ItemGroup>
 
 </Project>

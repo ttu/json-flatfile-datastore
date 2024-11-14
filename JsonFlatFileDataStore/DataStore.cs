@@ -25,7 +25,7 @@ namespace JsonFlatFileDataStore
         private readonly ExpandoObjectConverter _converter = new ExpandoObjectConverter();
 
         private readonly JsonSerializerSettings _serializerSettings = new JsonSerializerSettings()
-            { ContractResolver = new CamelCasePropertyNamesContractResolver() };
+        { ContractResolver = new CamelCasePropertyNamesContractResolver() };
 
         private readonly Func<string, string> _encryptJson;
         private readonly Func<string, string> _decryptJson;
@@ -132,7 +132,7 @@ namespace JsonFlatFileDataStore
                 // This might be a bad idea especially if the file is in use, as this can take a long time
                 _jsonData = GetJsonObjectFromFile();
             }
-            
+
             var convertedKey = _convertPathToCorrectCamelCase(key);
 
             var token = _jsonData[convertedKey];
@@ -195,7 +195,7 @@ namespace JsonFlatFileDataStore
         private Task<bool> Replace<T>(string key, T item, bool upsert = false, bool isAsync = false)
         {
             var convertedKey = _convertPathToCorrectCamelCase(key);
-            
+
             (bool, JObject) UpdateAction()
             {
                 if (_jsonData[convertedKey] == null && upsert == false)
@@ -313,7 +313,7 @@ namespace JsonFlatFileDataStore
         private IDocumentCollection<T> GetCollection<T>(string path, Func<JToken, T> readConvert, Func<T, T> insertConvert, Func<T> createNewInstance)
         {
             var pathWithConfiguredCase = _convertPathToCorrectCamelCase(path);
-            
+
             var data = new Lazy<List<T>>(() =>
             {
                 lock (_jsonData)
