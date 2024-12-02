@@ -8,7 +8,7 @@
     <RepositoryUrl>https://github.com/ttu/json-flatfile-datastore</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <Version>2.4.2</Version>
-    <Company />
+    <Company/>
     <Description>Simple JSON flat file data store</Description>
     <PackageTags>json flat file data store database linq</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -31,13 +31,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0"/>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2"/>
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\README.md" Pack="true" PackagePath="\" />
-    <None Include="..\LICENSE" Pack="true" PackagePath="\" />
+    <None Include="..\README.md" Pack="true" PackagePath="\"/>
+    <None Include="..\LICENSE" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
 </Project>

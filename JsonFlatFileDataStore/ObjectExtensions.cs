@@ -318,7 +318,8 @@ namespace JsonFlatFileDataStore
 
             Type GetTypeFromTargetItem(IList target, int index)
             {
-                if (index <= target.Count - 1) return target[index].GetType();
+                if (index <= target.Count - 1)
+                    return target[index].GetType();
 
                 var targetType = target.GetType();
                 return IsGenericListOrCollection(targetType) ? targetType.GetGenericArguments()[0] : targetType;
@@ -409,7 +410,9 @@ namespace JsonFlatFileDataStore
                 return expandoObject
                        .Select(i => new
                        {
-                           Name = i.Key, Value = i.Value, PropertyType = i.Value?.GetType()
+                           Name = i.Key,
+                           Value = i.Value,
+                           PropertyType = i.Value?.GetType()
                        })
                        .ToList();
             }

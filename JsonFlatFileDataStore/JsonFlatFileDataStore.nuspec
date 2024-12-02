@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package >
+<package>
   <metadata>
     <id>$id$</id>
     <version>$version$</version>
@@ -8,7 +8,7 @@
     <owners>$author$</owners>
     <licenseUrl>https://raw.githubusercontent.com/ttu/json-flatfile-datastore/master/LICENSE</licenseUrl>
     <projectUrl>https://ttu.github.io/json-flatfile-datastore/</projectUrl>
-    <repository url="https://github.com/ttu/json-flatfile-datastore" type="git" />
+    <repository url="https://github.com/ttu/json-flatfile-datastore" type="git"/>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>https://raw.githubusercontent.com/ttu/json-flatfile-datastore/master/CHANGELOG.md</releaseNotes>
