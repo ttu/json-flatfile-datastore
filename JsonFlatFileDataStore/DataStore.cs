@@ -25,7 +25,11 @@ namespace JsonFlatFileDataStore
         private readonly ExpandoObjectConverter _converter = new ExpandoObjectConverter();
 
         private readonly JsonSerializerSettings _serializerSettings = new JsonSerializerSettings()
-        { ContractResolver = new CamelCasePropertyNamesContractResolver() };
+        {
+            ContractResolver = new CamelCasePropertyNamesContractResolver(),
+            //DateTimeZoneHandling = DateTimeZoneHandling.Utc,
+            //DateParseHandling = DateParseHandling.DateTimeOffset
+        };
 
         private readonly Func<string, string> _encryptJson;
         private readonly Func<string, string> _decryptJson;

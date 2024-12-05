@@ -1075,5 +1075,58 @@ namespace JsonFlatFileDataStore.Test
 
             UTHelpers.Down(newFilePath);
         }
+
+        [Fact]
+        public async Task DateTimeOffset_MaintainsOffset()
+        {
+            var newFilePath = UTHelpers.Up();
+            var store = new DataStore(newFilePath);
+            var collection = store.GetCollection("dates");
+
+            var dtOffsetUtc = DateTimeOffset.UtcNow;
+            var dtOffsetLocal = DateTimeOffset.Now;
+            var dateTimeUtc = DateTime.UtcNow;
+            var dateTimeLocal = DateTime.Now;
+
+            await collection.InsertOneAsync(new
+            {
+                id = 1,
+                offsetUtc = dtOffsetUtc,
+                offsetlocal = dtOffsetLocal,
+                dateTimeUtc = dateTimeUtc,
+                dateTimeLocal = dateTimeLocal
+            });
+
+            var store2 = new DataStore(newFilePath);
+            var collection2 = store.GetCollection("dates");
+            var item = collection2.AsQueryable().First();
+
+            var itemOffsetUtc = ((DateTimeOffset)item.offsetUtc);
+            var itemOffsetLocal = ((DateTimeOffset)item.offsetlocal);
+            var itemDateTimeUtc = ((DateTime)item.dateTimeUtc);
+            var itemDateTimeLocal = ((DateTime)item.dateTimeLocal);
+
+            /*
+            "offsetUtc": "2025-02-17T14:30:05.399147+02:00",
+            "offsetlocal": "2025-02-17T14:30:05.399149+02:00",
+            "dateTimeUtc": "2025-02-17T12:30:05.399169Z",
+            "dateTimeUtc": "2025-02-17T14:30:05.399169+02:00"
+            */
+
+            // TODO: itemOffsetUtc should have UTC Offset
+            // "offsetUtc": "2025-02-17T12:30:05.399147+00:00",
+
+            Assert.Equal(dtOffsetUtc, itemOffsetUtc);
+            Assert.Equal(dtOffsetUtc.Offset, itemOffsetUtc.Offset);
+            Assert.Equal(dtOffsetLocal, itemOffsetLocal);
+            Assert.Equal(dtOffsetLocal.Offset, itemOffsetLocal.Offset);
+
+            Assert.Equal(dateTimeUtc, itemDateTimeUtc);
+            Assert.Equal(dateTimeUtc.Kind, itemDateTimeUtc.Kind);
+            Assert.Equal(dateTimeLocal, itemDateTimeLocal);
+            Assert.Equal(dateTimeLocal.Kind, itemDateTimeLocal.Kind);
+
+            UTHelpers.Down(newFilePath);
+        }
     }
 }
