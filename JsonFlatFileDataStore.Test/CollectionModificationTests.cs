@@ -1075,5 +1075,49 @@ namespace JsonFlatFileDataStore.Test
 
             UTHelpers.Down(newFilePath);
         }
+
+        [Fact]
+        public async Task DateTimeOffset_MaintainsOffset()
+        {
+            var newFilePath = UTHelpers.Up();
+            var store = new DataStore(newFilePath);
+            var collection = store.GetCollection("dates");
+
+            var utcDate = DateTimeOffset.UtcNow;
+            var localDate = DateTimeOffset.Now;
+            var dateTime = DateTime.UtcNow;
+            var dateTimeLocal = DateTime.Now;
+
+            await collection.InsertOneAsync(new
+            {
+                id = 1,
+                utcDate = utcDate,
+                localDate = localDate,
+                dateTime = dateTime,
+                dateTimeLocal = dateTimeLocal
+            });
+
+            var store2 = new DataStore(newFilePath);
+            var collection2 = store.GetCollection("dates");
+            var item = collection2.AsQueryable().First();
+
+            // All have kind local when serialized from json
+
+            var itemUtcDate = ((DateTimeOffset)item.utcDate);
+            var itemLocalDate = ((DateTimeOffset)item.localDate);
+            var itemDateTime = ((DateTime)item.dateTime);
+            var itemDateTimeLocal = ((DateTime)item.dateTimeLocal);
+
+            Assert.Equal(utcDate, itemUtcDate);
+            Assert.Equal(localDate, itemLocalDate);
+            Assert.Equal(dateTime, itemDateTime);
+            Assert.Equal(dateTimeLocal, itemDateTimeLocal);
+            Assert.Equal(utcDate.Offset, itemUtcDate.Offset);
+            Assert.Equal(localDate.Offset, itemLocalDate.Offset);
+            Assert.Equal(dateTime, itemDateTime);
+            Assert.Equal(dateTimeLocal, itemDateTimeLocal);
+
+            UTHelpers.Down(newFilePath);
+        }
     }
 }
