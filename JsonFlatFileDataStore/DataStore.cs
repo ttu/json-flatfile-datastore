@@ -15,6 +15,7 @@ namespace JsonFlatFileDataStore
 {
     public class DataStore : IDataStore
     {
+        private readonly IStorageAccess _fileAccess = new FileAccess();
         private readonly string _filePath;
         private readonly string _keyProperty;
         private readonly bool _reloadBeforeGetCollection;
@@ -86,7 +87,7 @@ namespace JsonFlatFileDataStore
                             _jsonData = JObject.Parse(jsonText);
                         }
 
-                        return FileAccess.WriteJsonToFile(_filePath, _encryptJson, jsonText);
+                        return _fileAccess.WriteJson(_filePath, _encryptJson, jsonText);
                     },
                     GetJsonTextFromFile);
             });
@@ -114,7 +115,7 @@ namespace JsonFlatFileDataStore
                 _jsonData = JObject.Parse(jsonData);
             }
 
-            FileAccess.WriteJsonToFile(_filePath, _encryptJson, jsonData);
+            _fileAccess.WriteJson(_filePath, _encryptJson, jsonData);
         }
 
         public void Reload()
@@ -432,7 +433,7 @@ namespace JsonFlatFileDataStore
             }
         }
 
-        private string GetJsonTextFromFile() => FileAccess.ReadJsonFromFile(_filePath, _encryptJson, _decryptJson);
+        private string GetJsonTextFromFile() => _fileAccess.ReadJson(_filePath, _encryptJson, _decryptJson);
 
         private JObject GetJsonObjectFromFile() => JObject.Parse(GetJsonTextFromFile());
 
