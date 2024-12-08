@@ -10,20 +10,20 @@ JSON Flat File Data Store
 | GH Actions  | Linux          | [![Build Status](https://github.com/ttu/json-flatfile-datastore/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/ttu/json-flatfile-datastore/actions/workflows/ci.yml)      |
 | GH Actions  | Windows        | [![Build Status](https://github.com/ttu/json-flatfile-datastore/actions/workflows/ci_win.yml/badge.svg?branch=master)](https://github.com/ttu/json-flatfile-datastore/actions/workflows/ci_win.yml) |
 
-Simple data store that saves the data in JSON format to a single file.
+A lightweight, JSON-based data storage solution, ideal for small applications and prototypes requiring simple, file-based storage.
 
-* Small API with basic functionality that is needed for handling data
-* Works with dynamic and typed data
-* Synchronous and asynchronous methods
-* Data is stored in a JSON file
-  * Easy to initialize
-  * Easy to edit
+* A compact API offering essential data-handling capabilities
+* Support for both dynamic and typed data structures
+* Synchronous and asynchronous operations
+* JSON file-based storage with:
+  * Easy initialization
+  * Simple editing
   * Perfect for small apps and prototyping
-  * Optional encryption for file content
+  * Optional encryption for secure data storage
 * .NET implementation & version support: [.NET Standard 2.0](https://docs.microsoft.com/en-us/dotnet/standard/net-standard?tabs=net-standard-2-0#select-net-standard-version)
-  * e.g. .NET 6, .NET Core 2.0, .NET Framework 4.6.1
+  * For example, .NET 6, .NET Core 2.0, .NET Framework 4.6.1
 
-**Docs website**
+**Docs Website**
 
 [https://ttu.github.io/json-flatfile-datastore/](https://ttu.github.io/json-flatfile-datastore/)
 
@@ -31,7 +31,7 @@ Simple data store that saves the data in JSON format to a single file.
 
 ## Installation
 
-You can install the latest version via [NuGet](https://www.nuget.org/packages/JsonFlatFileDataStore/).
+Install the latest version from [NuGet](https://www.nuget.org/packages/JsonFlatFileDataStore/).
 
 ```sh
 # .NET Core CLI
@@ -43,9 +43,10 @@ PM> Install-Package JsonFlatFileDataStore
 
 ## Example
 
-### Typed data
+### Typed Data
 
 ```csharp
+// Define a simple model class
 public class Employee
 {
     public int Id { get; set; }
@@ -53,25 +54,24 @@ public class Employee
     public int Age { get; set; }
 }
 
-// Open database (create new if file doesn't exist)
+// Initialize the data store with a JSON file path (creates a new file if one doesn’t exist)
 var store = new DataStore("data.json");
 
-// Get employee collection
+// Get a strongly-typed collection
 var collection = store.GetCollection<Employee>();
 
-// Create new employee instance
+// Create a new employee instance
 var employee = new Employee { Id = 1, Name = "John", Age = 46 };
 
-// Insert new employee
-// Id is updated automatically to correct next value
+// Insert a new employee
+// The id is automatically updated to correct next value
 await collection.InsertOneAsync(employee);
 
-// Update employee
+// Update employee information
 employee.Name = "John Doe";
-
 await collection.UpdateOneAsync(employee.Id, employee);
 
-// Use LINQ to query items
+// Query using LINQ
 var results = collection.AsQueryable().Where(e => e.Age > 30);
 
 // Save instance as a single item
@@ -82,12 +82,18 @@ await store.InsertItemAsync("counter", 1);
 var counter = await store.GetItem<int>("counter");
 ```
 
-### Dynamically typed data
+### Dynamically Typed Data
 
-Dynamic data can be `Anonymous type`, `ExpandoObject`, JSON objects (`JToken`, `JObject`, `JArray`) or `Dictionary<string, object>`. Internally dynamic data is serialized to `ExpandoObject`.
+Dynamic data can be any of the following types:
+* `Anonymous type`
+* `ExpandoObject`
+* JSON objects (`JToken`, `JObject`, `JArray`)
+* `Dictionary<string, object>`
+
+Note: All dynamic data is internally serialized to `ExpandoObject`.
 
 ```csharp
-// Open database (create new if file doesn't exist)
+// Open the database (create new if file doesn't exist)
 var store = new DataStore(pathToJson);
 
 // Get employee collection
@@ -130,9 +136,9 @@ await collection.UpdateOneAsync(e => e.id == 3, updateDict);
 var results = collection.AsQueryable().Where(x => x.age > 30);
 ```
 
-### Example project
+### Example Project
 
-[Fake JSON Server](https://github.com/ttu/dotnet-fake-json-server) is an ASP.NET Core Web App which uses JSON Flat File Data Store with dynamic data.
+[Fake JSON Server](https://github.com/ttu/dotnet-fake-json-server) is an ASP.NET Web App that uses JSON Flat File Data Store with dynamic data.
 
 ## Functionality
 
@@ -151,18 +157,19 @@ Example user collection in JSON
 
 #### Query
 
-Collection can be queried with LINQ by getting queryable from the collection with `AsQueryable` method.
+Collections can be queried using LINQ by obtaining a queryable object from the collection with the `AsQueryable` method.
 
-NOTE: `AsQueryable` returns `IEnumerable`, instead of `IQueryable`, because `IQueryable` doesn't support Dynamic types in LINQ queries. With this data store it won't matter as all data is already loaded into memory.
+NOTE: While `AsQueryable` returns `IEnumerable` instead of `IQueryable`, this doesn't impact performance since all data is already loaded into memory. The reason for returning `IEnumerable` is that `IQueryable` doesn't support dynamic types in LINQ queries.
 
 `AsQueryable` LINQ query with dynamic data:
 
 ```csharp
+// Initialize the data store with a JSON file path (creates a new file if one doesn’t exist)
 var store = new DataStore(pathToJson);
 
 var collection = store.GetCollection("user");
 
-// Find item with name
+// Que item with name
 var userDynamic = collection
                     .AsQueryable()
                     .FirstOrDefault(p => p.name == "Phil");
@@ -181,9 +188,9 @@ var userTyped = collection
                     .FirstOrDefault(p => p.Name == "Phil");
 ```
 
-#### Full-text search
+#### Full-Text Search
 
-Full-text search can be performed with `Find` method. Full-text search does deep search on all child objects. __By default__ the search is not case sensitive.
+Full-text search can be performed with the `Find` method. Full-text search performs a deep search on all child objects. __By default__, the search is not case-sensitive.
 
 ```csharp
 var store = new DataStore(pathToJson);
@@ -200,7 +207,7 @@ var caseSensitiveMatches = collection.Find("Alabama", true);
 
 #### Insert
 
-`InsertOne` and `InsertOneAsync` will insert a new item to the collection. Method returns true if insert was successful.
+`InsertOne` and `InsertOneAsync` will insert a new item into the collection. The method returns true if the insert was successful.
 
 ```csharp
 // Asynchronous method and dynamic data
@@ -229,7 +236,7 @@ var newItems = new[]
 collection.InsertMany(newItems);
 ```
 
-`Insert`-methods will update the inserted object's `Id`-field, if it has a field with that name and the field is writable. If the `Id`-field is missing from the dynamic object, a field is added with the correct value. If an `Anonymous type` is used for insert, `id` will be added to the persisted object if the `id`-field is missing. If the `id` is present, then that value will be used.
+`Insert`-methods will update an object's `Id`-field if the field exists and is writable. If the dynamic object is missing an `Id`-field, one will be added with the correct value. When using an `anonymous type` for insertion, if the `id` field is missing, it will be added to the persisted object. If an `id` field is already present, its value will be used.
 
 ```csharp
 var newItems = new[]
@@ -244,10 +251,10 @@ collection.InsertMany(newItems);
 // Item in newItems collection won't have id property as anonymous types are read only
 ```
 
-If the `id`-field 's type is a *number*, value is incremented by one. If the type is a *string*, incremented value number is added to the end of the initial text.
+If the type of the `id`-field is a *number*, the value is incremented by one. If the type is a *string*, an incremented number is added to the end of the initial text.
 
 ```csharp
-// Latest id in the collection is hello5
+// Latest id in the collection is "hello5"
 var user = JToken.Parse("{ 'id': 'wrongValue', 'name': 'Raymond', 'age': 32, 'city': 'NY' }");
 await collection.InsertOneAsync(user);
 // After addition: user["id"] == "hello6"
@@ -258,11 +265,11 @@ await collection.InsertOneAsync(userNoId);
 // After addition: userNoId["id"] == "hello7"
 ```
 
-If collection is empty and the type of the id-field is number, then first id will be `0`. If type is string then first id will be `"0"`. 
+For an empty collection, if the `id`-field's type is a number, the first id will be `0`. If the type is a string, the first id will be `"0"`.
 
 #### Replace
 
-`ReplaceOne` and `ReplaceOneAsync` will replace the first item that matches the filter or provided id-value matches the defined id-field. Method will return true if item(s) found with the filter.
+`ReplaceOne` and `ReplaceOneAsync` will replace the first item that matches the filter or the provided id-value that matches the defined id-field. The method returns true if item(s) are found that match the filter.
 
 ```csharp
 // Sync and dynamic
@@ -284,7 +291,7 @@ await collection.ReplaceOneAsync(3, new User { Id = 3, Name = "Barry", Age = 33 
 collection.ReplaceMany(e => e.City == "NY", new { City = "New York" });
 ```
 
-`ReplaceOne` and `ReplaceOneAsync` have an upsert option. If the item to replace doesn't exists in the data store, new item will be inserted. Upsert won't update id, so new item will be inserted with the id that it has.
+`ReplaceOne` and `ReplaceOneAsync` have an upsert option. If the item to replace doesn't exists in the data store, a new item will be inserted. Upsert won't update the id, so the new item will be inserted with the id that it has.
 
 ```csharp
 // New item will be inserted with id 11
@@ -293,7 +300,7 @@ collection.ReplaceOne(11, new { id = 11, name = "Theodor" }, true);
 
 #### Update
 
-`UpdateOne` and `UpdateOneAsync` will update the first item that matches the filter or provided id-value matches the defined id-field. Properties to update are defined with dynamic object. Dynamic object can be an `Anonymous type` or an `ExpandoObject`. Method will return true if item(s) found with the filter.
+`UpdateOne` and `UpdateOneAsync` will update the first item that matches the filter or the provided id-value that matches the defined id-field. Properties to update are defined with a dynamic object. The dynamic object can be an `Anonymous type` or an `ExpandoObject`. The method will return true if item(s) are found that match the filter.
 
 ```csharp
 // Dynamic
@@ -317,7 +324,7 @@ await collection.UpdateOneAsync(e => e.Name == "Phil", new { age = 42 });
 await collection.UpdateManyAsync(e => e.Age == 30, new { age = 31 });
 ```
 
-Update can also update items from the collection and add new items to the collection. `null` items in the passed update data are skipped, so with `null` items data in the correct index can be updated.
+Update can also update items in the collection and add new items to the collection. `null` items in the passed update data are skipped, so with `null` items, data in the correct index can be updated.
 
 ```csharp
 var family = new Family
@@ -340,7 +347,7 @@ await collection.UpdateOneAsync(e => e.Id == 12, new { Parents = new[] { null, n
 await collection.UpdateOneAsync(e => e.Id == 12, new { Parents = new[] { new { age = 42 } } });
 ```
 
-Easy way to create a patch `ExpandoObject` on runtime is to create a `Dictionary` and then to serialize it to a JSON and deserialize to an `ExpandoObject`.
+An easy way to create a patch `ExpandoObject` at runtime is to create a `Dictionary` and then serialize it to a JSON and deserialize it to an `ExpandoObject`.
 
 ```csharp
 var user = new User
@@ -366,9 +373,9 @@ await collection.UpdateOneAsync(e => e.Id == 12, patchExpando);
 
 ##### Limitations
 
-Dictionaries won't work when serializing JSON or data to `ExpandoObjects`. This is becauses dictionaries and objects are similar when serialized to JSON, so serialization creates an `ExpandoObject` from `Dictionary`. Update's are mainly meant to be used with `HTTP PATCH`, so normally `Replace` is easier and better way to update data.
+Dictionaries do not work when serializing JSON or data to `ExpandoObjects`. This is becauses dictionaries and objects are similar when serialized to JSON, so serialization creates an `ExpandoObject` from `Dictionary`. Update's are primarily intended for use with `HTTP PATCH`; in most cases, `Replace` provides an easier and more effective way to update data.
 
-If the update `ExpandoObject` is created manually, then the Dictionaries content can be updated. Unlike `List`, `Dictionary`'s whole content is replaced with the update data's content.
+If the update `ExpandoObject` is created manually, then the dictionary's content can be updated. Unlike a `List`, the dictionary's entire content is replaced with the update data's content.
 
 ```csharp
 var player = new Player
@@ -390,7 +397,7 @@ await collection.UpdateOneAsync(e => e.Id == 423, patchData);
 
 #### Delete
 
-`DeleteOne` and `DeleteOneAsync` will remove the first object that matches the filter or provided id-value matches the defined id-field. Method returns true if item(s) found with the filter or with the id.
+`DeleteOne` and `DeleteOneAsync` will remove the first object that matches the filter or where the provided id-value matches the defined id-field. Method returns true if an item id found and deleted with the filter or id.
 
 ```csharp
 // Dynamic
@@ -402,7 +409,7 @@ await collection.DeleteOneAsync(3);
 await collection.DeleteOneAsync(e => e.Id == 3);
 ```
 
-`DeleteMany` and `DeleteManyAsync` will delete all items that match the filter. Method returns true if item(s) found with the filter.
+`DeleteMany` and `DeleteManyAsync` will delete all items that match the filter. The method returns true if item(s) are found with the filter.
 
 ```csharp
 // Dynamic
@@ -412,10 +419,9 @@ await collection.DeleteManyAsync(e => e.city == "NY");
 await collection.DeleteManyAsync(e => e.City == "NY");
 ```
 
-#### Get next Id-field value
+#### Get Next Id-Field Value
 
-
-If incrementing Id-field values is used, `GetNextIdValue` returns next Id-field value. If Id-property is integer, last item's value is incremented by one. If field is not an integer, it is converted to a string and number is parsed from the end of the string and incremented by one.
+If incrementing Id-field values are used, `GetNextIdValue` returns the next Id-field value. For integer Id-properties, the last item's value is incremented by one. For non-integer fields, the value is converted to a string and number at the end of the sting is parsed and incremented by one.
 
 ```csharp
 var store = new DataStore(newFilePath, keyProperty: "myId");
@@ -435,7 +441,7 @@ collection.InsertOne(new { myId = "hello3" });
 var nextId = collection.GetNextIdValue();
 ```
 
-### Single item
+### Single Item
 
 ```json
 {
@@ -446,11 +452,11 @@ var nextId = collection.GetNextIdValue();
 }
 ```
 
-Data store supports single items. Items can be value and reference types. Single item supports dynamic and typed data.
+Data store supports single items, which can be either value or reference types. Single items supports both dynamic and typed data.
 
-Arrays are concidered as single items if they contain value types. If Array is empty it is listed as a collection.
+Arrays containing value types are treated as single items. Empty arrays are listed as collections.
 
-Single item's support same methods as Collections (`Get`, `Insert`, `Replace`, `Update`, `Delete`).
+Single items support the same methods as Collections (`Get`, `Insert`, `Replace`, `Update`, `Delete`).
 
 #### Get
 
@@ -462,7 +468,7 @@ var counter = store.GetItem<int>("counter");
 var user = store.GetItem("myUser");
 ```
 
-Typed data will throw `KeyNotFoundException` if key is not found. Dynamic data and nullable types will return null.
+For typed data, a `KeyNotFoundException` is thrown if the key is not found. For dynamic data and nullable types, null is returned instead.
 
 ```csharp
 // throw KeyNotFoundException
@@ -475,7 +481,7 @@ var counter = store.GetItem("counter_NotFound");
 
 #### Insert
 
-`InsertItem` and `InsertItemAsync` will insert a new item to the JSON. Method returns true if insert was successful.
+`InsertItem` and `InsertItemAsync` will insert a new item into the JSON. These methods return true if the insertion is successful.
 
 ```csharp
 // Value type
@@ -485,10 +491,9 @@ var user = new User { Id = 12, Name = "Teddy" }
 var result = await store.InsertItemAsync<User>("myUser", user);
 ```
 
-
 #### Replace
 
-`ReplaceItem` and `ReplaceItemAsync` will replace the item with the key. Method will return true if item is found with the key.
+`ReplaceItem` and `ReplaceItemAsync` will replace the item with the key. The method will return true if the item is found with the key.
 
 ```csharp
 // Value type
@@ -497,7 +502,8 @@ var result = await store.ReplaceItemAsync("counter", 4);
 var result = await store.ReplaceItemAsync("myUser", new User { Id = 2, Name = "James" });
 ```
 
-`ReplaceSingleItem` and `ReplaceSingleItem` have an upsert option. If the item to replace doesn't exists in the data store, new item will be inserted.
+`ReplaceSingleItem` and `ReplaceSingleItem` have an upsert option. If the item to replace doesn't exists in the data store, a new item will be inserted.
+
 ```csharp
 // Value type
 var result = await store.ReplaceItemAsync("counter", 4, true);
@@ -507,7 +513,7 @@ var result = await store.ReplaceItemAsync("myUser", new User { Id = 2, Name = "J
 
 #### Update
 
-`UpdateItem` and `UpdateItemAsync` will update the first item that matches the filter with passed properties from dynamic object. Dynamic object can be an `Anonymous type` or an `ExpandoObject`. Method will return true if item is found with the key.
+`UpdateItem` and `UpdateItemAsync` will update the first item that matches the filter with the passed properties from a dynamic object. The dynamic object can be an `Anonymous type` or an `ExpandoObject`. The method will return true if the item is found with the key.
 
 ```csharp
 // Value type
@@ -518,7 +524,7 @@ var result = await store.UpdateItemAsync("myUser", new { name = "Harold" });
 
 #### Delete
 
-`DeleteItem` and `DeleteItemAsync` will remove the item that matches the key. Method returns true if item is found and deleted with the key.
+`DeleteItem` and `DeleteItemAsync` will remove the item that matches the key. The method returns true if the item is found and deleted with the key.
 
 ```csharp
 // Sync
@@ -527,22 +533,22 @@ var result = store.DeleteItem("counter");
 var result = await store.DeleteItemAsync("counter");
 ```
 
-## Encrypt JSON-file content
+## Encrypt JSON-File Content
 
-It is possible to encrypt the written JSON-data. When `encryptionKey`-parameter is passed to constructor, data will be encypted with `Aes256`.
+It is possible to encrypt the written JSON-data. Passing the `encryptionKey` parameter to the constructor encrypts data using `AES-256`.
 
 ```c#
 var secretKey = "Key used for encryption";
 var store = new DataStore(newFilePath, encryptionKey: secretKey);
 ```
 
-## Data Store and collection lifecycle
+## Data Store and Collection Lifecycle
 
-When the data store is created, it reads the JSON file to the memory. Data store starts a new background thread that handles the file access.
+When the data store is created, it reads the JSON file into memory. The data store starts a new background thread that handles file access.
 
-When the collection is created it has a lazy reference to the data and it will deserialize the JSON to objects when it is accessed for the first time.
+When the collection is created, it has a lazy reference to the data and will deserialize the JSON to objects when accessed for the first time.
 
-All write operations in collections are executed immediately internally in the collection and then the same operation is queued on DataStore's BlockingCollection. Operations from the BlockingCollection are executed on background thread to DataStore's internal collection and saved to file.
+All write operations in collections are executed immediately internally in the collection, and then the same operation is queued on DataStore's `BlockingCollection`. Operations from the `BlockingCollection` are executed on a background thread to DataStore's internal collection and saved to the file.
 
 ```csharp
 // Data is loaded from the file
@@ -562,9 +568,9 @@ collection2nd.InsertOne(new { id = "hello2" });
 // collection1st won't have item with id hello2
 ```
 
-If multiple DataStores are initialized and used simultaneously, each DataStore will have its own internal state. They might become out of sync with the state in the JSON file, as data is only loaded from the file when DataStore is initialized and after each commit.
+If multiple DataStores are initialized and used simultaneously, each DataStore will have its own internal state. They might become out of sync with the state in the JSON file, as data is only loaded from the file when the DataStore is initialized and after each commit.
 
-It is also possible to reload JSON data manually, by using DataStore's `Reload` method or set `reloadBeforeGetCollection` constructor parameter to `true`.
+It is also possible to reload JSON data manually, by using DataStore's `Reload` method or by setting the `reloadBeforeGetCollection` constructor parameter to `true`.
 
 ```csharp
 // Data is loaded from the file
@@ -587,11 +593,11 @@ var collection1_2 = store.GetCollection("hello");
 // collection1_1 will not have item with id: hello2 even after reload, because it was initialized before reload
 ```
 
-If JSON Flat File Data Store is used with e.g. `ASP.NET`, add the `DataStore` to the DI container as a singleton. This way DataStore's internal state is correct and application does not have to rely on the state on the file as read operation is pretty slow. Reload can be triggered if needed.
+If JSON Flat File Data Store is used with, for example, `ASP.NET`, add the `DataStore` to the DI container as a singleton. This way, DataStore's internal state is correct, and the application does not have to rely on the state in the file, as read operation is relatively slow. Reload can be triggered if needed.
 
 ## Disposing Data Store
 
-Data store should be disposed after it is not needed anymore. Dispose will wait that all writes to the file are completed and after that it will stop the background thread. Then Garabge Collector can collect the data store that is not used anymore.
+Data store should be disposed after it is not needed anymore. Dispose will wait that all writes to the file are completed and after that it will stop the background thread. The garbage collector can then clean up the data store once it is no longer in use.
 
 ```csharp
 // Call dispose method
@@ -606,11 +612,11 @@ using(var store = new DataStore())
 }
 ```
 
-## Collection naming
+## Collection Naming
 
-Collection name must be always defined when dynamic collections are used. Collection name is converted to selected case.
+The collection name must always be defined when using dynamic collections. Collection names are converted to the selected case.
 
-If collection name is not defined with a typed collection, class-name is converted to selected case. E.g. with lower camel case `User` is `user`, `UserFamily` is `userFamily` etc.
+If the collection name is not defined with a typed collection, the class name is converted to the selected case. For example. with lower camel case, `User` becomes `user`, and `UserFamily` becomes `userFamily`, etc.
 
 ```csharp
 var store = new DataStore(newFilePath);
@@ -624,9 +630,9 @@ var collection = store.GetCollection<Movie>();
 var collection = store.GetCollection<Movie>("movies");
 ```
 
-## Writing data to a file
+## Writing Data to a File
 
-By default JSON is written in lower camel case. This can be changed with `useLowerCamelCase` parameter in DataStore's constructor.
+By default, JSON is written in lower camel case. This can be changed with `useLowerCamelCase` parameter in DataStore's constructor.
 
 ```csharp
 // This will write JSON in lower camel case
@@ -638,19 +644,19 @@ var store = new DataStore(newFilePath);
 var store = new DataStore(newFilePath, false);
 ```
 
-Additionaly the output of the file can be minfied. The default is an intended output.
+Additionally, the file output can be minified. The default is an intended output.
 
 ```csharp
 var store = new DataStore(newFilePath, minifyJson: true);
 ```
 
-## Dynamic types and error CS1977
+## Dynamic Types and Error CS1977
 
-When __Dynamic type__ is used with lambdas, compiler will give you error __CS1977__:
+When __Dynamic type__ is used with lambdas, the compiler will give you error __CS1977__:
 
 > CS1977: Cannot use a lambda expression as an argument to a dynamically dispatched operation without first casting it to a delegate or expression tree type
 
-A lambda needs to know the data type of the parameter at compile time. Cast dynamic to an object and compiler will happily accept it, as it believes you know what you are doing and leaves validation to Dynamic Language Runtime.
+A lambda needs to know the data type of the parameter at compile time. Cast the dynamic type to an object, and the compiler will happily accept it, as it believes you know what you are doing and leaves validation to the Dynamic Language Runtime.
 
 ```csharp
 dynamic dynamicUser = new { id = 11, name = "Theodor" };
@@ -665,15 +671,15 @@ collection2.ReplaceOne(e => e.id == 11, dynamicUser as object);
 collection2.ReplaceOne((Predicate<dynamic>)(e => e.id == 11), dynamicUser);
 ```
 
-## Unit tests & benchmarks
+## Unit Tests & Benchmarks
 
 `JsonFlatFileDataStore.Test` and `JsonFlatFileDataStore.Benchmark` are _.NET 6_ projects.
 
-Unit Tests are executed automatically with CI builds.
+Unit tests are executed automatically with CI builds.
 
 Benchmarks are not part of CI builds. Benchmarks can be used as a reference when making changes to the existing functionality by comparing the execution times before and after the changes.
 
-Run benchmarks from command line:
+Run benchmarks from the command line:
 ```sh
 $ dotnet run --configuration Release --project JsonFlatFileDataStore.Benchmark\JsonFlatFileDataStore.Benchmark.csproj
 ```
