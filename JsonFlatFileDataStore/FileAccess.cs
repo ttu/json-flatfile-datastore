@@ -1,13 +1,36 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 
 namespace JsonFlatFileDataStore
 {
+    public enum StorageAccessType
+    {
+        File,
+        LocalStorage
+    }
+
     public interface IStorageAccess
     {
         string ReadJson(string path, Func<string, string> encryptJson, Func<string, string> decryptJson);
         bool WriteJson(string path, Func<string, string> encryptJson, string content);
+    }
+
+    public static class StorageAccess
+    {
+        public static StorageAccessType GetSupportedStorageAccess()
+        {
+            // Check if running in browser context
+            if (Type.GetType("Mono.Runtime") != null &&
+                AppDomain.CurrentDomain.GetAssemblies()
+                        .Any(a => a.GetName().Name == "WebAssembly.Net.Http"))
+            {
+                return StorageAccessType.LocalStorage;
+            }
+
+            return StorageAccessType.File;
+        }
     }
 
     internal class FileAccess : IStorageAccess
@@ -70,7 +93,7 @@ namespace JsonFlatFileDataStore
 
     internal class LocalStorageAccess : IStorageAccess
     {
-        private string _content = string.Empty;
+        private string _content = "{}";
 
         public string ReadJson(string path, Func<string, string> encryptJson, Func<string, string> decryptJson) => _content;
 

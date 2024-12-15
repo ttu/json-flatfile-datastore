@@ -15,7 +15,7 @@ namespace JsonFlatFileDataStore
 {
     public class DataStore : IDataStore
     {
-        private readonly IStorageAccess _fileAccess = new FileAccess();
+        private readonly IStorageAccess _fileAccess;
         private readonly string _filePath;
         private readonly string _keyProperty;
         private readonly bool _reloadBeforeGetCollection;
@@ -38,6 +38,9 @@ namespace JsonFlatFileDataStore
             string encryptionKey = null, bool minifyJson = false)
         {
             _filePath = path;
+            _fileAccess = StorageAccess.GetSupportedStorageAccess() == StorageAccessType.LocalStorage
+                ? (IStorageAccess)new LocalStorageAccess()
+                : new FileAccess();
 
             var useEncryption = !string.IsNullOrWhiteSpace(encryptionKey);
             var usedFormatting = minifyJson || useEncryption ? Formatting.None : Formatting.Indented;
