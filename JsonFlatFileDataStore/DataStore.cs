@@ -38,9 +38,7 @@ namespace JsonFlatFileDataStore
             string encryptionKey = null, bool minifyJson = false)
         {
             _filePath = path;
-            _fileAccess = StorageAccess.GetSupportedStorageAccess() == StorageAccessType.LocalStorage
-                ? (IStorageAccess)new LocalStorageAccess()
-                : new FileAccess();
+            _fileAccess = StorageAccess.GetStorageAccess();
 
             var useEncryption = !string.IsNullOrWhiteSpace(encryptionKey);
             var usedFormatting = minifyJson || useEncryption ? Formatting.None : Formatting.Indented;

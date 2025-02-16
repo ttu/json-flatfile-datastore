@@ -671,6 +671,22 @@ collection2.ReplaceOne(e => e.id == 11, dynamicUser as object);
 collection2.ReplaceOne((Predicate<dynamic>)(e => e.id == 11), dynamicUser);
 ```
 
+## Alternative Storage Access Implementation
+
+The default storage access implementation is `FileStorage`. It is possible to implement your own storage access implementation by implementing the `IStorageAccess` interface.
+
+An alternative storage implementation in the project is `InMemoryStorage`. This implementation uses an in-memory collection to store the data.
+
+To use the alternative storage implementation, call `StorageAccess.SetStorageAccess` before creating the DataStore instance.
+
+```csharp
+StorageAccess.SetStorageAccess(new InMemoryStorage());
+var newFilePath = "";
+var store = new DataStore(newFilePath);
+```
+
+Storage implementation might not use file `path`, so it can be left empty. It is left as required for backwards compatibility with existing code.
+
 ## Unit Tests & Benchmarks
 
 `JsonFlatFileDataStore.Test` and `JsonFlatFileDataStore.Benchmark` are _.NET 6_ projects.

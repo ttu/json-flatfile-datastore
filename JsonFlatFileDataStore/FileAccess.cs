@@ -5,12 +5,6 @@ using System.Linq;
 
 namespace JsonFlatFileDataStore
 {
-    public enum StorageAccessType
-    {
-        File,
-        LocalStorage
-    }
-
     public interface IStorageAccess
     {
         string ReadJson(string path, Func<string, string> encryptJson, Func<string, string> decryptJson);
@@ -19,21 +13,21 @@ namespace JsonFlatFileDataStore
 
     public static class StorageAccess
     {
-        public static StorageAccessType GetSupportedStorageAccess()
-        {
-            // Check if running in browser context
-            if (Type.GetType("Mono.Runtime") != null &&
-                AppDomain.CurrentDomain.GetAssemblies()
-                        .Any(a => a.GetName().Name == "WebAssembly.Net.Http"))
-            {
-                return StorageAccessType.LocalStorage;
-            }
+        private static IStorageAccess _storageAccess;
 
-            return StorageAccessType.File;
+        public static IStorageAccess GetStorageAccess()
+        {
+            _storageAccess ??= new FileStorage();
+            return _storageAccess;
+        }
+
+        public static void SetStorageAccess(IStorageAccess storageAccess)
+        {
+            _storageAccess = storageAccess;
         }
     }
 
-    internal class FileAccess : IStorageAccess
+    public class FileStorage : IStorageAccess
     {
         public string ReadJson(string path, Func<string, string> encryptJson, Func<string, string> decryptJson)
         {
@@ -91,7 +85,7 @@ namespace JsonFlatFileDataStore
         }
     }
 
-    internal class LocalStorageAccess : IStorageAccess
+    public class InMemoryStorage : IStorageAccess
     {
         private string _content = "{}";
 
