@@ -78,7 +78,9 @@ namespace JsonFlatFileDataStore
                     break;
 
                 case JsonValueKind.String:
-                    expando[propertyName] = propertyValue.GetString();
+                    // Try to parse as DateTime to maintain Newtonsoft.Json compatibility
+                    // Newtonsoft.Json automatically parsed strings that looked like dates
+                    expando[propertyName] = TryParseDateTime(propertyValue.GetString());
                     break;
 
                 case JsonValueKind.Object:
@@ -134,7 +136,8 @@ namespace JsonFlatFileDataStore
                                 break;
 
                             case JsonValueKind.String:
-                                arrayValues.Add(arrayElement.GetString());
+                                // Try to parse as DateTime to maintain Newtonsoft.Json compatibility
+                                arrayValues.Add(TryParseDateTime(arrayElement.GetString()));
                                 break;
 
                             case JsonValueKind.Object:
@@ -191,7 +194,8 @@ namespace JsonFlatFileDataStore
                                             break;
 
                                         case JsonValueKind.String:
-                                            nestedArray.Add(nestedArrayElement.GetString());
+                                            // Try to parse as DateTime to maintain Newtonsoft.Json compatibility
+                                            nestedArray.Add(TryParseDateTime(nestedArrayElement.GetString()));
                                             break;
 
                                         case JsonValueKind.Object:
@@ -251,6 +255,32 @@ namespace JsonFlatFileDataStore
             }
 
             return arrayValues;
+        }
+
+        /// <summary>
+        /// Try to parse a string as DateTime to maintain backward compatibility with Newtonsoft.Json
+        /// Newtonsoft.Json automatically parsed strings that looked like dates
+        ///
+        /// Performance Note: This method is called for every string value when deserializing
+        /// dynamic/ExpandoObject data. DateTime.TryParse() has a performance cost, but it's
+        /// necessary to maintain backward compatibility. For performance-critical scenarios,
+        /// consider using strongly-typed collections (GetCollection&lt;T&gt;()) which don't
+        /// require this parsing step.
+        /// </summary>
+        private static object TryParseDateTime(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return value;
+
+            // Try to parse as DateTime using standard formats
+            // This includes ISO 8601, RFC 1123, and common date formats
+            if (DateTime.TryParse(value, out DateTime dateTime))
+            {
+                return dateTime;
+            }
+
+            // If not a valid date, return as string
+            return value;
         }
     }
 }

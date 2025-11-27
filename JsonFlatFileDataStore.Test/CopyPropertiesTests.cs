@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Dynamic;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
 using Xunit;
 
 namespace JsonFlatFileDataStore.Test
@@ -257,8 +256,9 @@ namespace JsonFlatFileDataStore.Test
                 { "name", "James" },
                 { "work", new Dictionary<string, object> { { "name", "ACME" } } }
             };
-            var jobject = JObject.FromObject(patchData);
-            dynamic patchExpando = JsonConvert.DeserializeObject<ExpandoObject>(jobject.ToString());
+            var jsonString = JsonSerializer.Serialize(patchData);
+            var options = new JsonSerializerOptions { Converters = { new SystemExpandoObjectConverter() } };
+            dynamic patchExpando = JsonSerializer.Deserialize<ExpandoObject>(jsonString, options);
 
             ObjectExtensions.CopyProperties(patchExpando, user);
             Assert.Equal("James", user.name);
@@ -325,8 +325,9 @@ namespace JsonFlatFileDataStore.Test
                 { "Name", "James" },
                 { "Work", new Dictionary<string, object> { { "Name", "ACME" } } }
             };
-            var jobject = JObject.FromObject(patchData);
-            dynamic patchExpando = JsonConvert.DeserializeObject<ExpandoObject>(jobject.ToString());
+            var jsonString = JsonSerializer.Serialize(patchData);
+            var options = new JsonSerializerOptions { Converters = { new SystemExpandoObjectConverter() } };
+            dynamic patchExpando = JsonSerializer.Deserialize<ExpandoObject>(jsonString, options);
 
             ObjectExtensions.CopyProperties(patchExpando, user);
             Assert.Equal("James", user.Name);

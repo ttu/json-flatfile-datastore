@@ -81,14 +81,23 @@ namespace JsonFlatFileDataStore.Test
 
             var test = DateTime.Now.ToShortDateString();
 
-            var itemDynamic = store.GetItem("myDate_string");
+            // Typed: System.Text.Json deserializes date strings to DateTime
             var itemTyped = store.GetItem<DateTime>("myDate_string");
             Assert.Equal(2009, itemTyped.Year);
 
-            var itemDynamic2 = store.GetItem("myDate_date");
+            // Dynamic: Now automatically parses date strings to DateTime (Newtonsoft.Json compatibility)
+            var itemDynamic = store.GetItem("myDate_string");
+            Assert.IsType<DateTime>(itemDynamic);
+            Assert.Equal(2009, itemDynamic.Year);
+
+            // Typed: System.Text.Json deserializes ISO date strings to DateTime
             var itemTyped2 = store.GetItem<DateTime>("myDate_date");
-            Assert.Equal(2015, itemDynamic2.Year);
             Assert.Equal(2015, itemTyped2.Year);
+
+            // Dynamic: Now automatically parses ISO date strings to DateTime (Newtonsoft.Json compatibility)
+            var itemDynamic2 = store.GetItem("myDate_date");
+            Assert.IsType<DateTime>(itemDynamic2);
+            Assert.Equal(2015, itemDynamic2.Year);
 
             UTHelpers.Down(newFilePath);
         }
