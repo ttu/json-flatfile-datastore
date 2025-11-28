@@ -6,7 +6,7 @@ using JsonFlatFileDataStore.Test;
 
 namespace JsonFlatFileDataStore.Benchmark
 {
-    [SimpleJob(RunStrategy.Monitoring, launchCount: 1, warmupCount: 5, targetCount: 50)]
+    [SimpleJob(RunStrategy.Monitoring, launchCount: 1, warmupCount: 5, iterationCount: 50)]
     public class TypedCollectionBenchmark
     {
         private string _newFilePath;
