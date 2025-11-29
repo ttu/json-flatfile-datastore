@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Dynamic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Xunit;
@@ -15,11 +17,11 @@ namespace JsonFlatFileDataStore.Test
 
             var storeFileNotFound = new DataStore(path);
             var collectionKeys = storeFileNotFound.GetKeys();
-            Assert.Equal(0, collectionKeys.Count);
+            Assert.Empty(collectionKeys);
 
             var storeFileFound = new DataStore(path);
             var collectionKeysFileFound = storeFileFound.GetKeys();
-            Assert.Equal(0, collectionKeysFileFound.Count);
+            Assert.Empty(collectionKeysFileFound);
 
             UTHelpers.Down(path);
         }
@@ -73,11 +75,11 @@ namespace JsonFlatFileDataStore.Test
 
             var storeFileNotFound = new DataStore(path, encryptionKey: "53cr3t");
             var collectionKeys = storeFileNotFound.GetKeys();
-            Assert.Equal(0, collectionKeys.Count);
+            Assert.Empty(collectionKeys);
 
             var storeFileFound = new DataStore(path, encryptionKey: "53cr3t");
             var collectionKeysFileFound = storeFileFound.GetKeys();
-            Assert.Equal(0, collectionKeysFileFound.Count);
+            Assert.Empty(collectionKeysFileFound);
 
             UTHelpers.Down(path);
         }
@@ -221,6 +223,44 @@ namespace JsonFlatFileDataStore.Test
             var json = File.ReadAllText(newFilePath);
 
             Assert.Contains("OwnerLongTestProperty", json);
+
+            UTHelpers.Down(newFilePath);
+        }
+
+        [Fact]
+        public async Task DynamicCollection_UpdateWrongCase_NoDuplicateProperties()
+        {
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection("user");
+            Assert.Equal(3, collection.Count);
+
+            await collection.InsertOneAsync(new { id = 11, name = "Teddy", age = 21 });
+
+            // Update with wrong case - capital A in Age
+            dynamic source = new ExpandoObject();
+            source.Age = 22;
+            var updateResult = await collection.UpdateOneAsync(e => e.id == 11, source as object);
+            Assert.True(updateResult);
+
+            // Read the raw JSON and verify no duplicate properties with different casing
+            var json = File.ReadAllText(newFilePath);
+            var ageCountLower = Regex.Matches(json, "\"age\"").Count;
+            var ageCountUpper = Regex.Matches(json, "\"Age\"").Count;
+
+            // Property 'age' (lowercase) should exist in the JSON
+            Assert.True(ageCountLower > 0);
+            // Property 'Age' (uppercase) should NOT exist - no duplicate properties with different casing
+            Assert.Equal(0, ageCountUpper);
+
+            // Verify the value is correct
+            var store2 = new DataStore(newFilePath);
+            var collection2 = store2.GetCollection("user");
+            var updated = collection2.Find(e => e.id == 11).First();
+            Assert.Equal(22, updated.age);
+            Assert.Equal("Teddy", updated.name);
 
             UTHelpers.Down(newFilePath);
         }
