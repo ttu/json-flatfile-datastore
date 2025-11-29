@@ -41,7 +41,7 @@ namespace JsonFlatFileDataStore.Test
                 await Task.Delay(1000);
 
                 if (sw.ElapsedMilliseconds > maxTimeMs)
-                    Assert.False(true, "Timeout");
+                    Assert.Fail("Timeout");
             }
 
             while (useDispose == storeRef.IsAlive)
@@ -50,7 +50,7 @@ namespace JsonFlatFileDataStore.Test
                 GC.Collect();
 
                 if (sw.ElapsedMilliseconds > maxTimeMs)
-                    Assert.False(true, "Timeout");
+                    Assert.Fail("Timeout");
             }
 
             // If DataStore is not disposed, it should still be alive
