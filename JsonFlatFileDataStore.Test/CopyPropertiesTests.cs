@@ -283,7 +283,9 @@ namespace JsonFlatFileDataStore.Test
 
             Assert.Equal(sensor.mac, destination.mac);
             Assert.Equal(sensor.data.temperature, destination.data.temperature);
-            Assert.Equal(sensor.data.identifier, destination.data.identifier);
+            // xUnit 2.9.3+ fix: Explicit cast to object for null values with dynamic types
+            // xunit new overloads cause ambiguity errors when using dynamic types
+            Assert.Equal((object)sensor.data.identifier, (object)destination.data.identifier);
         }
 
         [Fact]
@@ -304,7 +306,7 @@ namespace JsonFlatFileDataStore.Test
 
             Assert.Equal(sensor.mac, destination.mac);
             Assert.Equal(sensor.data["temperature"], destination.data["temperature"]);
-            Assert.Equal(sensor.data["identifier"], destination.data["identifier"]);
+            Assert.Equal((object)sensor.data["identifier"], (object)destination.data["identifier"]);
         }
 
         [Fact]
@@ -385,13 +387,23 @@ namespace JsonFlatFileDataStore.Test
         [InlineData("Field2", 0)]
         [InlineData("Field3", "0")]
         [InlineData("Field4", null)]
-        [InlineData("Field5", 0)]
-        [InlineData("Field6", 0)]
+        [InlineData("Field5", 0.0)]
+        // [InlineData("Field6", 0.0)] // See separate test: GetDefaultValue_DecimalField()
         [InlineData("Field7", false)]
         public void GetDefaultValue(string field, dynamic result)
         {
             var value = ObjectExtensions.GetDefaultValue<ClassForGetDefaultValue>(field);
-            Assert.Equal(value, result);
+            Assert.Equal((object)value, (object)result);
+        }
+
+        [Fact]
+        public void GetDefaultValue_DecimalField()
+        {
+            // Separate test for decimal field since InlineData doesn't support decimal literals
+            // C# attribute parameters must be compile-time constants, and decimal is not supported. The literal 0.0
+            // is interpreted as double, causing type mismatch with Field6 (decimal type).
+            var value = ObjectExtensions.GetDefaultValue<ClassForGetDefaultValue>("Field6");
+            Assert.Equal(0m, value);
         }
 
         [Theory]
@@ -403,7 +415,7 @@ namespace JsonFlatFileDataStore.Test
             var user = new User { Id = 2, Age = 40 };
 
             var value = ObjectExtensions.GetFieldValue(user, field);
-            Assert.Equal(value, result);
+            Assert.Equal((object)value, (object)result);
         }
     }
 }
