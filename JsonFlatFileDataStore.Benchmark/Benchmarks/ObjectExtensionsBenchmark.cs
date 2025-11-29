@@ -4,7 +4,7 @@ using JsonFlatFileDataStore.Test;
 
 namespace JsonFlatFileDataStore.Benchmark
 {
-    [SimpleJob(RunStrategy.Throughput, launchCount: 1, warmupCount: 5, targetCount: 50)]
+    [SimpleJob(RunStrategy.Throughput, launchCount: 1, warmupCount: 5, iterationCount: 50)]
     public class ObjectExtensionsBenchmark
     {
         private CopyPropertiesTests _test;
