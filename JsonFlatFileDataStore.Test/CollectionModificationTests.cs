@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace JsonFlatFileDataStore.Test
@@ -146,7 +146,7 @@ namespace JsonFlatFileDataStore.Test
 
             var collection2 = store2.GetCollection<User>("users2");
             await collection2.UpdateOneAsync(x => x.Id == 0, new { name = "new value" });
-            await collection2.UpdateOneAsync(x => x.Id == 1, JToken.Parse("{ name: \"new value 2\"} "));
+            await collection2.UpdateOneAsync(x => x.Id == 1, JsonNode.Parse("{ \"name\": \"new value 2\"} "));
 
             var store3 = new DataStore(newFilePath);
 
@@ -450,18 +450,19 @@ namespace JsonFlatFileDataStore.Test
 
             var newUsersJson = @"
             [
-                { 'id': 20, 'name': 'A1', 'age': 55 },
-                { 'id': 21, 'name': 'A2', 'age': 55 },
-                { 'id': 22, 'name': 'A3', 'age': 55 }
+                { ""id"": 20, ""name"": ""A1"", ""age"": 55 },
+                { ""id"": 21, ""name"": ""A2"", ""age"": 55 },
+                { ""id"": 22, ""name"": ""A3"", ""age"": 55 }
             ]
             ";
 
-            var newUsers = JToken.Parse(newUsersJson);
+            var newUsersArray = JsonNode.Parse(newUsersJson).AsArray();
+            var newUsers = newUsersArray.Select(n => n as dynamic);
 
             await collection.InsertManyAsync(newUsers);
 
-            var newUserJson = "{ 'id': 23, 'name': 'A4', 'age': 22 }";
-            var newUser = JToken.Parse(newUserJson);
+            var newUserJson = "{ \"id\": 23, \"name\": \"A4\", \"age\": 22 }";
+            var newUser = JsonNode.Parse(newUserJson);
 
             await collection.InsertOneAsync(newUser);
 
@@ -627,7 +628,7 @@ namespace JsonFlatFileDataStore.Test
             var collection = store.GetCollection("sensor");
 
             var success = collection.ReplaceOne(e => e.id == 11,
-                JToken.Parse("{ 'id': 11, 'mac': 'F4:A5:74:89:16:57', 'data': { 'temperature': 20.5 } }"),
+                JsonNode.Parse("{ \"id\": 11, \"mac\": \"F4:A5:74:89:16:57\", \"data\": { \"temperature\": 20.5 } }"),
                 true);
             Assert.True(success);
 
@@ -893,8 +894,9 @@ namespace JsonFlatFileDataStore.Test
                 { "name", "James" },
                 { "Work", new Dictionary<string, object> { { "Name", "ACME" } } }
             };
-            var jobject = JObject.FromObject(patchData);
-            dynamic patchExpando = JsonConvert.DeserializeObject<ExpandoObject>(jobject.ToString());
+            var jsonString = JsonSerializer.Serialize(patchData);
+            var options = new JsonSerializerOptions { Converters = { new SystemExpandoObjectConverter() } };
+            dynamic patchExpando = JsonSerializer.Deserialize<ExpandoObject>(jsonString, options);
 
             collection.UpdateOne(i => i.Id == 4, patchExpando as object);
 
@@ -1047,25 +1049,29 @@ namespace JsonFlatFileDataStore.Test
 
             var collection = store.GetCollection("employee");
 
-            var ja = new JArray { "Hello World!" };
-
-            var jObj = new JObject()
+            var data = new
             {
-                ["custom_id"] = 11,
-                ["nestedArray"] = new JArray { ja },
+                custom_id = 11,
+                nestedArray = new[]
+                {
+                    new[] { "Hello World!" }
+                }
             };
 
-            await collection.InsertOneAsync(jObj);
+            await collection.InsertOneAsync(data);
 
             var original = collection.Find(e => e.custom_id == 11).First();
             Assert.Equal(0, original.id);
             Assert.Equal(11, original.custom_id);
             Assert.Equal("Hello World!", original.nestedArray[0][0]);
 
-            var update = new JObject()
+            var update = new
             {
-                ["custom_id"] = 12,
-                ["nestedArray"] = new JArray { new JArray { "Other text" } },
+                custom_id = 12,
+                nestedArray = new[]
+                {
+                    new[] { "Other text" }
+                }
             };
 
             await collection.UpdateOneAsync(e => e.custom_id == 11, update);

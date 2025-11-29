@@ -23,6 +23,10 @@ A lightweight, JSON-based data storage solution, ideal for small applications an
 * .NET implementation & version support: [.NET Standard 2.0](https://docs.microsoft.com/en-us/dotnet/standard/net-standard?tabs=net-standard-2-0#select-net-standard-version)
   * For example, .NET 6, .NET Core 2.0, .NET Framework 4.6.1
 
+**Major Version Changes**
+
+* Version 3.0: Uses `System.Text.Json` instead of `Newtonsoft.Json` for JSON serialization and deserialization. This change reduces dependencies, as `System.Text.Json` is part of the .NET runtime.
+
 **Docs Website**
 
 [https://ttu.github.io/json-flatfile-datastore/](https://ttu.github.io/json-flatfile-datastore/)
@@ -670,6 +674,112 @@ collection2.ReplaceOne(e => e.id == 11, dynamicUser as object);
 // Compiler will also accept this
 collection2.ReplaceOne((Predicate<dynamic>)(e => e.id == 11), dynamicUser);
 ```
+
+## System.Text.Json vs Newtonsoft.Json
+
+Starting from version 3.x, JSON Flat File Data Store uses `System.Text.Json` instead of `Newtonsoft.Json` for JSON serialization and deserialization. This change reduces external dependencies, as `System.Text.Json` is part of the .NET runtime.
+
+**Note**: To maintain backward compatibility with Newtonsoft.Json behavior, custom parsing logic has been implemented for:
+- **Automatic date parsing** for dynamic types (parsing date strings to DateTime)
+- **Case-insensitive property matching** when updating ExpandoObjects (e.g., updating `Age` correctly updates `age`)
+
+These features were built-in to Newtonsoft.Json but required custom implementation in System.Text.Json. This may have a slight performance impact compared to using System.Text.Json without custom converters. For performance-critical applications, consider using strongly-typed collections.
+
+### Key Differences for Users
+
+#### 1. Working with Dynamic JSON Objects
+
+**Newtonsoft.Json (versions < 3.0):**
+```csharp
+// JToken/JObject had implicit conversion operators
+var employeeJson = JToken.Parse("{ \"id\": 1, \"name\": \"John\" }");
+await collection.InsertOneAsync(employeeJson);
+
+// Direct comparison worked due to implicit conversions
+Assert.Equal(1, employeeJson["id"]);
+```
+
+**System.Text.Json (version 3.x+):**
+```csharp
+// JsonNode is the equivalent of JToken
+var employeeJson = JsonNode.Parse("{ \"id\": 1, \"name\": \"John\" }");
+await collection.InsertOneAsync(employeeJson);
+
+// Explicit conversion required using GetValue<T>()
+Assert.Equal(1, employeeJson["id"].GetValue<int>());
+Assert.Equal("John", employeeJson["name"].GetValue<string>());
+```
+
+#### 2. Dynamic Data Types Support
+
+Both versions support the same dynamic data types:
+* `Anonymous types`
+* `ExpandoObject`
+* `Dictionary<string, object>`
+* JSON objects:
+  * versions < 3.0: `JToken`, `JObject`, `JArray` (Newtonsoft.Json)
+  * version 3.x+: `JsonNode`, `JsonObject`, `JsonArray` (System.Text.Json)
+
+#### 3. Creating Update Data
+
+**Newtonsoft.Json (versions < 3.0):**
+```csharp
+var patchData = new Dictionary<string, object>
+{
+    { "Age", 41 },
+    { "Name", "James" }
+};
+var jobject = JObject.FromObject(patchData);
+dynamic patchExpando = JsonConvert.DeserializeObject<ExpandoObject>(jobject.ToString());
+
+await collection.UpdateOneAsync(e => e.Id == 12, patchExpando);
+```
+
+**System.Text.Json (version 3.x+):**
+```csharp
+var patchData = new Dictionary<string, object>
+{
+    { "Age", 41 },
+    { "Name", "James" }
+};
+var jsonString = JsonSerializer.Serialize(patchData);
+var options = new JsonSerializerOptions { Converters = { new SystemExpandoObjectConverter() } };
+dynamic patchExpando = JsonSerializer.Deserialize<ExpandoObject>(jsonString, options);
+
+await collection.UpdateOneAsync(e => e.Id == 12, patchExpando);
+```
+
+#### 4. Date Handling with Dynamic Types
+
+Both versions automatically parse date strings when using dynamic types:
+
+```csharp
+// Both Newtonsoft.Json and System.Text.Json automatically parse date strings
+dynamic itemDynamic = store.GetItem("myDate");
+// itemDynamic is automatically converted to DateTime
+int year = itemDynamic.Year; // Works in both versions!
+
+// Typed retrieval also works as expected
+var itemTyped = store.GetItem<DateTime>("myDate");
+int year = itemTyped.Year; // Works!
+```
+
+**Performance Note**: In version 3.x, to maintain backward compatibility with Newtonsoft.Json, custom logic has been implemented for:
+1. **Automatic date parsing**: Attempts to parse all string values as dates using `DateTime.TryParse()`
+2. **Case-insensitive property matching**: When updating ExpandoObjects, finds existing properties using case-insensitive comparison
+
+These features were built-in to Newtonsoft.Json but require custom implementation in System.Text.Json. This may have a slight performance impact when working with large amounts of dynamic data. If performance is critical, consider using strongly-typed collections where possible.
+
+### Migration Notes
+
+* **API remains the same**: Public APIs for collections and data store operations are unchanged.
+* **JSON parsing**: Replace `JToken.Parse()` with `JsonNode.Parse()`.
+* **Value extraction**: Use `.GetValue<T>()` when accessing values from `JsonNode`.
+* **Date handling**: Both versions automatically parse date strings to DateTime for dynamic types (backward compatible).
+* **Converters**: If you were using custom Newtonsoft.Json converters, you'll need to rewrite them for System.Text.Json.
+* **Case-insensitive property matching**: Both versions support case-insensitive property updates (e.g., updating `Age` will correctly update `age`).
+* **Performance considerations**: Custom parsing logic for backward compatibility (automatic date parsing and case-insensitive property matching) may impact performance with large dynamic datasets. Use strongly-typed collections (`GetCollection<T>()`) for better performance when possible.
+* **Implementation note**: Features like automatic date parsing and case-insensitive property updates were built-in to Newtonsoft.Json but required custom implementation for System.Text.Json to maintain backward compatibility.
 
 ## Unit Tests & Benchmarks
 

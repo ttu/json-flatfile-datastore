@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace JsonFlatFileDataStore
 {
@@ -411,12 +410,21 @@ namespace JsonFlatFileDataStore
             if (keyValue is Int64)
                 return (int)keyValue + 1;
 
+            if (keyValue is Int32)
+                return (int)keyValue + 1;
+            
             return ParseNextIntegerToKeyValue(keyValue.ToString());
         }
 
         private dynamic GetFieldValue(T item, string fieldName)
         {
-            var expando = JsonConvert.DeserializeObject<ExpandoObject>(JsonConvert.SerializeObject(item), new ExpandoObjectConverter());
+            var options = new JsonSerializerOptions
+            {
+                Converters = { new SystemExpandoObjectConverter() },
+                PropertyNameCaseInsensitive = true // Optional: make property name matching case-insensitive
+            };
+            
+            var expando = JsonSerializer.Deserialize<ExpandoObject>(JsonSerializer.Serialize(item), options);
             // Problem here is if we have typed data with upper camel case properties but lower camel case in JSON, so need to use OrdinalIgnoreCase string comparer
             var expandoAsIgnoreCase = new Dictionary<string, dynamic>(expando, StringComparer.OrdinalIgnoreCase);
 
