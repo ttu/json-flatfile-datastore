@@ -6,27 +6,27 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <ApplicationIcon/>
+    <ApplicationIcon />
     <OutputTypeEx>library</OutputTypeEx>
-    <StartupObject/>
+    <StartupObject />
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.1"/>
-    <PackageReference Include="NSubstitute" Version="4.4.0"/>
-    <PackageReference Include="xunit" Version="2.4.2"/>
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+    <PackageReference Include="NSubstitute" Version="5.3.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\JsonFlatFileDataStore\JsonFlatFileDataStore.csproj"/>
+    <ProjectReference Include="..\JsonFlatFileDataStore\JsonFlatFileDataStore.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}"/>
+    <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
   </ItemGroup>
 
   <ItemGroup>
