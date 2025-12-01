@@ -16,7 +16,7 @@
     <Product>JsonFlatFileDataStore</Product>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <LangVersion>8</LangVersion>
+    <LangVersion>10</LangVersion>
     <PackageVersion>2.4.2</PackageVersion>
   </PropertyGroup>
 
