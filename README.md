@@ -671,6 +671,10 @@ collection2.ReplaceOne(e => e.id == 11, dynamicUser as object);
 collection2.ReplaceOne((Predicate<dynamic>)(e => e.id == 11), dynamicUser);
 ```
 
+## C# Language Version
+
+The main library (`JsonFlatFileDataStore`) uses C# 10 language features and targets .NET Standard 2.0. Most C# 10 features are compiler-only and work with .NET Standard 2.0. However, some C# 10 features require runtime support and are not compatible with .NET Standard 2.0.
+
 ## Unit Tests & Benchmarks
 
 `JsonFlatFileDataStore.Test` and `JsonFlatFileDataStore.Benchmark` are _.NET 10_ projects.
