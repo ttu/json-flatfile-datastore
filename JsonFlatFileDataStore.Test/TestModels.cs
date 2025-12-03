@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace JsonFlatFileDataStore.Test;
+﻿namespace JsonFlatFileDataStore.Test;
 
 public class TestModelWithStringArray
 {

@@ -1,8 +1,4 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
-using Xunit;
-
-namespace JsonFlatFileDataStore.Test;
+﻿namespace JsonFlatFileDataStore.Test;
 
 public class CollectionInsertBatchTests
 {
