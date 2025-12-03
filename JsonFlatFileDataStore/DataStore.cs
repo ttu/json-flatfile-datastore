@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Globalization;
@@ -435,7 +434,6 @@ public class DataStore : IDataStore
     private string GetJsonTextFromFile() => FileAccess.ReadJsonFromFile(_filePath, _encryptJson, _decryptJson);
 
     private JObject GetJsonObjectFromFile() => JObject.Parse(GetJsonTextFromFile());
-
 
     internal class CommitAction
     {

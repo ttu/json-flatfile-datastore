@@ -1,6 +1,4 @@
-﻿using BenchmarkDotNet.Running;
-
-namespace JsonFlatFileDataStore.Benchmark;
+﻿namespace JsonFlatFileDataStore.Benchmark;
 
 internal class Program
 {
