@@ -73,4 +73,71 @@ public class DataStoreDisposeTests
 
         store = null;
     }
+
+    [Fact]
+    public void VerifyJsonDocumentDisposal_NoMemoryLeaks()
+    {
+        // This test verifies that JsonDocument instances are properly disposed
+        // to prevent memory leaks when using ConvertToJsonElement and related methods
+        var newFilePath = UTHelpers.Up();
+        var store = new DataStore(newFilePath);
+
+        // Insert many items to stress test the resource management
+        for (int i = 0; i < 100; i++)
+        {
+            var item = new
+            {
+                id = i,
+                name = $"User{i}",
+                data = new
+                {
+                    value = i * 10,
+                    timestamp = DateTime.UtcNow
+                }
+            };
+
+            store.InsertItem($"item{i}", item);
+        }
+
+        // Force garbage collection to see if any disposed documents cause issues
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+
+        // Verify all items can still be read correctly
+        for (int i = 0; i < 100; i++)
+        {
+            var retrieved = store.GetItem($"item{i}");
+            Assert.NotNull(retrieved);
+            Assert.Equal(i, retrieved.id);
+            Assert.Equal($"User{i}", retrieved.name);
+            Assert.Equal(i * 10, retrieved.data.value);
+        }
+
+        // Delete items to test RemoveJsonDataElement disposal
+        for (int i = 0; i < 50; i++)
+        {
+            var deleted = store.DeleteItem($"item{i}");
+            Assert.True(deleted);
+        }
+
+        // Force GC again
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+
+        // Verify deleted items are gone and others remain
+        for (int i = 0; i < 50; i++)
+        {
+            Assert.Null(store.GetItem($"item{i}"));
+        }
+
+        for (int i = 50; i < 100; i++)
+        {
+            var retrieved = store.GetItem($"item{i}");
+            Assert.NotNull(retrieved);
+            Assert.Equal(i, retrieved.id);
+        }
+
+        UTHelpers.Down(newFilePath);
+    }
 }
