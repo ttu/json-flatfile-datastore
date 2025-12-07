@@ -2,6 +2,7 @@
 
 ### [Unreleased]
 * FIXED: Update functionality when objects has collections with nested collections
+* FIXED: Race condition during concurrent file access
 
 ### [2.4.2] - 2023-06-25
 * FIXED: Duplicate collection data to JSON on save when configured case was not used with collection name

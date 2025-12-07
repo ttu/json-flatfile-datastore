@@ -650,6 +650,8 @@ Additionally, the file output can be minified. The default is an intended output
 var store = new DataStore(newFilePath, minifyJson: true);
 ```
 
+**Note:** During write operations, temporary files (`.tmp` and `.bak`) are created in the same directory as the JSON file to ensure atomic writes. These files are automatically cleaned up after each write operation completes.
+
 ## Dynamic Types and Error CS1977
 
 When __Dynamic type__ is used with lambdas, the compiler will give you error __CS1977__:
