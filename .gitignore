@@ -267,3 +267,6 @@ __pycache__/
 .cursor/
 .vscode/
 .claude/
+
+# Code coverage results
+coverage-report/
