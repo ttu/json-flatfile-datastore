@@ -1071,4 +1071,113 @@ public class CollectionModificationTests
 
         UTHelpers.Down(newFilePath);
     }
+
+    [Fact]
+    public async Task ReplaceManyAsync_NoMatch_ReturnsFalse()
+    {
+        var newFilePath = UTHelpers.Up();
+        var store = new DataStore(newFilePath);
+        var collection = store.GetCollection<User>("user");
+
+        var result = await collection.ReplaceManyAsync(e => e.Name == "DoesNotExist", new User { Id = 99, Name = "Nobody" });
+        Assert.False(result);
+
+        UTHelpers.Down(newFilePath);
+    }
+
+    [Fact]
+    public async Task ReplaceManyAsync_SingleMatch_ReplacesItem()
+    {
+        var newFilePath = UTHelpers.Up();
+        var store = new DataStore(newFilePath);
+        var collection = store.GetCollection<User>("user");
+
+        var result = await collection.ReplaceManyAsync(e => e.Name == "Phil", new User { Id = 1, Name = "Phillip" });
+        Assert.True(result);
+
+        var store2 = new DataStore(newFilePath);
+        var collection2 = store2.GetCollection<User>("user");
+        Assert.Single(collection2.AsQueryable(), e => e.Name == "Phillip");
+        Assert.DoesNotContain(collection2.AsQueryable(), e => e.Name == "Phil");
+
+        UTHelpers.Down(newFilePath);
+    }
+
+    [Fact]
+    public async Task ReplaceManyAsync_MultipleMatches_ReplacesAll()
+    {
+        var path = UTHelpers.GetFullFilePath($"ReplaceManyAsync_{DateTime.UtcNow.Ticks}");
+        var store = new DataStore(path);
+        var collection = store.GetCollection<User>("user");
+
+        await collection.InsertOneAsync(new User { Id = 10, Name = "Target", Age = 20 });
+        await collection.InsertOneAsync(new User { Id = 11, Name = "Target", Age = 25 });
+        await collection.InsertOneAsync(new User { Id = 12, Name = "Other", Age = 30 });
+
+        var result = await collection.ReplaceManyAsync(e => e.Name == "Target", new User { Id = 0, Name = "Replaced", Age = 99 });
+        Assert.True(result);
+
+        store.Dispose();
+
+        var store2 = new DataStore(path);
+        var collection2 = store2.GetCollection<User>("user");
+        var replaced = collection2.AsQueryable().Where(e => e.Name == "Replaced").ToList();
+        Assert.Equal(2, replaced.Count);
+        Assert.All(replaced, u => Assert.Equal(99, u.Age));
+        Assert.Single(collection2.AsQueryable(), e => e.Name == "Other");
+
+        store2.Dispose();
+        UTHelpers.Down(path);
+    }
+
+    [Fact]
+    public async Task ReplaceManyAsync_PersistsAfterReload()
+    {
+        var path = UTHelpers.GetFullFilePath($"ReplaceManyAsyncPersist_{DateTime.UtcNow.Ticks}");
+        var store = new DataStore(path);
+        var collection = store.GetCollection<User>("user");
+
+        await collection.InsertOneAsync(new User { Id = 1, Name = "Before", Age = 10 });
+        await collection.InsertOneAsync(new User { Id = 2, Name = "Before", Age = 20 });
+
+        await collection.ReplaceManyAsync(e => e.Name == "Before", new User { Id = 1, Name = "After", Age = 50 });
+        store.Dispose();
+
+        var store2 = new DataStore(path);
+        var all = store2.GetCollection<User>("user").AsQueryable().ToList();
+        Assert.Equal(2, all.Count);
+        Assert.All(all, u => Assert.Equal("After", u.Name));
+
+        store2.Dispose();
+        UTHelpers.Down(path);
+    }
+
+    [Fact]
+    public async Task UpdateOne_DynamicWithExpandoObject_PreservesExistingFields()
+    {
+        var path = UTHelpers.GetFullFilePath($"DynExpUpd_{DateTime.UtcNow.Ticks}");
+        var store = new DataStore(path);
+
+        var collection = store.GetCollection("users");
+        await collection.InsertOneAsync(new { id = 1, name = "Alice", age = 30, location = "NY" });
+
+        // Update only age using ExpandoObject
+        dynamic update = new ExpandoObject();
+        update.age = 31;
+        await collection.UpdateOneAsync(e => e.id == 1, update as object);
+
+        store.Dispose();
+
+        var store2 = new DataStore(path);
+        var collection2 = store2.GetCollection("users");
+        var user = collection2.AsQueryable().First();
+
+        // Age should be updated, other fields preserved
+        Assert.Equal("Alice", (string)user.name);
+        Assert.Equal(31, (int)(long)user.age);
+        Assert.Equal("NY", (string)user.location);
+
+        store2.Dispose();
+        UTHelpers.Down(path);
+    }
 }

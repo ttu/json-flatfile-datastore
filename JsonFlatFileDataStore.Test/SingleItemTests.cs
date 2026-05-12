@@ -379,6 +379,70 @@ public class SingleItemTests
         UTHelpers.Down(newFilePath);
     }
 
+    [Fact]
+    public void UpdateItem_Sync_TypedUser()
+    {
+        var (newFilePath, store) = InitializeFileAndStore();
+
+        var result = store.InsertItem("myUser2", new User { Id = 12, Name = "Teddy" });
+        Assert.True(result);
+
+        var updated = store.UpdateItem("myUser2", new { name = "Harold" });
+        Assert.True(updated);
+
+        var user = store.GetItem<User>("myUser2");
+        Assert.Equal("Harold", user.Name);
+
+        var store2 = CreateStore(newFilePath);
+        var user2 = store2.GetItem<User>("myUser2");
+        Assert.Equal("Harold", user2.Name);
+
+        UTHelpers.Down(newFilePath);
+    }
+
+    [Fact]
+    public void UpdateItem_Sync_DynamicUser()
+    {
+        var (newFilePath, store) = InitializeFileAndStore();
+
+        store.InsertItem("myUser2", new { id = 12, name = "Teddy", age = 30 });
+
+        var updated = store.UpdateItem("myUser2", new { name = "Harold" });
+        Assert.True(updated);
+
+        var user = store.GetItem("myUser2");
+        Assert.Equal("Harold", user.name);
+        Assert.Equal(30, (int)user.age);
+
+        UTHelpers.Down(newFilePath);
+    }
+
+    [Fact]
+    public void UpdateItem_Sync_KeyNotFound_ReturnsFalse()
+    {
+        var (newFilePath, store) = InitializeFileAndStore();
+
+        var result = store.UpdateItem("nonExistentKey", new { name = "Nobody" });
+        Assert.False(result);
+
+        UTHelpers.Down(newFilePath);
+    }
+
+    [Fact]
+    public void UpdateItem_Sync_ValueType()
+    {
+        var (newFilePath, store) = InitializeFileAndStore();
+
+        store.InsertItem("counter", 10);
+        var updated = store.UpdateItem("counter", 99);
+        Assert.True(updated);
+
+        var value = store.GetItem<int>("counter");
+        Assert.Equal(99, value);
+
+        UTHelpers.Down(newFilePath);
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData(EncryptionPassword)]
@@ -407,5 +471,23 @@ public class SingleItemTests
         Assert.Null(user);
 
         UTHelpers.Down(newFilePath);
+    }
+
+    [Fact]
+    public void SingleItem_StringValue_InsertReplace()
+    {
+        var path = UTHelpers.GetFullFilePath($"StringItem_{DateTime.UtcNow.Ticks}");
+        var store = new DataStore(path);
+
+        store.InsertItem("greeting", "hello");
+        var val = store.GetItem<string>("greeting");
+        Assert.Equal("hello", val);
+
+        store.ReplaceItem("greeting", "world");
+        var val2 = store.GetItem<string>("greeting");
+        Assert.Equal("world", val2);
+
+        store.Dispose();
+        UTHelpers.Down(path);
     }
 }
