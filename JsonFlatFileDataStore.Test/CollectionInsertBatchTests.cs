@@ -85,4 +85,25 @@ public class CollectionInsertBatchTests
 
         UTHelpers.Down(newFilePath);
     }
+
+    [Fact]
+    public async Task ConcurrentInserts_AllItemsPersisted()
+    {
+        var path = UTHelpers.GetFullFilePath($"Concurrent_{DateTime.UtcNow.Ticks}");
+        var store = new DataStore(path);
+        var collection = store.GetCollection("items");
+
+        const int count = 50;
+        var tasks = Enumerable.Range(0, count)
+            .Select(i => collection.InsertOneAsync(new { id = i, value = $"item{i}" }));
+
+        await Task.WhenAll(tasks);
+        store.Dispose();
+
+        var store2 = new DataStore(path);
+        Assert.Equal(count, store2.GetCollection("items").Count);
+
+        store2.Dispose();
+        UTHelpers.Down(path);
+    }
 }

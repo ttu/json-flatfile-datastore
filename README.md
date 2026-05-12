@@ -82,6 +82,13 @@ await store.InsertItemAsync("counter", 1);
 var counter = await store.GetItem<int>("counter");
 ```
 
+> **Note:** A typed collection reads JSON into instances of the typed model, so any
+> properties present in the JSON file but missing from the model are dropped on the
+> next write. Don't mix typed and dynamic access against the same collection if the
+> dynamic side adds fields the typed model doesn't declare — those fields will be
+> lost the next time the typed collection is saved. Use a dynamic collection
+> (`GetCollection(string)`) when the schema is open.
+
 ### Dynamically Typed Data
 
 Dynamic data can be any of the following types:
@@ -423,6 +430,12 @@ await collection.DeleteManyAsync(e => e.City == "NY");
 
 If incrementing Id-field values are used, `GetNextIdValue` returns the next Id-field value. For integer Id-properties, the last item's value is incremented by one. For non-integer fields, the value is converted to a string and number at the end of the sting is parsed and incremented by one.
 
+> **Supported Id-field types:** integer types and `string` work as the collection key.
+> `Guid` is **not** supported as the Id property of a typed collection — inserts throw
+> at runtime. Use `int` or `string` as the key and keep the `Guid` in another field if
+> you need one per row. `Guid` is fine everywhere else (non-key fields,
+> `InsertItem`/`GetItem<Guid>` for single items).
+
 ```csharp
 var store = new DataStore(newFilePath, keyProperty: "myId");
 
@@ -670,6 +683,14 @@ collection2.ReplaceOne(e => e.id == 11, dynamicUser as object);
 // Compiler will also accept this
 collection2.ReplaceOne((Predicate<dynamic>)(e => e.id == 11), dynamicUser);
 ```
+
+## Known Limitations
+
+### Decimal precision
+
+Large `decimal` values do not survive a round trip cleanly. Data is internally routed through `ExpandoObject`, which represents JSON numbers as `double`, so anything past roughly 15 significant digits becomes inexact. `decimal.MaxValue` is a worst case — it is written in scientific notation (`7.922816251426434E+28`) that cannot be parsed back as `decimal` at all, and reading the file raises `JsonReaderException`.
+
+If you need exact preservation of large or high-precision decimals, store them as strings. Pinned by `NumericEdgeCaseTests`.
 
 ## C# Language Version
 

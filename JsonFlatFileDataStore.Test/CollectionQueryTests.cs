@@ -290,4 +290,24 @@ public class CollectionQueryTests
 
         UTHelpers.Down(newFilePath);
     }
+
+    [Fact]
+    public void ExpandoObject_CastToIDictionary_Works()
+    {
+        var newFilePath = UTHelpers.Up();
+        var store = new DataStore(newFilePath);
+
+        var collection = store.GetCollection("user");
+        var user = collection.AsQueryable().First();
+
+        // The dynamic item should be castable to IDictionary<string, object>
+        // This is critical because ObjectExtensions relies on this cast
+        var dict = user as IDictionary<string, object>;
+        Assert.NotNull(dict);
+        Assert.True(dict.ContainsKey("name"));
+        Assert.True(dict.ContainsKey("id"));
+        Assert.Equal("James", dict["name"]);
+
+        UTHelpers.Down(newFilePath);
+    }
 }
