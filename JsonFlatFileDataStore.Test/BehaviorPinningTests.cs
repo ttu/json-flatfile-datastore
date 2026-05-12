@@ -27,6 +27,10 @@ public class BehaviorPinningTests
         Assert.Equal(1, fresh.Count);
         Assert.Equal(99, (int)(long)fresh.AsQueryable().First().id);
 
+        // Pin: the previously-obtained reference still holds the pre-UpdateAll snapshot.
+        Assert.Equal(1, collection.Count);
+        Assert.Equal(1, (int)(long)collection.AsQueryable().First().id);
+
         store.Dispose();
         UTHelpers.Down(path);
     }

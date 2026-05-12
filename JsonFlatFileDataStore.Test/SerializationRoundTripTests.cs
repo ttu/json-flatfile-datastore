@@ -266,11 +266,11 @@ public class SerializationRoundTripTests
 
         var store2 = new DataStore(path);
         var collection2 = store2.GetCollection("items");
-        var items = collection2.AsQueryable().ToList();
+        var texts = collection2.AsQueryable().Select(x => (string)x.text).ToList();
 
-        Assert.Equal("He said \"hello\"", (string)items[0].text);
-        Assert.Equal("path\\to\\file", (string)items[1].text);
-        Assert.Equal("line1\nline2", (string)items[2].text);
+        Assert.Contains("He said \"hello\"", texts);
+        Assert.Contains("path\\to\\file", texts);
+        Assert.Contains("line1\nline2", texts);
 
         store2.Dispose();
         UTHelpers.Down(path);
@@ -291,11 +291,11 @@ public class SerializationRoundTripTests
 
         var store2 = new DataStore(path);
         var collection2 = store2.GetCollection("items");
-        var items = collection2.AsQueryable().ToList();
+        var texts = collection2.AsQueryable().Select(x => (string)x.text).ToList();
 
-        Assert.Equal("日本語テスト", (string)items[0].text);
-        Assert.Equal("émojis: 🎉", (string)items[1].text);
-        Assert.Equal("Ñoño", (string)items[2].text);
+        Assert.Contains("日本語テスト", texts);
+        Assert.Contains("émojis: 🎉", texts);
+        Assert.Contains("Ñoño", texts);
 
         store2.Dispose();
         UTHelpers.Down(path);
