@@ -232,8 +232,9 @@ public class JsonOutputFormatTests
 
         var json = UTHelpers.GetFileContent(path);
 
-        // Newtonsoft writes 5.0, System.Text.Json writes 5 — this test catches the difference
-        Assert.Contains("5.0", json);
+        // System.Text.Json writes whole-number doubles without a trailing ".0" (e.g., 5 not 5.0).
+        // Newtonsoft.Json preserved the trailing ".0". See README "Known Differences".
+        Assert.Matches("\"rating\"\\s*:\\s*5(\\b|[^.0-9])", json);
 
         store.Dispose();
         UTHelpers.Down(path);

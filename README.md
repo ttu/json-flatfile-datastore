@@ -692,7 +692,7 @@ collection2.ReplaceOne((Predicate<dynamic>)(e => e.id == 11), dynamicUser);
 
 ### Decimal precision
 
-Large `decimal` values do not survive a round trip cleanly. Data is internally routed through `ExpandoObject`, which represents JSON numbers as `double`, so anything past roughly 15 significant digits becomes inexact. `decimal.MaxValue` is a worst case — it is written in scientific notation (`7.922816251426434E+28`) that cannot be parsed back as `decimal` at all, and reading the file raises `JsonReaderException`.
+Large `decimal` values do not survive a round trip cleanly. Data is internally routed through `ExpandoObject`, which represents JSON numbers as `double`, so anything past roughly 15 significant digits becomes inexact. `decimal.MaxValue` is a worst case — it is written in scientific notation (`7.922816251426434E+28`) that cannot be parsed back as `decimal` at all, and reading the file raises `System.Text.Json.JsonException` (in earlier Newtonsoft-based releases this surfaced as `Newtonsoft.Json.JsonReaderException`).
 
 If you need exact preservation of large or high-precision decimals, store them as strings. Pinned by `NumericEdgeCaseTests`.
 
@@ -801,6 +801,31 @@ These features were built-in to Newtonsoft.Json but require custom implementatio
 * **Case-insensitive property matching**: Both versions support case-insensitive property updates (e.g., updating `Age` will correctly update `age`).
 * **Performance considerations**: Custom parsing logic for backward compatibility (automatic date parsing and case-insensitive property matching) may impact performance with large dynamic datasets. Use strongly-typed collections (`GetCollection<T>()`) for better performance when possible.
 * **Implementation note**: Features like automatic date parsing and case-insensitive property updates were built-in to Newtonsoft.Json but required custom implementation for System.Text.Json to maintain backward compatibility.
+
+### Known Behavior Differences
+
+The following differences were uncovered while migrating the test suite. Most are intrinsic to `System.Text.Json` and are not papered over by the compatibility shims:
+
+| Area | Newtonsoft.Json | System.Text.Json (this library) | Notes |
+| --- | --- | --- | --- |
+| Whole-number `double` output | `5.0` | `5` | STJ drops the trailing `.0`. Numeric value is unchanged. Pinned by `JsonOutputFormatTests.GoldenFile_DoubleFormatting_FivePointZero_WrittenCorrectly`. |
+| Invalid-JSON exception type | `Newtonsoft.Json.JsonException` | `System.Text.Json.JsonException` (typically the `JsonReaderException` subtype) | Callers catching the old type must update. |
+| `JToken` / `JObject` / `JArray` inputs | Accepted directly | Replaced by `JsonNode` / `JsonObject` / `JsonArray` from `System.Text.Json.Nodes` | The library accepts `JsonNode`-typed inputs in the same shape; rewrite call sites accordingly. |
+| Enum-as-string on typed models | `[JsonConverter(typeof(StringEnumConverter))]` | `[JsonConverter(typeof(JsonStringEnumConverter))]` | Read path also registers a global `JsonStringEnumConverter` (camelCase, case-insensitive). |
+| Dynamic integer type | All JSON integers surface as `Int64` (`long`) | Same — preserved by the custom `ExpandoObject` converter (Int64 is tried before smaller widths) | Without the converter STJ would surface them as `Int32`. |
+| Dynamic string → DateTime promotion | Permissive (`DateTime.TryParse`) | Restricted to explicit ISO 8601 patterns (`yyyy-MM-dd[THH:mm:ss[.FFFFFFF]][K]`) | Prevents `TimeSpan`-shaped strings like `"01:30:00"` from being silently turned into "today at 01:30". |
+| `TimeSpan` round-trip on typed models | Stored as `"hh:mm:ss[.fff]"` | Same on write (STJ default); read requires the typed deserialization path | Pinned by `TemporalAndIdentifierTests.TimeSpan_RoundTrip`. |
+| `DateTime.Kind = Utc` on single items | Preserved | Preserved (after the dynamic-string-promotion fix above) | Without the stricter promotion, UTC values were silently rewritten with the local offset. |
+| `DateTimeOffset` round-trip | Preserved | Preserved | Pinned by `TemporalAndIdentifierTests.DateTimeOffset_RoundTrip`. |
+| Large `decimal` values | Preserved within `decimal` precision | **Lossy** — routed through `ExpandoObject`/`double`, so >~15 significant digits are inexact and `decimal.MaxValue` cannot round-trip at all | Pre-existing limitation, see **Known Limitations** above. Store as `string` for exact preservation. |
+| `JsonNode` indexer return type | `JToken` had implicit conversion operators (`(int)token["id"]` worked) | `JsonNode` requires explicit `GetValue<T>()` (e.g. `node["id"].GetValue<int>()`) | Affects user code that reads `JsonNode`. Library-returned dynamic values are unaffected — they surface as primitives or `ExpandoObject`. |
+| Case-insensitive property binding (typed read) | Built-in | Enabled here via `PropertyNameCaseInsensitive = true` on the typed deserializer | Pre-existing files with PascalCase keys still load into camelCase models. Pinned by `CaseSensitivityTests`. |
+| Case-insensitive property merge (dynamic update) | Built-in | Custom implementation in `ObjectExtensions` — matching is `OrdinalIgnoreCase`, the existing key's casing is preserved | Updating `"Age"` correctly overwrites an existing `"age"` entry without creating a duplicate. |
+| `Dictionary<TKey, TValue>` with non-string keys (`int`, `Guid`, `enum`) | Supported out of the box | Supported on `System.Text.Json` 6+ when round-tripping through the library's options; keys are serialized as JSON strings | Pinned by `DictionarySerializationTests`. |
+| `[JsonConverter]` attribute namespace | `Newtonsoft.Json.JsonConverter` | `System.Text.Json.Serialization.JsonConverter` | Custom converters from the Newtonsoft world must be rewritten against the STJ converter API. |
+| `double.NaN` / `±Infinity` | Written as quoted literals (`"NaN"`, `"Infinity"`, `"-Infinity"`) | Same — enabled here via `JsonNumberHandling.AllowNamedFloatingPointLiterals`. STJ's default would throw on serialize. | Without the opt-in flag the commit thread would throw and the synchronous `InsertItem` call would hang waiting for a Ready callback. Both the flag and a defensive `try`/`catch` around each `HandleAction` in `CommitActionHandler` are required. Pinned by `NumericEdgeCaseTests.Double_NaN_RoundTrip_BehaviorPinned` and `Double_Infinity_RoundTrip_BehaviorPinned`. |
+
+## Unit Tests & Benchmarks
 
 ## Unit Tests & Benchmarks
 
