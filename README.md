@@ -23,6 +23,10 @@ A lightweight, JSON-based data storage solution, ideal for small applications an
 * .NET implementation & version support: [.NET Standard 2.0](https://docs.microsoft.com/en-us/dotnet/standard/net-standard?tabs=net-standard-2-0#select-net-standard-version)
   * For example, .NET 6, .NET Core 2.0, .NET Framework 4.6.1
 
+**Major Version Changes**
+
+* Version 3.0: Uses `System.Text.Json` instead of `Newtonsoft.Json` for JSON serialization and deserialization. This change reduces dependencies, as `System.Text.Json` is part of the .NET runtime.
+
 **Docs Website**
 
 [https://ttu.github.io/json-flatfile-datastore/](https://ttu.github.io/json-flatfile-datastore/)
@@ -94,7 +98,7 @@ var counter = await store.GetItem<int>("counter");
 Dynamic data can be any of the following types:
 * `Anonymous type`
 * `ExpandoObject`
-* JSON objects (`JToken`, `JObject`, `JArray`)
+* JSON objects (`JsonNode`, `JsonObject`, `JsonArray`)
 * `Dictionary<string, object>`
 
 Note: All dynamic data is internally serialized to `ExpandoObject`.
@@ -110,7 +114,7 @@ var collection = store.GetCollection("employee");
 var employee = new { id = 1, name = "John", age = 46 };
 
 // Create new employee from JSON
-var employeeJson = JToken.Parse("{ 'id': 2, 'name': 'Raymond', 'age': 32 }");
+var employeeJson = JsonNode.Parse("{ \"id\": 2, \"name\": \"Raymond\", \"age\": 32 }");
 
 // Create new employee from dictionary
 var employeeDict = new Dictionary<string, object>
@@ -130,7 +134,7 @@ await collection.InsertOneAsync(employeeDict);
 var updateData = new { name = "John Doe" };
 
 // Update data from JSON
-var updateJson = JToken.Parse("{ 'name': 'Raymond Doe' }");
+var updateJson = JsonNode.Parse("{ \"name\": \"Raymond Doe\" }");
 
 // Update data from dictionary
 var updateDict = new Dictionary<string, object> { ["name"] = "Andy Doe" };
@@ -223,7 +227,7 @@ var caseSensitiveMatches = collection.Find("Alabama", true);
 await collection.InsertOneAsync(new { id = 3, name = "Raymond", age = 32, city = "NY" });
 
 // Dynamic item can also be JSON object
-var user = JToken.Parse("{ 'id': 3, 'name': 'Raymond', 'age': 32, 'city': 'NY' }");
+var user = JsonNode.Parse("{ \"id\": 3, \"name\": \"Raymond\", \"age\": 32, \"city\": \"NY\" }");
 await collection.InsertOneAsync(user);
 
 // Synchronous method and typed data
@@ -262,14 +266,14 @@ If the type of the `id`-field is a *number*, the value is incremented by one. If
 
 ```csharp
 // Latest id in the collection is "hello5"
-var user = JToken.Parse("{ 'id': 'wrongValue', 'name': 'Raymond', 'age': 32, 'city': 'NY' }");
+var user = JsonNode.Parse("{ \"id\": \"wrongValue\", \"name\": \"Raymond\", \"age\": 32, \"city\": \"NY\" }");
 await collection.InsertOneAsync(user);
-// After addition: user["id"] == "hello6"
+// After addition: user["id"].GetValue<string>() == "hello6"
 
 // User data doesn't have an id field
-var userNoId = JToken.Parse("{ 'name': 'Raymond', 'age': 32, 'city': 'NY' }");
+var userNoId = JsonNode.Parse("{ \"name\": \"Raymond\", \"age\": 32, \"city\": \"NY\" }");
 await collection.InsertOneAsync(userNoId);
-// After addition: userNoId["id"] == "hello7"
+// After addition: userNoId["id"].GetValue<string>() == "hello7"
 ```
 
 For an empty collection, if the `id`-field's type is a number, the first id will be `0`. If the type is a string, the first id will be `"0"`.
@@ -372,8 +376,9 @@ patchData.Add("Age", 41);
 patchData.Add("Name", "James");
 patchData.Add("Work", new Dictionary<string, object> { { "Name", "ACME" } });
 
-var jobject = JObject.FromObject(patchData);
-dynamic patchExpando = JsonConvert.DeserializeObject<ExpandoObject>(jobject.ToString());
+var jsonString = JsonSerializer.Serialize(patchData);
+var options = new JsonSerializerOptions { Converters = { new SystemExpandoObjectConverter() } };
+dynamic patchExpando = JsonSerializer.Deserialize<ExpandoObject>(jsonString, options);
 
 await collection.UpdateOneAsync(e => e.Id == 12, patchExpando);
 ```
@@ -688,13 +693,138 @@ collection2.ReplaceOne((Predicate<dynamic>)(e => e.id == 11), dynamicUser);
 
 ### Decimal precision
 
-Large `decimal` values do not survive a round trip cleanly. Data is internally routed through `ExpandoObject`, which represents JSON numbers as `double`, so anything past roughly 15 significant digits becomes inexact. `decimal.MaxValue` is a worst case — it is written in scientific notation (`7.922816251426434E+28`) that cannot be parsed back as `decimal` at all, and reading the file raises `JsonReaderException`.
+Large `decimal` values do not survive a round trip cleanly. Data is internally routed through `ExpandoObject`, which represents JSON numbers as `double`, so anything past roughly 15 significant digits becomes inexact. `decimal.MaxValue` is a worst case — it is written in scientific notation (`7.922816251426434E+28`) that cannot be parsed back as `decimal` at all, and reading the file raises `System.Text.Json.JsonException` (in earlier Newtonsoft-based releases this surfaced as `Newtonsoft.Json.JsonReaderException`).
 
 If you need exact preservation of large or high-precision decimals, store them as strings. Pinned by `NumericEdgeCaseTests`.
 
-## C# Language Version
+## System.Text.Json vs Newtonsoft.Json
 
-The main library (`JsonFlatFileDataStore`) uses C# 10 language features and targets .NET Standard 2.0. Most C# 10 features are compiler-only and work with .NET Standard 2.0. However, some C# 10 features require runtime support and are not compatible with .NET Standard 2.0.
+Starting from version 3.x, JSON Flat File Data Store uses `System.Text.Json` instead of `Newtonsoft.Json` for JSON serialization and deserialization. This change reduces external dependencies, as `System.Text.Json` is part of the .NET runtime.
+
+**Note**: To maintain backward compatibility with Newtonsoft.Json behavior, custom parsing logic has been implemented for:
+- **Automatic date parsing** for dynamic types (parsing date strings to DateTime)
+- **Case-insensitive property matching** when updating ExpandoObjects (e.g., updating `Age` correctly updates `age`)
+
+These features were built-in to Newtonsoft.Json but required custom implementation in System.Text.Json. This may have a slight performance impact compared to using System.Text.Json without custom converters. For performance-critical applications, consider using strongly-typed collections.
+
+### Key Differences for Users
+
+#### 1. Working with Dynamic JSON Objects
+
+**Newtonsoft.Json (versions < 3.0):**
+```csharp
+// JToken/JObject had implicit conversion operators
+var employeeJson = JToken.Parse("{ \"id\": 1, \"name\": \"John\" }");
+await collection.InsertOneAsync(employeeJson);
+
+// Direct comparison worked due to implicit conversions
+Assert.Equal(1, employeeJson["id"]);
+```
+
+**System.Text.Json (version 3.x+):**
+```csharp
+// JsonNode is the equivalent of JToken
+var employeeJson = JsonNode.Parse("{ \"id\": 1, \"name\": \"John\" }");
+await collection.InsertOneAsync(employeeJson);
+
+// Explicit conversion required using GetValue<T>()
+Assert.Equal(1, employeeJson["id"].GetValue<int>());
+Assert.Equal("John", employeeJson["name"].GetValue<string>());
+```
+
+#### 2. Dynamic Data Types Support
+
+Both versions support the same dynamic data types:
+* `Anonymous types`
+* `ExpandoObject`
+* `Dictionary<string, object>`
+* JSON objects:
+  * versions < 3.0: `JToken`, `JObject`, `JArray` (Newtonsoft.Json)
+  * version 3.x+: `JsonNode`, `JsonObject`, `JsonArray` (System.Text.Json)
+
+#### 3. Creating Update Data
+
+**Newtonsoft.Json (versions < 3.0):**
+```csharp
+var patchData = new Dictionary<string, object>
+{
+    { "Age", 41 },
+    { "Name", "James" }
+};
+var jobject = JObject.FromObject(patchData);
+dynamic patchExpando = JsonConvert.DeserializeObject<ExpandoObject>(jobject.ToString());
+
+await collection.UpdateOneAsync(e => e.Id == 12, patchExpando);
+```
+
+**System.Text.Json (version 3.x+):**
+```csharp
+var patchData = new Dictionary<string, object>
+{
+    { "Age", 41 },
+    { "Name", "James" }
+};
+var jsonString = JsonSerializer.Serialize(patchData);
+var options = new JsonSerializerOptions { Converters = { new SystemExpandoObjectConverter() } };
+dynamic patchExpando = JsonSerializer.Deserialize<ExpandoObject>(jsonString, options);
+
+await collection.UpdateOneAsync(e => e.Id == 12, patchExpando);
+```
+
+#### 4. Date Handling with Dynamic Types
+
+Both versions automatically parse date strings when using dynamic types:
+
+```csharp
+// Both Newtonsoft.Json and System.Text.Json automatically parse date strings
+dynamic itemDynamic = store.GetItem("myDate");
+// itemDynamic is automatically converted to DateTime
+int year = itemDynamic.Year; // Works in both versions!
+
+// Typed retrieval also works as expected
+var itemTyped = store.GetItem<DateTime>("myDate");
+int year = itemTyped.Year; // Works!
+```
+
+**Performance Note**: In version 3.x, to maintain backward compatibility with Newtonsoft.Json, custom logic has been implemented for:
+1. **Automatic date parsing**: For **dynamic types only**, attempts to parse all string values as dates using `DateTime.TryParse()`. This performance impact **only affects dynamic/ExpandoObject collections** - typed collections (`GetCollection<T>()`) only parse strings that are actually mapped to DateTime properties, making them more efficient.
+2. **Case-insensitive property matching**: When updating ExpandoObjects, finds existing properties using case-insensitive comparison
+
+These features were built-in to Newtonsoft.Json but require custom implementation in System.Text.Json. The date parsing performance impact **only affects dynamic types** - if performance is critical, use strongly-typed collections (`GetCollection<T>()`) where possible.
+
+### Migration Notes
+
+* **API remains the same**: Public APIs for collections and data store operations are unchanged.
+* **JSON parsing**: Replace `JToken.Parse()` with `JsonNode.Parse()`.
+* **Value extraction**: Use `.GetValue<T>()` when accessing values from `JsonNode`.
+* **Date handling**: Both versions automatically parse date strings to DateTime for dynamic types (backward compatible).
+* **Converters**: If you were using custom Newtonsoft.Json converters, you'll need to rewrite them for System.Text.Json.
+* **Case-insensitive property matching**: Both versions support case-insensitive property updates (e.g., updating `Age` will correctly update `age`).
+* **Performance considerations**: Custom parsing logic for backward compatibility (automatic date parsing and case-insensitive property matching) may impact performance with large dynamic datasets. Use strongly-typed collections (`GetCollection<T>()`) for better performance when possible.
+* **Implementation note**: Features like automatic date parsing and case-insensitive property updates were built-in to Newtonsoft.Json but required custom implementation for System.Text.Json to maintain backward compatibility.
+
+### Known Behavior Differences
+
+The following differences were uncovered while migrating the test suite. Most are intrinsic to `System.Text.Json` and are not papered over by the compatibility shims:
+
+| Area | Newtonsoft.Json | System.Text.Json (this library) | Notes |
+| --- | --- | --- | --- |
+| Whole-number `double` output | `5.0` | `5` | STJ drops the trailing `.0`. Numeric value is unchanged. Pinned by `JsonOutputFormatTests.GoldenFile_DoubleFormatting_FivePointZero_WrittenCorrectly`. |
+| Invalid-JSON exception type | `Newtonsoft.Json.JsonException` | `System.Text.Json.JsonException` | Callers catching the old type must update. |
+| `JToken` / `JObject` / `JArray` inputs | Accepted directly | Replaced by `JsonNode` / `JsonObject` / `JsonArray` from `System.Text.Json.Nodes` | The library accepts `JsonNode`-typed inputs in the same shape; rewrite call sites accordingly. |
+| Enum-as-string on typed models | `[JsonConverter(typeof(StringEnumConverter))]` | `[JsonConverter(typeof(JsonStringEnumConverter))]` | Read path also registers a global `JsonStringEnumConverter` (camelCase, case-insensitive). |
+| Dynamic integer type | All JSON integers surface as `Int64` (`long`) | Same — preserved by the custom `ExpandoObject` converter (Int64 is tried before smaller widths) | Without the converter STJ would surface them as `Int32`. |
+| Dynamic string → DateTime promotion | Permissive (`DateTime.TryParse`) | Restricted to explicit ISO 8601 patterns (`yyyy-MM-dd[THH:mm:ss[.FFFFFFF]][K]`) | Prevents `TimeSpan`-shaped strings like `"01:30:00"` from being silently turned into "today at 01:30". |
+| `TimeSpan` round-trip on typed models | Stored as `"hh:mm:ss[.fff]"` | Same on write (STJ default); read requires the typed deserialization path | Pinned by `TemporalAndIdentifierTests.TimeSpan_RoundTrip`. |
+| `DateTime.Kind = Utc` on single items | Preserved | Preserved (after the dynamic-string-promotion fix above) | Without the stricter promotion, UTC values were silently rewritten with the local offset. |
+| `DateTimeOffset` round-trip | Preserved | Preserved | Pinned by `TemporalAndIdentifierTests.DateTimeOffset_RoundTrip`. |
+| Large `decimal` values | Preserved within `decimal` precision | **Lossy** — routed through `ExpandoObject`/`double`, so >~15 significant digits are inexact and `decimal.MaxValue` cannot round-trip at all | Pre-existing limitation, see **Known Limitations** above. Store as `string` for exact preservation. |
+| `JsonNode` indexer return type | `JToken` had implicit conversion operators (`(int)token["id"]` worked) | `JsonNode` requires explicit `GetValue<T>()` (e.g. `node["id"].GetValue<int>()`) | Affects user code that reads `JsonNode`. Library-returned dynamic values are unaffected — they surface as primitives or `ExpandoObject`. |
+| Case-insensitive property binding (typed read) | Built-in | Enabled here via `PropertyNameCaseInsensitive = true` on the typed deserializer | Pre-existing files with PascalCase keys still load into camelCase models. Pinned by `CaseSensitivityTests`. |
+| Case-insensitive property merge (dynamic update) | Built-in | Custom implementation in `ObjectExtensions` — matching is `OrdinalIgnoreCase`, the existing key's casing is preserved | Updating `"Age"` correctly overwrites an existing `"age"` entry without creating a duplicate. |
+| `Dictionary<TKey, TValue>` with non-string keys (`int`, `Guid`, `enum`) | Supported out of the box | Supported on `System.Text.Json` 6+ when round-tripping through the library's options; keys are serialized as JSON strings | Pinned by `DictionarySerializationTests`. |
+| `[JsonConverter]` attribute namespace | `Newtonsoft.Json.JsonConverter` | `System.Text.Json.Serialization.JsonConverter` | Custom converters from the Newtonsoft world must be rewritten against the STJ converter API. |
+| `double.NaN` / `±Infinity` | Written as quoted literals (`"NaN"`, `"Infinity"`, `"-Infinity"`) | Same — enabled here via `JsonNumberHandling.AllowNamedFloatingPointLiterals`. STJ's default would throw on serialize. | Without the opt-in flag the commit thread would throw and the synchronous `InsertItem` call would hang waiting for a Ready callback. Both the flag and a defensive `try`/`catch` around each `HandleAction` in `CommitActionHandler` are required. Pinned by `NumericEdgeCaseTests.Double_NaN_RoundTrip_BehaviorPinned` and `Double_Infinity_RoundTrip_BehaviorPinned`. |
 
 ## Unit Tests & Benchmarks
 
@@ -708,6 +838,10 @@ Run benchmarks from the command line:
 ```sh
 $ dotnet run --configuration Release --project JsonFlatFileDataStore.Benchmark\JsonFlatFileDataStore.Benchmark.csproj
 ```
+
+## C# Language Version
+
+The main library (`JsonFlatFileDataStore`) uses C# 10 language features and targets .NET Standard 2.0. Most C# 10 features are compiler-only and work with .NET Standard 2.0. However, some C# 10 features require runtime support and are not compatible with .NET Standard 2.0.
 
 ## API
 

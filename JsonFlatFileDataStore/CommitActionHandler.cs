@@ -1,7 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
-using Newtonsoft.Json.Linq;
 
 namespace JsonFlatFileDataStore;
 
@@ -40,26 +39,42 @@ internal static class CommitActionHandler
 
             var jsonText = getLatestJson();
 
+            Exception actionException = null;
+
             foreach (var action in batch)
             {
-                var (actionSuccess, updatedJson) = action.HandleAction(JObject.Parse(jsonText));
+                try
+                {
+                    using var jsonDocument = JsonDocument.Parse(jsonText);
+                    var rootElement = jsonDocument.RootElement.Clone();
+                    var (actionSuccess, updatedJson) = action.HandleAction(rootElement);
 
-                callbacks.Enqueue((action, actionSuccess));
+                    callbacks.Enqueue((action, actionSuccess));
 
-                if (actionSuccess)
-                    jsonText = updatedJson;
+                    if (actionSuccess)
+                        jsonText = updatedJson;
+                }
+                catch (Exception e)
+                {
+                    // Record the failure but keep draining the batch so every caller's Ready
+                    // callback fires — otherwise InnerCommit's wait loop would hang forever.
+                    actionException = e;
+                    callbacks.Enqueue((action, false));
+                }
             }
 
             var updateSuccess = false;
-            Exception actionException = null;
 
-            try
+            if (actionException == null)
             {
-                updateSuccess = updateState(jsonText);
-            }
-            catch (Exception e)
-            {
-                actionException = e;
+                try
+                {
+                    updateSuccess = updateState(jsonText);
+                }
+                catch (Exception e)
+                {
+                    actionException = e;
+                }
             }
 
             foreach (var (cbAction, cbSuccess) in callbacks)
