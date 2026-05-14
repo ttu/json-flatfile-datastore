@@ -1,4 +1,4 @@
-namespace JsonFlatFileDataStore.Test;
+﻿namespace JsonFlatFileDataStore.Test;
 
 /// <summary>
 /// Numeric edge cases that commonly differ between Newtonsoft and System.Text.Json:

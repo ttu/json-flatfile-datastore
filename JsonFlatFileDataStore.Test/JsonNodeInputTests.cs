@@ -1,4 +1,4 @@
-using System.Text.Json.Nodes;
+﻿using System.Text.Json.Nodes;
 
 namespace JsonFlatFileDataStore.Test;
 
@@ -7,7 +7,7 @@ namespace JsonFlatFileDataStore.Test;
 /// as input. The original tests targeted Newtonsoft's JToken/JObject/JArray; after the
 /// Newtonsoft → System.Text.Json migration the equivalent contract is exercised here.
 /// </summary>
-public class JTokenInputTests
+public class JsonNodeInputTests
 {
     [Fact]
     public async Task InsertOne_JsonNode_AnonymousObject_RoundTrip()

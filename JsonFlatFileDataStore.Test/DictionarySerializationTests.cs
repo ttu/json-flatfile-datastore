@@ -1,4 +1,4 @@
-namespace JsonFlatFileDataStore.Test;
+﻿namespace JsonFlatFileDataStore.Test;
 
 /// <summary>
 /// Tests for Dictionary serialization, especially Dictionary with non-string keys

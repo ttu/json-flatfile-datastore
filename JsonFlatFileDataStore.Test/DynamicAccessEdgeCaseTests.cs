@@ -1,4 +1,4 @@
-namespace JsonFlatFileDataStore.Test;
+﻿namespace JsonFlatFileDataStore.Test;
 
 /// <summary>
 /// Edge cases for DataStore.GetItem when the value is an array (of objects, of arrays, mixed).

@@ -253,12 +253,12 @@ public class DataStore : IDataStore
             {
                 ObjectExtensions.CopyProperties(item, toUpdate);
                 var newElement = ConvertToJsonElement(toUpdate);
-                _jsonData = SetJsonDataElement(_jsonData.RootElement, convertedKey, newElement);
+                SetJsonData(SetJsonDataElement(_jsonData.RootElement, convertedKey, newElement));
             }
             else
             {
                 var newElement = ConvertToJsonElement(item);
-                _jsonData = SetJsonDataElement(_jsonData.RootElement, convertedKey, newElement);
+                SetJsonData(SetJsonDataElement(_jsonData.RootElement, convertedKey, newElement));
             }
 
             return (true, _jsonData.RootElement);
@@ -614,7 +614,7 @@ public class DataStore : IDataStore
         return JsonDocument.Parse(modifiedJson);
     }
 
-    public (bool, JsonElement) RemoveJsonDataElement(JsonElement original, string key)
+    private (bool, JsonElement) RemoveJsonDataElement(JsonElement original, string key)
     {
         // Deserialize _jsonData to a dictionary for modification
         var jsonDataDict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(original.GetRawText());
