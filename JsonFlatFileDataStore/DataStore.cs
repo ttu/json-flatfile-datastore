@@ -433,7 +433,27 @@ public class DataStore : IDataStore
 
     private string GetJsonTextFromFile() => FileAccess.ReadJsonFromFile(_filePath, _encryptJson, _decryptJson);
 
-    private JObject GetJsonObjectFromFile() => JObject.Parse(GetJsonTextFromFile());
+    private JObject GetJsonObjectFromFile()
+    {
+        // The writer is non-atomic (File.WriteAllText truncates then writes), so a concurrent
+        // reader can observe a partially-written file and JObject.Parse will throw. Retry briefly —
+        // the writer finishes in milliseconds. Cannot use a temp-file-then-rename strategy because
+        // users may have permission for the data file only.
+        const int maxAttempts = 50;
+        const int delayMs = 20;
+        for (var attempt = 0; ; attempt++)
+        {
+            var jsonText = GetJsonTextFromFile();
+            try
+            {
+                return JObject.Parse(jsonText);
+            }
+            catch (JsonReaderException) when (attempt < maxAttempts - 1)
+            {
+                Thread.Sleep(delayMs);
+            }
+        }
+    }
 
     internal class CommitAction
     {
