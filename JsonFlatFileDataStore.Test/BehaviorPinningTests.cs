@@ -1,5 +1,4 @@
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+using System.Text.Json.Serialization;
 
 namespace JsonFlatFileDataStore.Test;
 
@@ -117,7 +116,7 @@ public class BehaviorPinningTests
     {
         public int Id { get; set; }
 
-        [JsonConverter(typeof(StringEnumConverter))]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public StatusValue Status { get; set; }
     }
 }

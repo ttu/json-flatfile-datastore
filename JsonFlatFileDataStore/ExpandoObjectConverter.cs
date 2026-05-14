@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Dynamic;
+using System.Globalization;
 using System.Text.Json.Serialization;
 
 namespace JsonFlatFileDataStore;
@@ -52,11 +53,9 @@ public class SystemExpandoObjectConverter : JsonConverter<ExpandoObject>
                 break;
 
             case JsonValueKind.Number:
-                if (propertyValue.TryGetInt32(out int intValue))
-                {
-                    expando[propertyName] = intValue;
-                }
-                else if (propertyValue.TryGetInt64(out long longValue))
+                // Newtonsoft.Json deserialized JSON integers as Int64 for dynamic/ExpandoObject mode;
+                // preserve that behavior so dynamic arithmetic and type assertions stay stable.
+                if (propertyValue.TryGetInt64(out long longValue))
                 {
                     expando[propertyName] = longValue;
                 }
@@ -70,7 +69,6 @@ public class SystemExpandoObjectConverter : JsonConverter<ExpandoObject>
                 }
                 else
                 {
-                    // TODO: Handle other numeric types as needed
                     throw new JsonException("Unsupported numeric type");
                 }
                 break;
@@ -111,21 +109,17 @@ public class SystemExpandoObjectConverter : JsonConverter<ExpandoObject>
                             break;
 
                         case JsonValueKind.Number:
-                            if (arrayElement.TryGetInt32(out int arrayElementIntValue))
+                            if (arrayElement.TryGetInt64(out long arrLong))
                             {
-                                arrayValues.Add(arrayElementIntValue);
+                                arrayValues.Add(arrLong);
                             }
-                            else if (arrayElement.TryGetInt64(out long longValue))
+                            else if (arrayElement.TryGetDouble(out double arrDouble))
                             {
-                                arrayValues.Add(longValue);
+                                arrayValues.Add(arrDouble);
                             }
-                            else if (arrayElement.TryGetDouble(out double doubleValue))
+                            else if (arrayElement.TryGetDecimal(out decimal arrDecimal))
                             {
-                                arrayValues.Add(doubleValue);
-                            }
-                            else if (arrayElement.TryGetDecimal(out decimal decimalValue))
-                            {
-                                arrayValues.Add(decimalValue);
+                                arrayValues.Add(arrDecimal);
                             }
                             else
                             {
@@ -169,21 +163,17 @@ public class SystemExpandoObjectConverter : JsonConverter<ExpandoObject>
                                         break;
 
                                     case JsonValueKind.Number:
-                                        if (nestedArrayElement.TryGetInt32(out int nestedArrayElementIntValue))
+                                        if (nestedArrayElement.TryGetInt64(out long nestLong))
                                         {
-                                            nestedArray.Add(nestedArrayElementIntValue);
+                                            nestedArray.Add(nestLong);
                                         }
-                                        else if (nestedArrayElement.TryGetInt64(out long longValue))
+                                        else if (nestedArrayElement.TryGetDouble(out double nestDouble))
                                         {
-                                            nestedArray.Add(longValue);
+                                            nestedArray.Add(nestDouble);
                                         }
-                                        else if (nestedArrayElement.TryGetDouble(out double doubleValue))
+                                        else if (nestedArrayElement.TryGetDecimal(out decimal nestDecimal))
                                         {
-                                            nestedArray.Add(doubleValue);
-                                        }
-                                        else if (nestedArrayElement.TryGetDecimal(out decimal decimalValue))
-                                        {
-                                            nestedArray.Add(decimalValue);
+                                            nestedArray.Add(nestDecimal);
                                         }
                                         else
                                         {
@@ -265,19 +255,31 @@ public class SystemExpandoObjectConverter : JsonConverter<ExpandoObject>
     /// consider using strongly-typed collections (GetCollection&lt;T&gt;()) which don't
     /// require this parsing step.
     /// </summary>
+    private static readonly string[] _dateTimeFormats = new[]
+    {
+        "yyyy-MM-ddTHH:mm:ss.FFFFFFFK",
+        "yyyy-MM-ddTHH:mm:ss.FFFFFFF",
+        "yyyy-MM-ddTHH:mm:ssK",
+        "yyyy-MM-ddTHH:mm:ss",
+        "yyyy-MM-dd"
+    };
+
     private static object TryParseDateTime(string value)
     {
         if (string.IsNullOrEmpty(value))
             return value;
 
-        // Try to parse as DateTime using standard formats
-        // This includes ISO 8601, RFC 1123, and common date formats
-        if (DateTime.TryParse(value, out DateTime dateTime))
+        // Only parse strings that match an explicit ISO 8601 date(time) format.
+        // DateTime.TryParse is too permissive — it would treat "01:30:00" (TimeSpan) or
+        // "12.5" (a version-like string) as DateTime by attaching today's date.
+        foreach (var format in _dateTimeFormats)
         {
-            return dateTime;
+            if (DateTime.TryParseExact(value, format, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var dt))
+                return dt;
+            if (DateTime.TryParseExact(value, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out dt))
+                return dt;
         }
 
-        // If not a valid date, return as string
         return value;
     }
 }
