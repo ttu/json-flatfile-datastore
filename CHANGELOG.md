@@ -2,6 +2,7 @@
 
 ### [Unreleased]
 * FIXED: Update functionality when objects has collections with nested collections
+* FIXED: Retry JSON parse on read to tolerate concurrent partial-file writes
 
 ### [2.4.2] - 2023-06-25
 * FIXED: Duplicate collection data to JSON on save when configured case was not used with collection name
