@@ -123,7 +123,7 @@ public class CollectionQueryTests
     }
 
     [Fact]
-    public void GetNextIdValue_StringType_JToken()
+    public void GetNextIdValue_StringType_JsonNode()
     {
         var newFilePath = UTHelpers.Up();
 

@@ -32,7 +32,7 @@ public class SystemExpandoObjectConverter : JsonConverter<ExpandoObject>
 
     public override void Write(Utf8JsonWriter writer, ExpandoObject value, JsonSerializerOptions options)
     {
-        JsonSerializer.Serialize(writer, (object)value, options);
+        JsonSerializer.Serialize(writer, (IDictionary<string, object>)value, options);
     }
 
     private static void AddPropertyToExpando(IDictionary<string, object> expando, string propertyName, JsonElement propertyValue)
@@ -221,24 +221,49 @@ public class SystemExpandoObjectConverter : JsonConverter<ExpandoObject>
 
         foreach (var element in arrayElement.EnumerateArray())
         {
-            if (element.ValueKind == JsonValueKind.Object)
+            switch (element.ValueKind)
             {
-                var nestedExpando = new ExpandoObject();
-                var nestedDictionary = (IDictionary<string, object>)nestedExpando;
-                foreach (var nestedProperty in element.EnumerateObject())
-                {
-                    AddPropertyToExpando(nestedDictionary, nestedProperty.Name, nestedProperty.Value);
-                }
-                arrayValues.Add(nestedExpando);
-            }
-            else if (element.ValueKind == JsonValueKind.Array)
-            {
-                // Recursively handle further nested arrays
-                arrayValues.Add(ProcessNestedArray(element));
-            }
-            else
-            {
-                arrayValues.Add(element.ToString());
+                case JsonValueKind.Object:
+                    var nestedExpando = new ExpandoObject();
+                    var nestedDictionary = (IDictionary<string, object>)nestedExpando;
+                    foreach (var nestedProperty in element.EnumerateObject())
+                    {
+                        AddPropertyToExpando(nestedDictionary, nestedProperty.Name, nestedProperty.Value);
+                    }
+                    arrayValues.Add(nestedExpando);
+                    break;
+
+                case JsonValueKind.Array:
+                    arrayValues.Add(ProcessNestedArray(element));
+                    break;
+
+                case JsonValueKind.Undefined:
+                case JsonValueKind.Null:
+                    arrayValues.Add(null);
+                    break;
+
+                case JsonValueKind.False:
+                    arrayValues.Add(false);
+                    break;
+
+                case JsonValueKind.True:
+                    arrayValues.Add(true);
+                    break;
+
+                case JsonValueKind.Number:
+                    if (element.TryGetInt64(out long longValue))
+                        arrayValues.Add(longValue);
+                    else if (element.TryGetDouble(out double doubleValue))
+                        arrayValues.Add(doubleValue);
+                    else if (element.TryGetDecimal(out decimal decimalValue))
+                        arrayValues.Add(decimalValue);
+                    else
+                        throw new JsonException("Unsupported numeric type");
+                    break;
+
+                case JsonValueKind.String:
+                    arrayValues.Add(TryParseDateTime(element.GetString()));
+                    break;
             }
         }
 

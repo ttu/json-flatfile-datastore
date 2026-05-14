@@ -98,7 +98,7 @@ var counter = await store.GetItem<int>("counter");
 Dynamic data can be any of the following types:
 * `Anonymous type`
 * `ExpandoObject`
-* JSON objects (`JToken`, `JObject`, `JArray`)
+* JSON objects (`JsonNode`, `JsonObject`, `JsonArray`)
 * `Dictionary<string, object>`
 
 Note: All dynamic data is internally serialized to `ExpandoObject`.
@@ -114,7 +114,7 @@ var collection = store.GetCollection("employee");
 var employee = new { id = 1, name = "John", age = 46 };
 
 // Create new employee from JSON
-var employeeJson = JToken.Parse("{ 'id': 2, 'name': 'Raymond', 'age': 32 }");
+var employeeJson = JsonNode.Parse("{ \"id\": 2, \"name\": \"Raymond\", \"age\": 32 }");
 
 // Create new employee from dictionary
 var employeeDict = new Dictionary<string, object>
@@ -134,7 +134,7 @@ await collection.InsertOneAsync(employeeDict);
 var updateData = new { name = "John Doe" };
 
 // Update data from JSON
-var updateJson = JToken.Parse("{ 'name': 'Raymond Doe' }");
+var updateJson = JsonNode.Parse("{ \"name\": \"Raymond Doe\" }");
 
 // Update data from dictionary
 var updateDict = new Dictionary<string, object> { ["name"] = "Andy Doe" };
@@ -227,7 +227,7 @@ var caseSensitiveMatches = collection.Find("Alabama", true);
 await collection.InsertOneAsync(new { id = 3, name = "Raymond", age = 32, city = "NY" });
 
 // Dynamic item can also be JSON object
-var user = JToken.Parse("{ 'id': 3, 'name': 'Raymond', 'age': 32, 'city': 'NY' }");
+var user = JsonNode.Parse("{ \"id\": 3, \"name\": \"Raymond\", \"age\": 32, \"city\": \"NY\" }");
 await collection.InsertOneAsync(user);
 
 // Synchronous method and typed data
@@ -266,14 +266,14 @@ If the type of the `id`-field is a *number*, the value is incremented by one. If
 
 ```csharp
 // Latest id in the collection is "hello5"
-var user = JToken.Parse("{ 'id': 'wrongValue', 'name': 'Raymond', 'age': 32, 'city': 'NY' }");
+var user = JsonNode.Parse("{ \"id\": \"wrongValue\", \"name\": \"Raymond\", \"age\": 32, \"city\": \"NY\" }");
 await collection.InsertOneAsync(user);
-// After addition: user["id"] == "hello6"
+// After addition: user["id"].GetValue<string>() == "hello6"
 
 // User data doesn't have an id field
-var userNoId = JToken.Parse("{ 'name': 'Raymond', 'age': 32, 'city': 'NY' }");
+var userNoId = JsonNode.Parse("{ \"name\": \"Raymond\", \"age\": 32, \"city\": \"NY\" }");
 await collection.InsertOneAsync(userNoId);
-// After addition: userNoId["id"] == "hello7"
+// After addition: userNoId["id"].GetValue<string>() == "hello7"
 ```
 
 For an empty collection, if the `id`-field's type is a number, the first id will be `0`. If the type is a string, the first id will be `"0"`.
@@ -376,8 +376,9 @@ patchData.Add("Age", 41);
 patchData.Add("Name", "James");
 patchData.Add("Work", new Dictionary<string, object> { { "Name", "ACME" } });
 
-var jobject = JObject.FromObject(patchData);
-dynamic patchExpando = JsonConvert.DeserializeObject<ExpandoObject>(jobject.ToString());
+var jsonString = JsonSerializer.Serialize(patchData);
+var options = new JsonSerializerOptions { Converters = { new SystemExpandoObjectConverter() } };
+dynamic patchExpando = JsonSerializer.Deserialize<ExpandoObject>(jsonString, options);
 
 await collection.UpdateOneAsync(e => e.Id == 12, patchExpando);
 ```
@@ -809,7 +810,7 @@ The following differences were uncovered while migrating the test suite. Most ar
 | Area | Newtonsoft.Json | System.Text.Json (this library) | Notes |
 | --- | --- | --- | --- |
 | Whole-number `double` output | `5.0` | `5` | STJ drops the trailing `.0`. Numeric value is unchanged. Pinned by `JsonOutputFormatTests.GoldenFile_DoubleFormatting_FivePointZero_WrittenCorrectly`. |
-| Invalid-JSON exception type | `Newtonsoft.Json.JsonException` | `System.Text.Json.JsonException` (typically the `JsonReaderException` subtype) | Callers catching the old type must update. |
+| Invalid-JSON exception type | `Newtonsoft.Json.JsonException` | `System.Text.Json.JsonException` | Callers catching the old type must update. |
 | `JToken` / `JObject` / `JArray` inputs | Accepted directly | Replaced by `JsonNode` / `JsonObject` / `JsonArray` from `System.Text.Json.Nodes` | The library accepts `JsonNode`-typed inputs in the same shape; rewrite call sites accordingly. |
 | Enum-as-string on typed models | `[JsonConverter(typeof(StringEnumConverter))]` | `[JsonConverter(typeof(JsonStringEnumConverter))]` | Read path also registers a global `JsonStringEnumConverter` (camelCase, case-insensitive). |
 | Dynamic integer type | All JSON integers surface as `Int64` (`long`) | Same — preserved by the custom `ExpandoObject` converter (Int64 is tried before smaller widths) | Without the converter STJ would surface them as `Int32`. |
@@ -824,8 +825,6 @@ The following differences were uncovered while migrating the test suite. Most ar
 | `Dictionary<TKey, TValue>` with non-string keys (`int`, `Guid`, `enum`) | Supported out of the box | Supported on `System.Text.Json` 6+ when round-tripping through the library's options; keys are serialized as JSON strings | Pinned by `DictionarySerializationTests`. |
 | `[JsonConverter]` attribute namespace | `Newtonsoft.Json.JsonConverter` | `System.Text.Json.Serialization.JsonConverter` | Custom converters from the Newtonsoft world must be rewritten against the STJ converter API. |
 | `double.NaN` / `±Infinity` | Written as quoted literals (`"NaN"`, `"Infinity"`, `"-Infinity"`) | Same — enabled here via `JsonNumberHandling.AllowNamedFloatingPointLiterals`. STJ's default would throw on serialize. | Without the opt-in flag the commit thread would throw and the synchronous `InsertItem` call would hang waiting for a Ready callback. Both the flag and a defensive `try`/`catch` around each `HandleAction` in `CommitActionHandler` are required. Pinned by `NumericEdgeCaseTests.Double_NaN_RoundTrip_BehaviorPinned` and `Double_Infinity_RoundTrip_BehaviorPinned`. |
-
-## Unit Tests & Benchmarks
 
 ## Unit Tests & Benchmarks
 
