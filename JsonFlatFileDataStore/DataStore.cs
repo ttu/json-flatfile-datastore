@@ -21,7 +21,10 @@ public class DataStore : IDataStore
     private readonly JsonSerializerOptions _options = new JsonSerializerOptions
     {
         Converters = { new NewtonsoftDateTimeConverter(), new SystemExpandoObjectConverter() },
-        PropertyNameCaseInsensitive = true
+        PropertyNameCaseInsensitive = true,
+        // Newtonsoft serialized NaN / Infinity / -Infinity as quoted literals by default.
+        // STJ would otherwise throw on these values.
+        NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals
     };
 
     private readonly JsonSerializerOptions _serializerOptions;
@@ -44,10 +47,12 @@ public class DataStore : IDataStore
         _serializerOptions = useLowerCamelCase ? new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = writeIntended
+            WriteIndented = writeIntended,
+            NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals
         } : new JsonSerializerOptions
         {
-            WriteIndented = writeIntended
+            WriteIndented = writeIntended,
+            NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals
         };
 
         _toJsonFunc = useLowerCamelCase
@@ -528,8 +533,25 @@ public class DataStore : IDataStore
 
     private JsonDocument GetJsonObjectFromFile()
     {
-        var jsonText = GetJsonTextFromFile();
-        return JsonDocument.Parse(jsonText);
+        // The writer is non-atomic (File.WriteAllText truncates then writes), so a concurrent
+        // reader can observe a partially-written file and JsonDocument.Parse will throw with
+        // "Expected end of string, but instead reached end of data". Retry briefly — the writer
+        // finishes in milliseconds. Cannot use a temp-file-then-rename strategy because users
+        // may have permission for the data file only.
+        const int maxAttempts = 50;
+        const int delayMs = 20;
+        for (var attempt = 0; ; attempt++)
+        {
+            var jsonText = GetJsonTextFromFile();
+            try
+            {
+                return JsonDocument.Parse(jsonText);
+            }
+            catch (JsonException) when (attempt < maxAttempts - 1)
+            {
+                System.Threading.Thread.Sleep(delayMs);
+            }
+        }
     }
 
     private JsonElement? TryGetElement(JsonElement element, string key)
