@@ -323,7 +323,10 @@ public class DataStore : IDataStore
                     _jsonData = GetJsonObjectFromFile();
                 }
 
-                return _jsonData[pathWithConfiguredCase]?
+                // Match case-insensitively: in camelCase mode the lookup path is camelCased
+                // (e.g. "user") but a file authored elsewhere may store the key as "User".
+                // A case-sensitive miss would incorrectly read the collection as empty.
+                return _jsonData.Property(pathWithConfiguredCase, StringComparison.OrdinalIgnoreCase)?.Value
                        .Children()
                        .Select(e => readConvert(e))
                        .ToList()
@@ -361,7 +364,11 @@ public class DataStore : IDataStore
         {
             var updatedJson = string.Empty;
 
-            var selectedData = currentJson[dataPath]?
+            // Match case-insensitively so a Pascal-cased key in an externally authored file
+            // ("User") is found by the camelCased lookup path ("user").
+            var existingProperty = currentJson.Property(dataPath, StringComparison.OrdinalIgnoreCase);
+
+            var selectedData = existingProperty?.Value
                                .Children()
                                .Select(e => readConvert(e))
                                .ToList()
@@ -371,7 +378,17 @@ public class DataStore : IDataStore
 
             if (success)
             {
-                currentJson[dataPath] = JArray.FromObject(selectedData);
+                var newArray = JArray.FromObject(selectedData);
+
+                // Update the existing property in place (preserving its key) rather than adding a
+                // second property that differs only by case; _toJsonFunc normalizes the key to
+                // camelCase on write. Setting currentJson[dataPath] directly would leave the
+                // original "User" key alongside a new "user" key, corrupting the document.
+                if (existingProperty != null)
+                    existingProperty.Value = newArray;
+                else
+                    currentJson[dataPath] = newArray;
+
                 updatedJson = _toJsonFunc(currentJson);
             }
 
