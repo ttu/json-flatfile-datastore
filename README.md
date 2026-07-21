@@ -691,11 +691,11 @@ collection2.ReplaceOne((Predicate<dynamic>)(e => e.id == 11), dynamicUser);
 
 ## Known Limitations
 
-### Decimal precision
+### Decimal precision (dynamic reads only)
 
-Large `decimal` values do not survive a round trip cleanly. Data is internally routed through `ExpandoObject`, which represents JSON numbers as `double`, so anything past roughly 15 significant digits becomes inexact. `decimal.MaxValue` is a worst case — it is written in scientific notation (`7.922816251426434E+28`) that cannot be parsed back as `decimal` at all, and reading the file raises `System.Text.Json.JsonException` (in earlier Newtonsoft-based releases this surfaced as `Newtonsoft.Json.JsonReaderException`).
+Since version 3.x, `decimal` values are written to disk verbatim — the write path no longer routes data through `ExpandoObject`/`double`. Values are stored exactly (`decimal.MaxValue` is written as `79228162514264337593543950335`, not scientific notation) and **typed** round-trips (`GetCollection<T>()`) preserve the full value, including large and high-precision decimals.
 
-If you need exact preservation of large or high-precision decimals, store them as strings. Pinned by `NumericEdgeCaseTests`.
+The remaining caveat is **dynamic** access: `GetCollection()` / `GetItem()` surface JSON numbers through `ExpandoObject`, which represents non-integer numbers as `double` (matching Newtonsoft's dynamic behavior), so a decimal read this way loses precision beyond roughly 15 significant digits. If you need the exact `decimal`, read through a typed collection. Pinned by `NumericEdgeCaseTests`.
 
 ## System.Text.Json vs Newtonsoft.Json
 
@@ -773,21 +773,22 @@ await collection.UpdateOneAsync(e => e.Id == 12, patchExpando);
 
 #### 4. Date Handling with Dynamic Types
 
-Both versions automatically parse date strings when using dynamic types:
+When using dynamic types, string values are promoted to `DateTime` **only** when they match an explicit ISO 8601 date/time pattern:
 
 ```csharp
-// Both Newtonsoft.Json and System.Text.Json automatically parse date strings
+// Stored value must be ISO 8601, e.g. "2015-11-23" or "2015-11-23T00:00:00"
 dynamic itemDynamic = store.GetItem("myDate");
-// itemDynamic is automatically converted to DateTime
-int year = itemDynamic.Year; // Works in both versions!
+// itemDynamic is a DateTime
+int year = itemDynamic.Year;
 
-// Typed retrieval also works as expected
+// Typed retrieval is permissive — the caller declared the type, so even a
+// non-ISO/locale-specific value like "6/15/2009" is parsed to DateTime.
 var itemTyped = store.GetItem<DateTime>("myDate");
-int year = itemTyped.Year; // Works!
+int typedYear = itemTyped.Year;
 ```
 
-**Performance Note**: In version 3.x, to maintain backward compatibility with Newtonsoft.Json, custom logic has been implemented for:
-1. **Automatic date parsing**: For **dynamic types only**, attempts to parse all string values as dates using `DateTime.TryParse()`. This performance impact **only affects dynamic/ExpandoObject collections** - typed collections (`GetCollection<T>()`) only parse strings that are actually mapped to DateTime properties, making them more efficient.
+**Performance Note**: In version 3.x, to approximate Newtonsoft.Json's convenience, custom logic has been implemented for:
+1. **Automatic date parsing**: For **dynamic types only**, string values that match an explicit ISO 8601 pattern (`yyyy-MM-dd[THH:mm:ss[.FFFFFFF]][K]`) are promoted to `DateTime` via `DateTime.TryParseExact` (invariant culture). Non-ISO strings — including locale-specific formats like `6/15/2009` and `TimeSpan`-shaped values like `01:30:00` — are left as strings. This applies identically to the collection (`GetCollection`) and single-item (`GetItem`) dynamic paths, and is independent of the machine's locale. The parsing cost **only affects dynamic/ExpandoObject collections** — typed collections (`GetCollection<T>()`) only parse strings mapped to `DateTime` properties, making them more efficient.
 2. **Case-insensitive property matching**: When updating ExpandoObjects, finds existing properties using case-insensitive comparison
 
 These features were built-in to Newtonsoft.Json but require custom implementation in System.Text.Json. The date parsing performance impact **only affects dynamic types** - if performance is critical, use strongly-typed collections (`GetCollection<T>()`) where possible.
@@ -797,7 +798,7 @@ These features were built-in to Newtonsoft.Json but require custom implementatio
 * **API remains the same**: Public APIs for collections and data store operations are unchanged.
 * **JSON parsing**: Replace `JToken.Parse()` with `JsonNode.Parse()`.
 * **Value extraction**: Use `.GetValue<T>()` when accessing values from `JsonNode`.
-* **Date handling**: Both versions automatically parse date strings to DateTime for dynamic types (backward compatible).
+* **Date handling**: For dynamic types, only explicit ISO 8601 date/time strings are promoted to `DateTime`. Newtonsoft's more permissive parsing (e.g. `6/15/2009`) is intentionally *not* reproduced, to avoid misinterpreting locale-ambiguous or `TimeSpan`-shaped strings. Typed reads (`GetItem<DateTime>` / `DateTime` properties) still parse permissively.
 * **Converters**: If you were using custom Newtonsoft.Json converters, you'll need to rewrite them for System.Text.Json.
 * **Case-insensitive property matching**: Both versions support case-insensitive property updates (e.g., updating `Age` will correctly update `age`).
 * **Performance considerations**: Custom parsing logic for backward compatibility (automatic date parsing and case-insensitive property matching) may impact performance with large dynamic datasets. Use strongly-typed collections (`GetCollection<T>()`) for better performance when possible.
@@ -818,7 +819,7 @@ The following differences were uncovered while migrating the test suite. Most ar
 | `TimeSpan` round-trip on typed models | Stored as `"hh:mm:ss[.fff]"` | Same on write (STJ default); read requires the typed deserialization path | Pinned by `TemporalAndIdentifierTests.TimeSpan_RoundTrip`. |
 | `DateTime.Kind = Utc` on single items | Preserved | Preserved (after the dynamic-string-promotion fix above) | Without the stricter promotion, UTC values were silently rewritten with the local offset. |
 | `DateTimeOffset` round-trip | Preserved | Preserved | Pinned by `TemporalAndIdentifierTests.DateTimeOffset_RoundTrip`. |
-| Large `decimal` values | Preserved within `decimal` precision | **Lossy** — routed through `ExpandoObject`/`double`, so >~15 significant digits are inexact and `decimal.MaxValue` cannot round-trip at all | Pre-existing limitation, see **Known Limitations** above. Store as `string` for exact preservation. |
+| Large `decimal` values | Preserved within `decimal` precision | Stored exactly and preserved by typed round-trips (`GetCollection<T>()`), including `decimal.MaxValue`; only **dynamic** reads surface as `double` and lose precision beyond ~15 significant digits | See **Known Limitations** above. Use a typed collection for exact preservation. Pinned by `NumericEdgeCaseTests`. |
 | `JsonNode` indexer return type | `JToken` had implicit conversion operators (`(int)token["id"]` worked) | `JsonNode` requires explicit `GetValue<T>()` (e.g. `node["id"].GetValue<int>()`) | Affects user code that reads `JsonNode`. Library-returned dynamic values are unaffected — they surface as primitives or `ExpandoObject`. |
 | Case-insensitive property binding (typed read) | Built-in | Enabled here via `PropertyNameCaseInsensitive = true` on the typed deserializer | Pre-existing files with PascalCase keys still load into camelCase models. Pinned by `CaseSensitivityTests`. |
 | Case-insensitive property merge (dynamic update) | Built-in | Custom implementation in `ObjectExtensions` — matching is `OrdinalIgnoreCase`, the existing key's casing is preserved | Updating `"Age"` correctly overwrites an existing `"age"` entry without creating a duplicate. |
