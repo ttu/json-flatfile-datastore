@@ -289,7 +289,7 @@ public class SystemExpandoObjectConverter : JsonConverter<ExpandoObject>
         "yyyy-MM-dd"
     };
 
-    private static object TryParseDateTime(string value)
+    internal static object TryParseDateTime(string value)
     {
         if (string.IsNullOrEmpty(value))
             return value;

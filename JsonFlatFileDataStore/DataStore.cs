@@ -1,7 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Dynamic;
-using System.Globalization;
 using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading;
@@ -499,32 +498,12 @@ public class DataStore : IDataStore
                 return list;
 
             case JsonValueKind.String:
-                // Try to parse as DateTime to maintain Newtonsoft.Json compatibility
-                // Performance Note: DateTime.TryParse() is expensive, so we use a heuristic
-                // to quickly filter out obvious non-date strings before attempting to parse.
-                var strValue = e.GetString();
-                if (!string.IsNullOrEmpty(strValue))
-                {
-                    // Quick heuristic: likely a date if it starts with a digit and contains date separators
-                    // This filters out most non-date strings very quickly
-                    // Common date formats: "2015-11-23T00:00:00", "6/15/2009", "2023-01-15"
-                    if (strValue.Length >= 8 && // Minimum reasonable date length (e.g., "1/1/2023")
-                        char.IsDigit(strValue[0]) &&
-                        (strValue.IndexOf('-') >= 0 || strValue.IndexOf('/') >= 0 || strValue.IndexOf('T') >= 0))
-                    {
-                        // Try InvariantCulture first (for ISO formats like "2015-11-23T00:00:00")
-                        if (DateTime.TryParse(strValue, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTime))
-                        {
-                            return dateTime;
-                        }
-                        // Fallback to current culture (for locale-specific formats like "6/15/2009")
-                        if (DateTime.TryParse(strValue, CultureInfo.CurrentCulture, DateTimeStyles.None, out dateTime))
-                        {
-                            return dateTime;
-                        }
-                    }
-                }
-                return strValue;
+                // Route through the same strict, invariant-culture date detection used by the
+                // collection/dynamic path (SystemExpandoObjectConverter). The previous heuristic
+                // here used a permissive DateTime.TryParse with a CurrentCulture fallback, so the
+                // single-item dynamic path (GetItem(key)) and the collection dynamic path could
+                // disagree on whether a string was a date, and results varied with machine locale.
+                return SystemExpandoObjectConverter.TryParseDateTime(e.GetString());
 
             case JsonValueKind.Number:
                 return e.TryGetInt64(out long l) ? l : e.GetDouble();
