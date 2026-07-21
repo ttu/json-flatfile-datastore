@@ -56,15 +56,7 @@ public class DataStore : IDataStore
         };
 
         _toJsonFunc = useLowerCamelCase
-            ? new Func<JsonElement, string>(data =>
-            {
-                // Deserialize to ExpandoObject to allow flexible serialization settings
-                var expandoObject = JsonSerializer.Deserialize<ExpandoObject>(data.GetRawText(), _options);
-
-                // Serialize back to JSON with camel casing and indentation options applied
-                // Case-insensitive property matching is handled in ObjectExtensions.CopyProperties
-                return JsonSerializer.Serialize(expandoObject, _serializerOptions);
-            })
+            ? new Func<JsonElement, string>(data => SerializeCamelCase(data, writeIntended))
             : (s => JsonSerializer.Serialize(s, _serializerOptions));
 
         _convertPathToCorrectCamelCase = useLowerCamelCase
@@ -640,6 +632,51 @@ public class DataStore : IDataStore
         }
 
         return JsonSerializer.Deserialize<T>(token.GetRawText(), _options);
+    }
+
+    // Rewrites the document to lower camelCase property names while preserving every value byte-for-byte.
+    // The previous implementation round-tripped through ExpandoObject, which ran the date-detection
+    // heuristic (SystemExpandoObjectConverter.TryParseDateTime) over every string. That silently
+    // rewrote any date-looking string — e.g. a "2015-11-23" version field — into "2015-11-23T00:00:00"
+    // on the next unrelated write. Walking the JsonElement directly touches only property names.
+    private static string SerializeCamelCase(JsonElement data, bool writeIndented)
+    {
+        using var stream = new System.IO.MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = writeIndented }))
+        {
+            WriteCamelCase(data, writer);
+        }
+
+        return System.Text.Encoding.UTF8.GetString(stream.ToArray());
+    }
+
+    private static void WriteCamelCase(JsonElement element, Utf8JsonWriter writer)
+    {
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Object:
+                writer.WriteStartObject();
+                foreach (var property in element.EnumerateObject())
+                {
+                    writer.WritePropertyName(JsonNamingPolicy.CamelCase.ConvertName(property.Name));
+                    WriteCamelCase(property.Value, writer);
+                }
+                writer.WriteEndObject();
+                break;
+
+            case JsonValueKind.Array:
+                writer.WriteStartArray();
+                foreach (var item in element.EnumerateArray())
+                {
+                    WriteCamelCase(item, writer);
+                }
+                writer.WriteEndArray();
+                break;
+
+            default:
+                element.WriteTo(writer);
+                break;
+        }
     }
 
     private JsonElement ConvertToJsonElement(object item)
