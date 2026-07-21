@@ -148,45 +148,56 @@ public class DataStore : IDataStore
 
     public T GetItem<T>(string key)
     {
-        if (_reloadBeforeGetCollection)
+        // Hold the lock for the whole read: the background commit thread disposes the previous
+        // JsonDocument the moment it swaps in a new one (SetJsonData), and the token below points
+        // into _jsonData's buffer. Reading it unsynchronized races into an ObjectDisposedException.
+        lock (_jsonDataLock)
         {
-            // This might be a bad idea especially if the file is in use, as this can take a long time
-            SetJsonData(GetJsonObjectFromFile());
-        }
-
-        var convertedKey = _convertPathToCorrectCamelCase(key);
-
-        var token = TryGetElement(_jsonData.RootElement, convertedKey);
-
-        if (token == null)
-        {
-            if (Nullable.GetUnderlyingType(typeof(T)) != null)
+            if (_reloadBeforeGetCollection)
             {
-                return default(T);
+                // This might be a bad idea especially if the file is in use, as this can take a long time
+                SetJsonData(GetJsonObjectFromFile());
             }
 
-            throw new KeyNotFoundException();
-        }
+            var convertedKey = _convertPathToCorrectCamelCase(key);
 
-        return ConvertJsonElementToObject<T>(token.Value);
+            var token = TryGetElement(_jsonData.RootElement, convertedKey);
+
+            if (token == null)
+            {
+                if (Nullable.GetUnderlyingType(typeof(T)) != null)
+                {
+                    return default(T);
+                }
+
+                throw new KeyNotFoundException();
+            }
+
+            return ConvertJsonElementToObject<T>(token.Value);
+        }
     }
 
     public dynamic GetItem(string key)
     {
-        if (_reloadBeforeGetCollection)
+        // See GetItem<T> — the returned value is materialized from _jsonData's buffer, so the read
+        // must be synchronized against the background thread disposing the document.
+        lock (_jsonDataLock)
         {
-            // This might be a bad idea especially if the file is in use, as this can take a long time
-            SetJsonData(GetJsonObjectFromFile());
+            if (_reloadBeforeGetCollection)
+            {
+                // This might be a bad idea especially if the file is in use, as this can take a long time
+                SetJsonData(GetJsonObjectFromFile());
+            }
+
+            var convertedKey = _convertPathToCorrectCamelCase(key);
+
+            var token = TryGetElement(_jsonData.RootElement, convertedKey);
+
+            if (token == null)
+                return null;
+
+            return SingleDynamicItemReadConverter(token.Value);
         }
-
-        var convertedKey = _convertPathToCorrectCamelCase(key);
-
-        var token = TryGetElement(_jsonData.RootElement, convertedKey);
-
-        if (token == null)
-            return null;
-
-        return SingleDynamicItemReadConverter(token.Value);
     }
 
     public bool InsertItem<T>(string key, T item) => Insert(key, item).Result;
@@ -396,8 +407,14 @@ public class DataStore : IDataStore
 
         commitAction.HandleAction = (currentJson =>
         {
-            var (success, newJson) = commitOperation();
-            return success ? (true, _toJsonFunc(newJson)) : (false, string.Empty);
+            // commitOperation reads and reassigns _jsonData (disposing the old document) and newJson
+            // points into it; hold the lock across the serialization so a concurrent reader or
+            // Reload cannot dispose the document mid-operation.
+            lock (_jsonDataLock)
+            {
+                var (success, newJson) = commitOperation();
+                return success ? (true, _toJsonFunc(newJson)) : (false, string.Empty);
+            }
         });
 
         return await InnerCommit(isOperationAsync, commitAction);
