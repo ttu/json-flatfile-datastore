@@ -73,22 +73,23 @@ public class SingleItemTests
     {
         var (newFilePath, store) = InitializeFileAndStore(encryptionPassword);
 
-        var test = DateTime.Now.ToShortDateString();
-
-        // Typed: System.Text.Json deserializes date strings to DateTime
+        // Typed reads obey the declared type: a DateTime target parses even a locale-ambiguous,
+        // non-ISO value like "6/15/2009" (via NewtonsoftDateTimeConverter's permissive fallback).
         var itemTyped = store.GetItem<DateTime>("myDate_string");
         Assert.Equal(2009, itemTyped.Year);
 
-        // Dynamic: Now automatically parses date strings to DateTime (Newtonsoft.Json compatibility)
+        // Dynamic reads only *guess* dates, and the guess is strict and invariant-culture: it matches
+        // explicit ISO 8601 formats only. "6/15/2009" is left as a string, consistent with the
+        // collection dynamic path (GetCollection) and independent of the machine's locale.
         var itemDynamic = store.GetItem("myDate_string");
-        Assert.IsType<DateTime>(itemDynamic);
-        Assert.Equal(2009, itemDynamic.Year);
+        Assert.IsType<string>(itemDynamic);
+        Assert.Equal("6/15/2009", itemDynamic);
 
         // Typed: System.Text.Json deserializes ISO date strings to DateTime
         var itemTyped2 = store.GetItem<DateTime>("myDate_date");
         Assert.Equal(2015, itemTyped2.Year);
 
-        // Dynamic: Now automatically parses ISO date strings to DateTime (Newtonsoft.Json compatibility)
+        // Dynamic: ISO 8601 strings are recognized as dates by the strict heuristic.
         var itemDynamic2 = store.GetItem("myDate_date");
         Assert.IsType<DateTime>(itemDynamic2);
         Assert.Equal(2015, itemDynamic2.Year);
