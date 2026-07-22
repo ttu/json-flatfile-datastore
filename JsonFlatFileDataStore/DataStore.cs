@@ -1,14 +1,10 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Dynamic;
-using System.Globalization;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
 
 namespace JsonFlatFileDataStore;
 
@@ -17,19 +13,26 @@ public class DataStore : IDataStore
     private readonly string _filePath;
     private readonly string _keyProperty;
     private readonly bool _reloadBeforeGetCollection;
-    private readonly Func<JObject, string> _toJsonFunc;
+    private readonly Func<JsonElement, string> _toJsonFunc;
     private readonly Func<string, string> _convertPathToCorrectCamelCase;
     private readonly BlockingCollection<CommitAction> _updates = new BlockingCollection<CommitAction>();
     private readonly CancellationTokenSource _cts = new CancellationTokenSource();
-    private readonly ExpandoObjectConverter _converter = new ExpandoObjectConverter();
+    private readonly JsonSerializerOptions _options = new JsonSerializerOptions
+    {
+        Converters = { new NewtonsoftDateTimeConverter(), new SystemExpandoObjectConverter() },
+        PropertyNameCaseInsensitive = true,
+        // Newtonsoft serialized NaN / Infinity / -Infinity as quoted literals by default.
+        // STJ would otherwise throw on these values.
+        NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals
+    };
 
-    private readonly JsonSerializerSettings _serializerSettings = new JsonSerializerSettings()
-    { ContractResolver = new CamelCasePropertyNamesContractResolver() };
+    private readonly JsonSerializerOptions _serializerOptions;
 
     private readonly Func<string, string> _encryptJson;
     private readonly Func<string, string> _decryptJson;
 
-    private JObject _jsonData;
+    private JsonDocument _jsonData;
+    private readonly object _jsonDataLock = new object();
     private bool _executingJsonUpdate;
 
     public DataStore(string path, bool useLowerCamelCase = true, string keyProperty = null, bool reloadBeforeGetCollection = false,
@@ -38,17 +41,22 @@ public class DataStore : IDataStore
         _filePath = path;
 
         var useEncryption = !string.IsNullOrWhiteSpace(encryptionKey);
-        var usedFormatting = minifyJson || useEncryption ? Formatting.None : Formatting.Indented;
+        var writeIntended = !minifyJson && !useEncryption;  // Set to `true` if not minifying or encrypting
+
+        _serializerOptions = useLowerCamelCase ? new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = writeIntended,
+            NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals
+        } : new JsonSerializerOptions
+        {
+            WriteIndented = writeIntended,
+            NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals
+        };
 
         _toJsonFunc = useLowerCamelCase
-            ? new Func<JObject, string>(data =>
-            {
-                // Serializing JObject ignores SerializerSettings, so we have to first deserialize to ExpandoObject and then serialize
-                // http://json.codeplex.com/workitem/23853
-                var jObject = JsonConvert.DeserializeObject<ExpandoObject>(data.ToString());
-                return JsonConvert.SerializeObject(jObject, usedFormatting, _serializerSettings);
-            })
-            : (s => s.ToString(usedFormatting));
+            ? new Func<JsonElement, string>(data => SerializeCamelCase(data, writeIntended))
+            : (s => JsonSerializer.Serialize(s, _serializerOptions));
 
         _convertPathToCorrectCamelCase = useLowerCamelCase
             ? new Func<string, string>(s => string.Concat(s.Select((x, i) => i == 0 ? char.ToLower(x).ToString() : x.ToString())))
@@ -70,7 +78,7 @@ public class DataStore : IDataStore
             _decryptJson = (json => json);
         }
 
-        _jsonData = GetJsonObjectFromFile();
+        SetJsonData(GetJsonObjectFromFile());
 
         // Run updates on a background thread and use BlockingCollection to prevent multiple updates to run simultaneously
         Task.Run(() =>
@@ -80,9 +88,9 @@ public class DataStore : IDataStore
                 executionState => _executingJsonUpdate = executionState,
                 jsonText =>
                 {
-                    lock (_jsonData)
+                    lock (_jsonDataLock)
                     {
-                        _jsonData = JObject.Parse(jsonText);
+                        SetJsonData(Parse(jsonText));
                     }
 
                     return FileAccess.WriteJsonToFile(_filePath, _encryptJson, jsonText);
@@ -102,15 +110,20 @@ public class DataStore : IDataStore
         {
             _cts.Cancel();
         }
+
+        // Dispose the JsonDocument to free unmanaged resources
+        _jsonData?.Dispose();
     }
+
+
 
     public bool IsUpdating => _updates.Count > 0 || _executingJsonUpdate;
 
     public void UpdateAll(string jsonData)
     {
-        lock (_jsonData)
+        lock (_jsonDataLock)
         {
-            _jsonData = JObject.Parse(jsonData);
+            SetJsonData(Parse(jsonData));
         }
 
         FileAccess.WriteJsonToFile(_filePath, _encryptJson, jsonData);
@@ -118,53 +131,64 @@ public class DataStore : IDataStore
 
     public void Reload()
     {
-        lock (_jsonData)
+        lock (_jsonDataLock)
         {
-            _jsonData = GetJsonObjectFromFile();
+            SetJsonData(GetJsonObjectFromFile());
         }
     }
 
     public T GetItem<T>(string key)
     {
-        if (_reloadBeforeGetCollection)
+        // Hold the lock for the whole read: the background commit thread disposes the previous
+        // JsonDocument the moment it swaps in a new one (SetJsonData), and the token below points
+        // into _jsonData's buffer. Reading it unsynchronized races into an ObjectDisposedException.
+        lock (_jsonDataLock)
         {
-            // This might be a bad idea especially if the file is in use, as this can take a long time
-            _jsonData = GetJsonObjectFromFile();
-        }
-
-        var convertedKey = _convertPathToCorrectCamelCase(key);
-
-        var token = _jsonData[convertedKey];
-
-        if (token == null)
-        {
-            if (Nullable.GetUnderlyingType(typeof(T)) != null)
+            if (_reloadBeforeGetCollection)
             {
-                return default(T);
+                // This might be a bad idea especially if the file is in use, as this can take a long time
+                SetJsonData(GetJsonObjectFromFile());
             }
 
-            throw new KeyNotFoundException();
-        }
+            var convertedKey = _convertPathToCorrectCamelCase(key);
 
-        return token.ToObject<T>();
+            var token = TryGetElement(_jsonData.RootElement, convertedKey);
+
+            if (token == null)
+            {
+                if (Nullable.GetUnderlyingType(typeof(T)) != null)
+                {
+                    return default(T);
+                }
+
+                throw new KeyNotFoundException();
+            }
+
+            return ConvertJsonElementToObject<T>(token.Value);
+        }
     }
 
     public dynamic GetItem(string key)
     {
-        if (_reloadBeforeGetCollection)
+        // See GetItem<T> — the returned value is materialized from _jsonData's buffer, so the read
+        // must be synchronized against the background thread disposing the document.
+        lock (_jsonDataLock)
         {
-            // This might be a bad idea especially if the file is in use, as this can take a long time
-            _jsonData = GetJsonObjectFromFile();
+            if (_reloadBeforeGetCollection)
+            {
+                // This might be a bad idea especially if the file is in use, as this can take a long time
+                SetJsonData(GetJsonObjectFromFile());
+            }
+
+            var convertedKey = _convertPathToCorrectCamelCase(key);
+
+            var token = TryGetElement(_jsonData.RootElement, convertedKey);
+
+            if (token == null)
+                return null;
+
+            return SingleDynamicItemReadConverter(token.Value);
         }
-
-        var convertedKey = _convertPathToCorrectCamelCase(key);
-
-        var token = _jsonData[convertedKey];
-
-        if (token == null)
-            return null;
-
-        return SingleDynamicItemReadConverter(token);
     }
 
     public bool InsertItem<T>(string key, T item) => Insert(key, item).Result;
@@ -175,13 +199,15 @@ public class DataStore : IDataStore
     {
         var convertedKey = _convertPathToCorrectCamelCase(key);
 
-        (bool, JObject) UpdateAction()
+        (bool, JsonElement) UpdateAction()
         {
-            if (_jsonData[convertedKey] != null)
-                return (false, _jsonData);
+            var data = TryGetElement(_jsonData.RootElement, convertedKey);
+            if (data.HasValue)
+                return (false, data.Value);
 
-            _jsonData[convertedKey] = JToken.FromObject(item);
-            return (true, _jsonData);
+            var newElement = ConvertToJsonElement(item);
+            SetJsonData(SetJsonDataElement(_jsonData.RootElement, convertedKey, newElement));
+            return (true, _jsonData.RootElement);
         }
 
         return CommitItem(UpdateAction, isAsync);
@@ -195,13 +221,15 @@ public class DataStore : IDataStore
     {
         var convertedKey = _convertPathToCorrectCamelCase(key);
 
-        (bool, JObject) UpdateAction()
+        (bool, JsonElement) UpdateAction()
         {
-            if (_jsonData[convertedKey] == null && upsert == false)
-                return (false, _jsonData);
+            var data = TryGetElement(_jsonData.RootElement, convertedKey);
+            if (data == null && upsert == false)
+                return (false, _jsonData.RootElement);
 
-            _jsonData[convertedKey] = JToken.FromObject(item);
-            return (true, _jsonData);
+            var newElement = ConvertToJsonElement(item);
+            SetJsonData(SetJsonDataElement(_jsonData.RootElement, convertedKey, newElement));
+            return (true, _jsonData.RootElement);
         }
 
         return CommitItem(UpdateAction, isAsync);
@@ -215,24 +243,27 @@ public class DataStore : IDataStore
     {
         var convertedKey = _convertPathToCorrectCamelCase(key);
 
-        (bool, JObject) UpdateAction()
+        (bool, JsonElement) UpdateAction()
         {
-            if (_jsonData[convertedKey] == null)
-                return (false, _jsonData);
+            var data = TryGetElement(_jsonData.RootElement, convertedKey);
+            if (data == null)
+                return (false, _jsonData.RootElement);
 
-            var toUpdate = SingleDynamicItemReadConverter(_jsonData[convertedKey]);
+            var toUpdate = SingleDynamicItemReadConverter(data.Value);
 
             if (ObjectExtensions.IsReferenceType(item) && ObjectExtensions.IsReferenceType(toUpdate))
             {
                 ObjectExtensions.CopyProperties(item, toUpdate);
-                _jsonData[convertedKey] = JToken.FromObject(toUpdate);
+                var newElement = ConvertToJsonElement(toUpdate);
+                SetJsonData(SetJsonDataElement(_jsonData.RootElement, convertedKey, newElement));
             }
             else
             {
-                _jsonData[convertedKey] = JToken.FromObject(item);
+                var newElement = ConvertToJsonElement(item);
+                SetJsonData(SetJsonDataElement(_jsonData.RootElement, convertedKey, newElement));
             }
 
-            return (true, _jsonData);
+            return (true, _jsonData.RootElement);
         }
 
         return CommitItem(UpdateAction, isAsync);
@@ -246,10 +277,9 @@ public class DataStore : IDataStore
     {
         var convertedKey = _convertPathToCorrectCamelCase(key);
 
-        (bool, JObject) UpdateAction()
+        (bool, JsonElement) UpdateAction()
         {
-            var result = _jsonData.Remove(convertedKey);
-            return (result, _jsonData);
+            return RemoveJsonDataElement(_jsonData.RootElement, convertedKey);
         }
 
         return CommitItem(UpdateAction, isAsync);
@@ -257,8 +287,14 @@ public class DataStore : IDataStore
 
     public IDocumentCollection<T> GetCollection<T>(string name = null) where T : class
     {
-        // NOTE 27.6.2017: Should this be new Func<JToken, T>(e => e.ToObject<T>())?
-        var readConvert = new Func<JToken, T>(e => JsonConvert.DeserializeObject<T>(e.ToString()));
+        // Deserialize JsonElement to T
+        // Uses NewtonsoftDateTimeConverter for backward compatibility with Newtonsoft.Json DateTime formats
+        var readConvert = new Func<JsonElement, T>(e => e.Deserialize<T>(
+            new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, true), new NewtonsoftDateTimeConverter() }
+            }));
         var insertConvert = new Func<T, T>(e => e);
         var createNewInstance = new Func<T>(() => Activator.CreateInstance<T>());
 
@@ -267,9 +303,13 @@ public class DataStore : IDataStore
 
     public IDocumentCollection<dynamic> GetCollection(string name)
     {
-        // As we don't want to return JObject when using dynamic, JObject will be converted to ExpandoObject
-        var readConvert = new Func<JToken, dynamic>(e => JsonConvert.DeserializeObject<ExpandoObject>(e.ToString(), _converter) as dynamic);
-        var insertConvert = new Func<dynamic, dynamic>(e => JsonConvert.DeserializeObject<ExpandoObject>(JsonConvert.SerializeObject(e), _converter));
+        // Deserialize JsonElement to ExpandoObject for dynamic handling
+        var readConvert = new Func<JsonElement, dynamic>(e => e.Deserialize<ExpandoObject>(_options));
+        var insertConvert = new Func<dynamic, dynamic>(e =>
+        {
+            var json = JsonSerializer.Serialize(e, _serializerOptions);
+            return JsonSerializer.Deserialize<ExpandoObject>(json, _options);
+        });
         var createNewInstance = new Func<dynamic>(() => new ExpandoObject());
 
         return GetCollection(name, readConvert, insertConvert, createNewInstance);
@@ -277,60 +317,69 @@ public class DataStore : IDataStore
 
     public IDictionary<string, ValueType> GetKeys(ValueType? typeToGet = null)
     {
-        bool IsCollection(JToken c) => c.Children().FirstOrDefault() is JArray && c.Children().FirstOrDefault().Any() == false
-                                    || c.Children().FirstOrDefault()?.FirstOrDefault()?.Type == JTokenType.Object;
+        bool IsCollection(JsonElement property) =>
+   property.ValueKind == JsonValueKind.Array &&
+   (!property.EnumerateArray().Any() || property.EnumerateArray().First().ValueKind == JsonValueKind.Object);
 
-        bool IsItem(JToken c) => c.Children().FirstOrDefault().GetType() != typeof(JArray)
-                              || (c.Children().FirstOrDefault() is JArray
-                               && c.Children().FirstOrDefault().Any() // Empty array is considered as a collection
-                               && c.Children().FirstOrDefault()?.FirstOrDefault()?.Type != JTokenType.Object);
+        bool IsItem(JsonElement property) =>
+           property.ValueKind != JsonValueKind.Array ||
+           (property.EnumerateArray().Any() && property.EnumerateArray().First().ValueKind != JsonValueKind.Object);
 
-        lock (_jsonData)
+        lock (_jsonDataLock)
         {
-            switch (typeToGet)
+            var result = new Dictionary<string, ValueType>();
+
+            if (_jsonData.RootElement.ValueKind == JsonValueKind.Object)
             {
-                case null:
-                    return _jsonData.Children()
-                                    .ToDictionary(c => c.Path, c => IsCollection(c) ? ValueType.Collection : ValueType.Item);
+                foreach (var property in _jsonData.RootElement.EnumerateObject())
+                {
+                    bool isCollection = IsCollection(property.Value);
+                    bool isItem = IsItem(property.Value);
 
-                case ValueType.Collection:
-                    return _jsonData.Children()
-                                    .Where(IsCollection)
-                                    .ToDictionary(c => c.Path, c => ValueType.Collection);
-
-                case ValueType.Item:
-                    return _jsonData.Children()
-                                    .Where(IsItem)
-                                    .ToDictionary(c => c.Path, c => ValueType.Item);
-
-                default:
-                    throw new NotSupportedException();
+                    switch (typeToGet)
+                    {
+                        case null:
+                            result[property.Name] = isCollection ? ValueType.Collection : ValueType.Item;
+                            break;
+                        case ValueType.Collection when isCollection:
+                            result[property.Name] = ValueType.Collection;
+                            break;
+                        case ValueType.Item when isItem:
+                            result[property.Name] = ValueType.Item;
+                            break;
+                    }
+                }
             }
+
+            return result;
         }
     }
 
-    private IDocumentCollection<T> GetCollection<T>(string path, Func<JToken, T> readConvert, Func<T, T> insertConvert, Func<T> createNewInstance)
+    private IDocumentCollection<T> GetCollection<T>(string path, Func<JsonElement, T> readConvert, Func<T, T> insertConvert, Func<T> createNewInstance)
     {
         var pathWithConfiguredCase = _convertPathToCorrectCamelCase(path);
 
         var data = new Lazy<List<T>>(() =>
         {
-            lock (_jsonData)
+            lock (_jsonDataLock)
             {
                 if (_reloadBeforeGetCollection)
                 {
                     // This might be a bad idea especially if the file is in use, as this can take a long time
-                    _jsonData = GetJsonObjectFromFile();
+                    SetJsonData(GetJsonObjectFromFile());
                 }
 
                 // Match case-insensitively: in camelCase mode the lookup path is camelCased
                 // (e.g. "user") but a file authored elsewhere may store the key as "User".
                 // A case-sensitive miss would incorrectly read the collection as empty.
-                return _jsonData.Property(pathWithConfiguredCase, StringComparison.OrdinalIgnoreCase)?.Value
-                       .Children()
+                var data = TryGetElementIgnoreCase(_jsonData.RootElement, pathWithConfiguredCase);
+
+                if (data.HasValue == false)
+                    return new List<T>();
+
+                return GetChildren(data.Value)
                        .Select(e => readConvert(e))
-                       .ToList()
-                    ?? new List<T>();
+                       .ToList();
             }
         });
 
@@ -343,20 +392,26 @@ public class DataStore : IDataStore
             createNewInstance);
     }
 
-    private async Task<bool> CommitItem(Func<(bool, JObject)> commitOperation, bool isOperationAsync)
+    private async Task<bool> CommitItem(Func<(bool, JsonElement)> commitOperation, bool isOperationAsync)
     {
         var commitAction = new CommitAction();
 
         commitAction.HandleAction = (currentJson =>
         {
-            var (success, newJson) = commitOperation();
-            return success ? (true, _toJsonFunc(newJson)) : (false, string.Empty);
+            // commitOperation reads and reassigns _jsonData (disposing the old document) and newJson
+            // points into it; hold the lock across the serialization so a concurrent reader or
+            // Reload cannot dispose the document mid-operation.
+            lock (_jsonDataLock)
+            {
+                var (success, newJson) = commitOperation();
+                return success ? (true, _toJsonFunc(newJson)) : (false, string.Empty);
+            }
         });
 
         return await InnerCommit(isOperationAsync, commitAction);
     }
 
-    private async Task<bool> Commit<T>(string dataPath, Func<List<T>, bool> commitOperation, bool isOperationAsync, Func<JToken, T> readConvert)
+    private async Task<bool> Commit<T>(string dataPath, Func<List<T>, bool> commitOperation, bool isOperationAsync, Func<JsonElement, T> readConvert)
     {
         var commitAction = new CommitAction();
 
@@ -366,29 +421,26 @@ public class DataStore : IDataStore
 
             // Match case-insensitively so a Pascal-cased key in an externally authored file
             // ("User") is found by the camelCased lookup path ("user").
-            var existingProperty = currentJson.Property(dataPath, StringComparison.OrdinalIgnoreCase);
+            var existingKey = FindPropertyNameIgnoreCase(currentJson, dataPath);
 
-            var selectedData = existingProperty?.Value
-                               .Children()
+            var data = existingKey != null ? TryGetElement(currentJson, existingKey) : null;
+
+            var selectedData = (data.HasValue) ? GetChildren(data.Value)
                                .Select(e => readConvert(e))
                                .ToList()
-                            ?? new List<T>();
+                            : new List<T>();
 
             var success = commitOperation(selectedData);
 
             if (success)
             {
-                var newArray = JArray.FromObject(selectedData);
+                var newElement = ConvertToJsonElement(selectedData);
 
-                // Update the existing property in place (preserving its key) rather than adding a
-                // second property that differs only by case; _toJsonFunc normalizes the key to
-                // camelCase on write. Setting currentJson[dataPath] directly would leave the
-                // original "User" key alongside a new "user" key, corrupting the document.
-                if (existingProperty != null)
-                    existingProperty.Value = newArray;
-                else
-                    currentJson[dataPath] = newArray;
-
+                // Write back under the key that already exists (preserving its case) rather than
+                // adding a second property that differs only by case; _toJsonFunc normalizes the
+                // key to camelCase on write. Using dataPath directly would leave the original
+                // "User" key alongside a new "user" key, corrupting the document.
+                currentJson = SetJsonDataElement(currentJson, existingKey ?? dataPath, newElement).RootElement;
                 updatedJson = _toJsonFunc(currentJson);
             }
 
@@ -427,35 +479,65 @@ public class DataStore : IDataStore
         return actionSuccess;
     }
 
-    private dynamic SingleDynamicItemReadConverter(JToken e)
+    private dynamic SingleDynamicItemReadConverter(JsonElement e)
     {
-        switch (e)
+        switch (e.ValueKind)
         {
-            case var objToken when e.Type == JTokenType.Object:
-                //As we don't want to return JObject when using dynamic, JObject will be converted to ExpandoObject
-                // JToken.ToString() is not culture invariant, so need to use string.Format
-                var content = string.Format(CultureInfo.InvariantCulture, "{0}", objToken);
-                return JsonConvert.DeserializeObject<ExpandoObject>(content, _converter) as dynamic;
+            case JsonValueKind.Object:
+                // Convert JsonElement to ExpandoObject for a dynamic structure
+                var content = e.GetRawText(); // Get the JSON as a raw string
+                return JsonSerializer.Deserialize<ExpandoObject>(content, _options) as dynamic;
 
-            case var arrayToken when e.Type == JTokenType.Array:
-                return e.ToObject<List<object>>();
+            case JsonValueKind.Array:
+                // Convert JsonElement array to a List<object>
+                var list = new List<object>();
+                foreach (var item in e.EnumerateArray())
+                {
+                    list.Add(SingleDynamicItemReadConverter(item)); // Recursively handle each item
+                }
+                return list;
 
-            case JValue jv when e is JValue:
-                return jv.Value;
+            case JsonValueKind.String:
+                // Route through the same strict, invariant-culture date detection used by the
+                // collection/dynamic path (SystemExpandoObjectConverter). The previous heuristic
+                // here used a permissive DateTime.TryParse with a CurrentCulture fallback, so the
+                // single-item dynamic path (GetItem(key)) and the collection dynamic path could
+                // disagree on whether a string was a date, and results varied with machine locale.
+                return SystemExpandoObjectConverter.TryParseDateTime(e.GetString());
+
+            case JsonValueKind.Number:
+                return e.TryGetInt64(out long l) ? l : e.GetDouble();
+
+            case JsonValueKind.True:
+            case JsonValueKind.False:
+                return e.GetBoolean();
+
+            case JsonValueKind.Null:
+                return null;
 
             default:
-                return e.ToObject<object>();
+                return e.GetRawText(); // Return as string for unknown types
         }
     }
 
+
+    private void SetJsonData(JsonDocument newData)
+    {
+        // Safely replaces _jsonData by disposing the old JsonDocument before assigning the new one.
+        // This prevents memory leaks by ensuring JsonDocument resources are properly released.
+        var oldData = _jsonData;
+        _jsonData = newData;
+        oldData?.Dispose();
+    }
     private string GetJsonTextFromFile() => FileAccess.ReadJsonFromFile(_filePath, _encryptJson, _decryptJson);
 
-    private JObject GetJsonObjectFromFile()
+    private JsonDocument GetJsonObjectFromFile()
     {
         // The writer is non-atomic (File.WriteAllText truncates then writes), so a concurrent
-        // reader can observe a partially-written file and JObject.Parse will throw. Retry briefly —
-        // the writer finishes in milliseconds. Cannot use a temp-file-then-rename strategy because
-        // users may have permission for the data file only.
+        // reader can observe a partially-written file and JsonDocument.Parse will throw with
+        // "Expected end of string, but instead reached end of data". Retry briefly — the writer
+        // finishes in milliseconds. Cannot use a temp-file-then-rename strategy because users
+        // may have permission for the data file only.
         const int maxAttempts = 50;
         const int delayMs = 20;
         for (var attempt = 0; ; attempt++)
@@ -463,19 +545,234 @@ public class DataStore : IDataStore
             var jsonText = GetJsonTextFromFile();
             try
             {
-                return JObject.Parse(jsonText);
+                return JsonDocument.Parse(jsonText);
             }
-            catch (JsonReaderException) when (attempt < maxAttempts - 1)
+            catch (JsonException) when (attempt < maxAttempts - 1)
             {
-                Thread.Sleep(delayMs);
+                System.Threading.Thread.Sleep(delayMs);
             }
         }
+    }
+
+    private JsonElement? TryGetElement(JsonElement element, string key)
+    {
+        if (element.TryGetProperty(key, out JsonElement childElement))
+        {
+            return childElement;
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    private JsonElement? TryGetElementIgnoreCase(JsonElement element, string key)
+    {
+        var actualKey = FindPropertyNameIgnoreCase(element, key);
+        return actualKey != null ? TryGetElement(element, actualKey) : null;
+    }
+
+    /// <summary>
+    /// Returns the property name as it is stored in the document, matching case-insensitively,
+    /// or null when the element has no such property. An exact match always wins.
+    /// </summary>
+    private static string FindPropertyNameIgnoreCase(JsonElement element, string key)
+    {
+        if (element.ValueKind != JsonValueKind.Object)
+            return null;
+
+        if (element.TryGetProperty(key, out _))
+            return key;
+
+        foreach (var property in element.EnumerateObject())
+        {
+            if (string.Equals(property.Name, key, StringComparison.OrdinalIgnoreCase))
+                return property.Name;
+        }
+
+        return null;
+    }
+
+    private JsonDocument Parse(string json)
+    {
+        return JsonDocument.Parse(json);
+    }
+
+    private T ConvertJsonElementToObject<T>(JsonElement token)
+    {
+        // Special handling for DateTime to support Newtonsoft.Json format
+        if (typeof(T) == typeof(DateTime) && token.ValueKind == JsonValueKind.String)
+        {
+            var dateString = token.GetString();
+            var converter = new NewtonsoftDateTimeConverter();
+            var reader = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes($"\"{dateString}\""));
+            reader.Read(); // Advance to the string token
+            return (T)(object)converter.Read(ref reader, typeof(DateTime), _options);
+        }
+
+        return JsonSerializer.Deserialize<T>(token.GetRawText(), _options);
+    }
+
+    // Rewrites the document to lower camelCase property names while preserving every value byte-for-byte.
+    // The previous implementation round-tripped through ExpandoObject, which ran the date-detection
+    // heuristic (SystemExpandoObjectConverter.TryParseDateTime) over every string. That silently
+    // rewrote any date-looking string — e.g. a "2015-11-23" version field — into "2015-11-23T00:00:00"
+    // on the next unrelated write. Walking the JsonElement directly touches only property names.
+    private static string SerializeCamelCase(JsonElement data, bool writeIndented)
+    {
+        using var stream = new System.IO.MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = writeIndented }))
+        {
+            WriteCamelCase(data, writer);
+        }
+
+        return System.Text.Encoding.UTF8.GetString(stream.ToArray());
+    }
+
+    private static void WriteCamelCase(JsonElement element, Utf8JsonWriter writer)
+    {
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Object:
+                writer.WriteStartObject();
+                foreach (var property in element.EnumerateObject())
+                {
+                    writer.WritePropertyName(JsonNamingPolicy.CamelCase.ConvertName(property.Name));
+                    WriteCamelCase(property.Value, writer);
+                }
+                writer.WriteEndObject();
+                break;
+
+            case JsonValueKind.Array:
+                writer.WriteStartArray();
+                foreach (var item in element.EnumerateArray())
+                {
+                    WriteCamelCase(item, writer);
+                }
+                writer.WriteEndArray();
+                break;
+
+            default:
+                element.WriteTo(writer);
+                break;
+        }
+    }
+
+    private JsonElement ConvertToJsonElement(object item)
+    {
+        // Serialize the object to JSON with proper naming policy and parse it as a JsonDocument
+        var json = JsonSerializer.Serialize(item, _serializerOptions);
+        using var jsonDocument = JsonDocument.Parse(json);
+
+        // Clone the root element so it doesn't reference the disposed JsonDocument
+        // JsonElement is a struct that holds a reference to its parent document's buffer,
+        // so we must clone it to create a copy that's independent of the document's lifetime
+        return jsonDocument.RootElement.Clone();
+    }
+
+    private JsonDocument SetJsonDataElement(JsonElement original, string key, object item)
+    {
+        // Convert _jsonData to a Dictionary to make modifications
+        var jsonDataDict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(original.GetRawText());
+
+        // Convert the item to JsonElement
+        var newElement = ConvertToJsonElement(item);
+
+        // Set or update the element in the dictionary
+        jsonDataDict[key] = newElement;
+
+        // Serialize back to JsonElement
+        var modifiedJson = JsonSerializer.Serialize(jsonDataDict);
+        return JsonDocument.Parse(modifiedJson);
+    }
+
+    private (bool, JsonElement) RemoveJsonDataElement(JsonElement original, string key)
+    {
+        // Deserialize _jsonData to a dictionary for modification
+        var jsonDataDict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(original.GetRawText());
+
+        // Remove the specified key
+        var removed = jsonDataDict.Remove(key);
+
+        // Serialize the updated dictionary back to a JsonElement
+        var modifiedJson = JsonSerializer.Serialize(jsonDataDict);
+        using var jsonDocument = JsonDocument.Parse(modifiedJson);
+
+        // Clone the root element so it doesn't reference the disposed JsonDocument
+        return (removed, jsonDocument.RootElement.Clone());
+    }
+
+    private IEnumerable<JsonElement> GetChildren(JsonElement element)
+    {
+        if (element.ValueKind == JsonValueKind.Object)
+        {
+            // If element is an object, return its property values
+            // JsonElement is a struct - no disposal needed
+            return element.EnumerateObject().Select(p => p.Value);
+        }
+        else if (element.ValueKind == JsonValueKind.Array)
+        {
+            // If element is an array, return the array items
+            // JsonElement is a struct - no disposal needed
+            return element.EnumerateArray();
+        }
+
+        // If it's neither an object nor an array, return an empty sequence
+        return Enumerable.Empty<JsonElement>();
+    }
+
+    public static string GetJsonPath(JsonElement root, JsonElement target)
+    {
+        return FindPath(root, target);
+    }
+
+    private static string FindPath(JsonElement element, JsonElement target, string currentPath = "")
+    {
+        if (element.Equals(target))
+        {
+            return currentPath;
+        }
+
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Object:
+                foreach (var property in element.EnumerateObject())
+                {
+                    var propertyPath = string.IsNullOrEmpty(currentPath)
+                        ? property.Name
+                        : $"{currentPath}.{property.Name}";
+
+                    var result = FindPath(property.Value, target, propertyPath);
+                    if (result != null)
+                    {
+                        return result;
+                    }
+                }
+                break;
+
+            case JsonValueKind.Array:
+                int index = 0;
+                foreach (var item in element.EnumerateArray())
+                {
+                    var arrayPath = $"{currentPath}[{index}]";
+
+                    var result = FindPath(item, target, arrayPath);
+                    if (result != null)
+                    {
+                        return result;
+                    }
+                    index++;
+                }
+                break;
+        }
+
+        return null; // Target not found in this branch
     }
 
     internal class CommitAction
     {
         public Action<bool, Exception> Ready { get; set; }
 
-        public Func<JObject, (bool success, string json)> HandleAction { get; set; }
+        public Func<JsonElement, (bool success, string json)> HandleAction { get; set; }
     }
 }

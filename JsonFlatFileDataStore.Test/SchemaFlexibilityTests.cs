@@ -1,5 +1,5 @@
-using System.IO;
-using Newtonsoft.Json;
+﻿using System.IO;
+using System.Text.Json;
 
 namespace JsonFlatFileDataStore.Test;
 

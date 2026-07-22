@@ -1,4 +1,4 @@
-namespace JsonFlatFileDataStore.Test;
+﻿namespace JsonFlatFileDataStore.Test;
 
 /// <summary>
 /// Numeric edge cases that commonly differ between Newtonsoft and System.Text.Json:
@@ -46,13 +46,12 @@ public class NumericEdgeCaseTests
     }
 
     [Fact]
-    public async Task Decimal_LargeValue_LosesPrecision_BehaviorPinned()
+    public async Task Decimal_LargeValue_RoundTripsExactly()
     {
-        // Documented limitation of the current Newtonsoft path: very large decimal values
-        // are serialized via JObject → ExpandoObject (which uses double internally),
-        // so significant digits beyond double precision are lost on round trip.
-        // Migration note: STJ may behave differently here — expected to either round-trip
-        // exactly or fail explicitly. Update this test once the migration lands.
+        // The old Newtonsoft path serialized via JObject → ExpandoObject (which uses double
+        // internally), so significant digits beyond double precision were lost on round trip.
+        // After the System.Text.Json migration the write path preserves the decimal's raw JSON
+        // token verbatim, so large decimal values now round-trip exactly.
         var path = UTHelpers.GetFullFilePath($"DecLoss_{DateTime.UtcNow.Ticks}");
         var store = new DataStore(path);
 
@@ -64,8 +63,8 @@ public class NumericEdgeCaseTests
         var store2 = new DataStore(path);
         var item = store2.GetCollection<DecimalModel>("decModel").AsQueryable().First();
 
-        // Precision is lost — assert the value differs from the input.
-        Assert.NotEqual(79228162514264337593543950m, item.Price);
+        // Precision is preserved — the value round-trips exactly.
+        Assert.Equal(79228162514264337593543950m, item.Price);
 
         store2.Dispose();
         UTHelpers.Down(path);

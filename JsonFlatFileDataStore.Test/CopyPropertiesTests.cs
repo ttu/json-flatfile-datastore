@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Dynamic;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using Xunit;
 
 namespace JsonFlatFileDataStore.Test;
 
@@ -73,10 +73,10 @@ public class CopyPropertiesTests
         var family = new Family
         {
             Parents = new List<Parent>
-                {
-                    new Parent { Name = "Jim", Age = 52 },
-                    new Parent { Name = "Theodor", Age = 14 }
-                },
+            {
+                new Parent { Name = "Jim", Age = 52 },
+                new Parent { Name = "Theodor", Age = 14 }
+            },
             Address = new Address { City = "Helsinki" }
         };
 
@@ -123,10 +123,10 @@ public class CopyPropertiesTests
         sParent.Age = 14;
 
         family.Parents = new List<ExpandoObject>
-            {
-                fParent,
-                sParent,
-            };
+        {
+            fParent,
+            sParent,
+        };
 
         family.Address = new ExpandoObject();
         family.Address.City = "Helsinki";
@@ -228,9 +228,9 @@ public class CopyPropertiesTests
         var family = new Family
         {
             Parents = new List<Parent>
-                {
-                    new Parent { Name = "Jim", Age = 52 }
-                },
+            {
+                new Parent { Name = "Jim", Age = 52 }
+            },
             Address = new Address { City = "Helsinki" }
         };
 
@@ -251,13 +251,14 @@ public class CopyPropertiesTests
         user.work = work;
 
         var patchData = new Dictionary<string, object>
-            {
-                { "age", 41 },
-                { "name", "James" },
-                { "work", new Dictionary<string, object> { { "name", "ACME" } } }
-            };
-        var jobject = JObject.FromObject(patchData);
-        dynamic patchExpando = JsonConvert.DeserializeObject<ExpandoObject>(jobject.ToString());
+        {
+            { "age", 41 },
+            { "name", "James" },
+            { "work", new Dictionary<string, object> { { "name", "ACME" } } }
+        };
+        var jsonString = JsonSerializer.Serialize(patchData);
+        var options = new JsonSerializerOptions { Converters = { new SystemExpandoObjectConverter() } };
+        dynamic patchExpando = JsonSerializer.Deserialize<ExpandoObject>(jsonString, options);
 
         ObjectExtensions.CopyProperties(patchExpando, user);
         Assert.Equal("James", user.name);
@@ -296,10 +297,10 @@ public class CopyPropertiesTests
         sensor.mac = "F4:A5:74:89:16:57";
         sensor.timestamp = null;
         sensor.data = new Dictionary<string, object>
-            {
-                { "temperature", 24.3 },
-                { "identifier", null }
-            };
+        {
+            { "temperature", 24.3 },
+            { "identifier", null }
+        };
 
         ObjectExtensions.CopyProperties(sensor, destination);
 
@@ -319,13 +320,14 @@ public class CopyPropertiesTests
         };
 
         var patchData = new Dictionary<string, object>
-            {
-                { "Age", 41 },
-                { "Name", "James" },
-                { "Work", new Dictionary<string, object> { { "Name", "ACME" } } }
-            };
-        var jobject = JObject.FromObject(patchData);
-        dynamic patchExpando = JsonConvert.DeserializeObject<ExpandoObject>(jobject.ToString());
+        {
+            { "Age", 41 },
+            { "Name", "James" },
+            { "Work", new Dictionary<string, object> { { "Name", "ACME" } } }
+        };
+        var jsonString = JsonSerializer.Serialize(patchData);
+        var options = new JsonSerializerOptions { Converters = { new SystemExpandoObjectConverter() } };
+        dynamic patchExpando = JsonSerializer.Deserialize<ExpandoObject>(jsonString, options);
 
         ObjectExtensions.CopyProperties(patchExpando, user);
         Assert.Equal("James", user.Name);
