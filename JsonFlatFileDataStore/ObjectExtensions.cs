@@ -84,7 +84,10 @@ internal static class ObjectExtensions
 
         bool AnyPropertyHasValue(dynamic current)
         {
-            if (current == null)
+            // Pattern matching is not dynamically bound, unlike ==. A struct without a
+            // user-defined equality operator, such as the KeyValuePair a dictionary yields when
+            // enumerated, makes the runtime binder throw on "current == null".
+            if (current is null)
                 return false;
 
             if (!IsValueReferenceType(current.GetType()))
@@ -97,7 +100,18 @@ internal static class ObjectExtensions
                 if (propValue == null)
                     continue;
 
-                if (IsEnumerable(srcProp.PropertyType) && srcProp.PropertyType != typeof(ExpandoObject))
+                if (IsDictionary(srcProp.PropertyType))
+                {
+                    // Search keys and values as separate values. Enumerating a dictionary as a
+                    // plain sequence would instead compare against the "[key, value]" text a
+                    // KeyValuePair stringifies to, making the brackets and separator searchable.
+                    foreach (DictionaryEntry entry in (IDictionary)propValue)
+                    {
+                        if (AnyPropertyHasValue(entry.Key) || AnyPropertyHasValue(entry.Value))
+                            return true;
+                    }
+                }
+                else if (IsEnumerable(srcProp.PropertyType) && srcProp.PropertyType != typeof(ExpandoObject))
                 {
                     // propValue is IEnumerable, suppress compiler warning with null-forgiving operator
                     foreach (var i in (propValue as IEnumerable)!)

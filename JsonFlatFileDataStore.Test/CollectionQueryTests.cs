@@ -267,6 +267,153 @@ public class CollectionQueryTests
     }
 
     [Fact]
+    public void FullTextSearch_ModelWithDictionary_MatchesOtherProperty()
+    {
+        var newFilePath = UTHelpers.Up();
+
+        var store = new DataStore(newFilePath);
+
+        var collection = store.GetCollection<PrivateOwner>("owner");
+        collection.InsertOne(new PrivateOwner
+        {
+            FirstName = "Jim",
+            MyStrings = new Dictionary<string, string> { { "plan", "gold" } }
+        });
+
+        var matches = collection.Find("Jim");
+
+        Assert.Single(matches);
+
+        UTHelpers.Down(newFilePath);
+    }
+
+    [Fact]
+    public void FullTextSearch_ModelWithDictionary_MatchesValue()
+    {
+        var newFilePath = UTHelpers.Up();
+
+        var store = new DataStore(newFilePath);
+
+        var collection = store.GetCollection<PrivateOwner>("owner");
+        collection.InsertOne(new PrivateOwner
+        {
+            FirstName = "Jim",
+            MyStrings = new Dictionary<string, string> { { "plan", "gold" } }
+        });
+
+        var matches = collection.Find("gold");
+
+        Assert.Single(matches);
+
+        UTHelpers.Down(newFilePath);
+    }
+
+    [Fact]
+    public void FullTextSearch_ModelWithDictionary_MatchesKey()
+    {
+        var newFilePath = UTHelpers.Up();
+
+        var store = new DataStore(newFilePath);
+
+        var collection = store.GetCollection<PrivateOwner>("owner");
+        collection.InsertOne(new PrivateOwner
+        {
+            FirstName = "Jim",
+            MyStrings = new Dictionary<string, string> { { "plan", "gold" } }
+        });
+
+        var matches = collection.Find("plan");
+
+        Assert.Single(matches);
+
+        UTHelpers.Down(newFilePath);
+    }
+
+    [Fact]
+    public void FullTextSearch_ModelWithNonStringDictionary_MatchesValue()
+    {
+        var newFilePath = UTHelpers.Up();
+
+        var store = new DataStore(newFilePath);
+
+        var collection = store.GetCollection<PrivateOwner>("owner");
+        collection.InsertOne(new PrivateOwner
+        {
+            FirstName = "Jim",
+            MyIntegers = new Dictionary<int, int> { { 11, 22 } }
+        });
+
+        Assert.Single(collection.Find("22"));
+        Assert.Empty(collection.Find("33"));
+
+        UTHelpers.Down(newFilePath);
+    }
+
+    [Fact]
+    public void FullTextSearch_ModelWithDictionary_DoesNotMatchEntryFormatting()
+    {
+        var newFilePath = UTHelpers.Up();
+
+        var store = new DataStore(newFilePath);
+
+        var collection = store.GetCollection<PrivateOwner>("owner");
+        collection.InsertOne(new PrivateOwner
+        {
+            FirstName = "Jim",
+            MyStrings = new Dictionary<string, string> { { "plan", "gold" } }
+        });
+
+        // Keys and values are searchable; the brackets and separator a dictionary entry
+        // stringifies to are not part of the document.
+        Assert.Empty(collection.Find("[plan"));
+        Assert.Empty(collection.Find(", gold"));
+
+        UTHelpers.Down(newFilePath);
+    }
+
+    [Fact]
+    public void FullTextSearch_ModelWithEmptyDictionary_MatchesOtherProperty()
+    {
+        var newFilePath = UTHelpers.Up();
+
+        var store = new DataStore(newFilePath);
+
+        var collection = store.GetCollection<PrivateOwner>("owner");
+        collection.InsertOne(new PrivateOwner
+        {
+            FirstName = "Jim",
+            MyStrings = new Dictionary<string, string>()
+        });
+
+        var matches = collection.Find("Jim");
+
+        Assert.Single(matches);
+
+        UTHelpers.Down(newFilePath);
+    }
+
+    [Fact]
+    public void FullTextSearch_ModelWithDictionary_NoMatch()
+    {
+        var newFilePath = UTHelpers.Up();
+
+        var store = new DataStore(newFilePath);
+
+        var collection = store.GetCollection<PrivateOwner>("owner");
+        collection.InsertOne(new PrivateOwner
+        {
+            FirstName = "Jim",
+            MyStrings = new Dictionary<string, string> { { "plan", "gold" } }
+        });
+
+        var matches = collection.Find("silver");
+
+        Assert.Empty(matches);
+
+        UTHelpers.Down(newFilePath);
+    }
+
+    [Fact]
     public void FullTextSearch_Dynamic()
     {
         var newFilePath = UTHelpers.Up();
