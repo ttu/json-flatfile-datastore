@@ -1,4 +1,6 @@
 using System.IO;
+using System.Linq;
+using Newtonsoft.Json.Linq;
 
 namespace JsonFlatFileDataStore.Test;
 
@@ -45,6 +47,55 @@ public class CaseSensitivityTests
         Assert.Equal(40, user.Age);
 
         store.Dispose();
+        UTHelpers.Down(path);
+    }
+
+    [Fact]
+    public void ReadExistingFile_PascalCaseCollectionKey_IsReadable()
+    {
+        var path = UTHelpers.GetFullFilePath($"PascalKey_{DateTime.UtcNow.Ticks}");
+
+        // The collection KEY itself is Pascal case ("User"), not just the item properties.
+        File.WriteAllText(path, "{ \"User\": [ { \"Id\": 1, \"Name\": \"Alice\", \"Age\": 30 } ] }");
+
+        var store = new DataStore(path, useLowerCamelCase: true);
+        var collection = store.GetCollection<User>("User");
+
+        // In camelCase mode the collection path is looked up as "user"; the store must still find
+        // the "User" key instead of treating the collection as empty.
+        Assert.Equal(1, collection.Count);
+        Assert.Equal("Alice", collection.AsQueryable().First().Name);
+
+        store.Dispose();
+        UTHelpers.Down(path);
+    }
+
+    [Fact]
+    public void InsertInto_PascalCaseCollectionKey_DoesNotDuplicateKey()
+    {
+        var path = UTHelpers.GetFullFilePath($"PascalKeyInsert_{DateTime.UtcNow.Ticks}");
+
+        File.WriteAllText(path, "{ \"User\": [ { \"Id\": 1, \"Name\": \"Alice\" } ] }");
+
+        var store = new DataStore(path, useLowerCamelCase: true);
+        var collection = store.GetCollection<User>("User");
+        collection.InsertOne(new User { Id = 2, Name = "Bob" });
+        store.Dispose();
+
+        // The existing "User" collection must be updated in place, not shadowed by a second
+        // camelCased "user" key. A JSON object with two keys differing only by case is corrupt.
+        var root = JObject.Parse(File.ReadAllText(path));
+        var userKeys = root.Properties()
+                           .Where(p => string.Equals(p.Name, "user", StringComparison.OrdinalIgnoreCase))
+                           .ToList();
+        Assert.Single(userKeys);
+        Assert.Equal(2, userKeys[0].Value.Count());
+
+        // Reopening finds both items through the collection API.
+        var store2 = new DataStore(path, useLowerCamelCase: true);
+        Assert.Equal(2, store2.GetCollection<User>("User").Count);
+        store2.Dispose();
+
         UTHelpers.Down(path);
     }
 
