@@ -25,7 +25,7 @@ A lightweight, JSON-based data storage solution, ideal for small applications an
 
 **Major Version Changes**
 
-* Version 3.0: Uses `System.Text.Json` instead of `Newtonsoft.Json` for JSON serialization and deserialization. This change reduces dependencies, as `System.Text.Json` is part of the .NET runtime.
+* Version 3.0: Uses `System.Text.Json` instead of `Newtonsoft.Json` for JSON serialization and deserialization. `System.Text.Json` is included in modern .NET runtimes, so on those it is not an extra dependency. The `netstandard2.0` target still pulls it in through the `System.Text.Json` package reference in `JsonFlatFileDataStore.csproj`.
 
 **Docs Website**
 
