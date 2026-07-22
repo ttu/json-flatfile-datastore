@@ -414,15 +414,23 @@ public class DocumentCollection<T> : IDocumentCollection<T>
         return ParseNextIntegerToKeyValue(keyValue.ToString());
     }
 
+    // Reused between calls, as a new JsonSerializerOptions instance would throw away
+    // System.Text.Json's cached type metadata on every lookup
+    private static readonly JsonSerializerOptions _fieldValueOptions = new JsonSerializerOptions
+    {
+        Converters = { new SystemExpandoObjectConverter() },
+        PropertyNameCaseInsensitive = true // Optional: make property name matching case-insensitive
+    };
+
     private dynamic GetFieldValue(T item, string fieldName)
     {
-        var options = new JsonSerializerOptions
-        {
-            Converters = { new SystemExpandoObjectConverter() },
-            PropertyNameCaseInsensitive = true // Optional: make property name matching case-insensitive
-        };
+        // Dynamic items are already dictionaries, so the field can be read without serializing
+        // the whole item. Typed items are serialized, as the id value has to be in the same
+        // format as it is in JSON, e.g. a Guid is handled as a string.
+        var expando = item is IDictionary<string, object> itemDictionary
+            ? itemDictionary
+            : JsonSerializer.SerializeToElement(item).Deserialize<ExpandoObject>(_fieldValueOptions);
 
-        var expando = JsonSerializer.Deserialize<ExpandoObject>(JsonSerializer.Serialize(item), options);
         // Problem here is if we have typed data with upper camel case properties but lower camel case in JSON, so need to use OrdinalIgnoreCase string comparer
         var expandoAsIgnoreCase = new Dictionary<string, dynamic>(expando, StringComparer.OrdinalIgnoreCase);
 
