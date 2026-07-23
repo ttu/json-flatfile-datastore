@@ -5,6 +5,7 @@
 * FIXED: Retry JSON parse on read to tolerate concurrent partial-file writes
 * FIXED: A failing commit action no longer hangs other callers in the same batch
 * FIXED: Collection key in file not matching configured case is now matched case-insensitively, instead of reading empty and duplicating the key on save
+* FIXED: Full-text search no longer throws on models with a dictionary property, and searches dictionary keys and values
 
 ### [2.4.2] - 2023-06-25
 * FIXED: Duplicate collection data to JSON on save when configured case was not used with collection name

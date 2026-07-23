@@ -100,12 +100,16 @@ internal static class ObjectExtensions
                 if (propValue == null)
                     continue;
 
-                if (IsDictionary(srcProp.PropertyType))
+                if (propValue is IDictionary dictionary)
                 {
-                    // Search keys and values as separate values. Enumerating a dictionary as a
-                    // plain sequence would instead compare against the "[key, value]" text a
-                    // KeyValuePair stringifies to, making the brackets and separator searchable.
-                    foreach (DictionaryEntry entry in (IDictionary)propValue)
+                    // Test the runtime value rather than the declared property type: a property
+                    // typed as IDictionary<,> or IReadOnlyDictionary<,> still holds a concrete
+                    // Dictionary that implements the non-generic IDictionary. Search keys and
+                    // values as separate values, otherwise enumerating a dictionary as a plain
+                    // sequence would compare against the "[key, value]" text a KeyValuePair
+                    // stringifies to, making the brackets and separator searchable. ExpandoObject
+                    // implements IDictionary<,> but not IDictionary, so it is recursed as an object.
+                    foreach (DictionaryEntry entry in dictionary)
                     {
                         if (AnyPropertyHasValue(entry.Key) || AnyPropertyHasValue(entry.Value))
                             return true;

@@ -372,6 +372,34 @@ public class CollectionQueryTests
     }
 
     [Fact]
+    public void FullTextSearch_ModelWithInterfaceTypedDictionary_MatchesKeyAndValue()
+    {
+        var newFilePath = UTHelpers.Up();
+
+        var store = new DataStore(newFilePath);
+
+        var collection = store.GetCollection<OwnerWithDictionaryInterfaces>("owner");
+        collection.InsertOne(new OwnerWithDictionaryInterfaces
+        {
+            FirstName = "Jim",
+            Attributes = new Dictionary<string, string> { { "plan", "gold" } },
+            ReadOnlyAttributes = new Dictionary<string, string> { { "tier", "silver" } }
+        });
+
+        // A property declared as an interface (IDictionary<,> / IReadOnlyDictionary<,>) must be
+        // searched by key and value, not by the "[key, value]" text a KeyValuePair stringifies to.
+        Assert.Single(collection.Find("plan"));
+        Assert.Single(collection.Find("gold"));
+        Assert.Single(collection.Find("tier"));
+        Assert.Single(collection.Find("silver"));
+
+        Assert.Empty(collection.Find("[plan"));
+        Assert.Empty(collection.Find(", gold"));
+
+        UTHelpers.Down(newFilePath);
+    }
+
+    [Fact]
     public void FullTextSearch_ModelWithEmptyDictionary_MatchesOtherProperty()
     {
         var newFilePath = UTHelpers.Up();
