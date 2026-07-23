@@ -305,15 +305,20 @@ public class CollectionQueryTests
 
             var newFilePath = UTHelpers.Up();
 
-            var store = new DataStore(newFilePath);
+            try
+            {
+                var store = new DataStore(newFilePath);
 
-            var collection = store.GetCollection<Movie>("movie");
-            collection.InsertOne(new Movie { Name = "The Room", Rating = 9.99 });
+                var collection = store.GetCollection<Movie>("movie");
+                collection.InsertOne(new Movie { Name = "The Room", Rating = 9.99 });
 
-            Assert.Single(collection.Find("9.99"));
-            Assert.Empty(collection.Find("9,99"));
-
-            UTHelpers.Down(newFilePath);
+                Assert.Single(collection.Find("9.99"));
+                Assert.Empty(collection.Find("9,99"));
+            }
+            finally
+            {
+                UTHelpers.Down(newFilePath);
+            }
         }
         finally
         {
