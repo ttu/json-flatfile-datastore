@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Dynamic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using Newtonsoft.Json;
@@ -88,7 +89,11 @@ internal static class ObjectExtensions
                 return false;
 
             if (!IsValueReferenceType(current.GetType()))
-                return compareFunc(current.ToString(), text);
+                // Format leaf values (numbers, dates) with the invariant culture so a search is
+                // not affected by the machine's locale — otherwise a decimal stored as 9.99 would
+                // only match "9,99" where the decimal separator is a comma. Matches the invariant
+                // formatting DataStore uses when it reads dynamic values back.
+                return compareFunc(Convert.ToString((object)current, CultureInfo.InvariantCulture), text);
 
             foreach (var srcProp in GetProperties(current))
             {

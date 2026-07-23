@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using System.Globalization;
+using Newtonsoft.Json.Linq;
 
 namespace JsonFlatFileDataStore.Test;
 
@@ -289,6 +290,35 @@ public class CollectionQueryTests
         Assert.Equal(9, matches3.Count());
 
         UTHelpers.Down(newFilePath);
+    }
+
+    [Fact]
+    public void FullTextSearch_NumericValue_IsCultureInvariant()
+    {
+        var originalCulture = CultureInfo.CurrentCulture;
+
+        try
+        {
+            // A culture whose decimal separator is a comma. Before the fix the stored value was
+            // rendered with ToString() under this culture, so "9,99" matched and "9.99" did not.
+            CultureInfo.CurrentCulture = new CultureInfo("fi-FI");
+
+            var newFilePath = UTHelpers.Up();
+
+            var store = new DataStore(newFilePath);
+
+            var collection = store.GetCollection<Movie>("movie");
+            collection.InsertOne(new Movie { Name = "The Room", Rating = 9.99 });
+
+            Assert.Single(collection.Find("9.99"));
+            Assert.Empty(collection.Find("9,99"));
+
+            UTHelpers.Down(newFilePath);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = originalCulture;
+        }
     }
 
     [Fact]
