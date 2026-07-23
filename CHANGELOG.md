@@ -5,6 +5,7 @@
 * FIXED: Retry JSON parse on read to tolerate concurrent partial-file writes
 * FIXED: A failing commit action no longer hangs other callers in the same batch
 * FIXED: Collection key in file not matching configured case is now matched case-insensitively, instead of reading empty and duplicating the key on save
+* FIXED: Full-text search of numeric and date values is now culture-invariant, instead of depending on the machine's locale
 
 ### [2.4.2] - 2023-06-25
 * FIXED: Duplicate collection data to JSON on save when configured case was not used with collection name
