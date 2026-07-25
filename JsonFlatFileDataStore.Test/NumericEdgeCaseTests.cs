@@ -23,10 +23,6 @@ public class NumericEdgeCaseTests
         var collection = store.GetCollection<DecimalModel>("decModel");
         await collection.InsertOneAsync(new DecimalModel { Id = 1, Price = 19.95m, OptionalAmount = 0.0000001m });
         await collection.InsertOneAsync(new DecimalModel { Id = 2, Price = 9999999999.99m, OptionalAmount = null });
-        // Note: very large decimals lose precision on the current Newtonsoft path because
-        // the serializer routes data through ExpandoObject (JSON number → double → back).
-        // decimal.MaxValue specifically also fails to deserialize. Use a value within
-        // double precision range to assert lossless round-trip.
         await collection.InsertOneAsync(new DecimalModel { Id = 3, Price = -0.01m, OptionalAmount = 12345678.99m });
 
         store.Dispose();
@@ -45,27 +41,79 @@ public class NumericEdgeCaseTests
         UTHelpers.Down(path);
     }
 
-    [Fact]
-    public async Task Decimal_LargeValue_LosesPrecision_BehaviorPinned()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Decimal_BeyondDoublePrecision_RoundTrip(bool useLowerCamelCase)
     {
-        // Documented limitation of the current Newtonsoft path: very large decimal values
-        // are serialized via JObject → ExpandoObject (which uses double internally),
-        // so significant digits beyond double precision are lost on round trip.
-        // Migration note: STJ may behave differently here — expected to either round-trip
-        // exactly or fail explicitly. Update this test once the migration lands.
-        var path = UTHelpers.GetFullFilePath($"DecLoss_{DateTime.UtcNow.Ticks}");
+        // Values with more significant digits than a double can hold. Both the read path and the
+        // camelCase write path used to materialize them as double, which corrupted them.
+        var path = UTHelpers.GetFullFilePath($"DecPrecision_{useLowerCamelCase}_{DateTime.UtcNow.Ticks}");
+        var store = new DataStore(path, useLowerCamelCase);
+
+        var collection = store.GetCollection<DecimalModel>("decModel");
+        await collection.InsertOneAsync(new DecimalModel { Id = 1, Price = 123456789012345678.5m });
+        await collection.InsertOneAsync(new DecimalModel { Id = 2, Price = 79228162514264337593543950m });
+        await collection.InsertOneAsync(new DecimalModel { Id = 3, Price = decimal.MaxValue });
+
+        store.Dispose();
+
+        var store2 = new DataStore(path, useLowerCamelCase);
+        var items = store2.GetCollection<DecimalModel>("decModel").AsQueryable().OrderBy(e => e.Id).ToList();
+
+        Assert.Equal(123456789012345678.5m, items[0].Price);
+        Assert.Equal(79228162514264337593543950m, items[1].Price);
+        Assert.Equal(decimal.MaxValue, items[2].Price);
+
+        store2.Dispose();
+        UTHelpers.Down(path);
+    }
+
+    [Fact]
+    public async Task Decimal_UpdatedAfterReload_KeepsPrecision()
+    {
+        // The reload path parses the file again, so precision must survive a write that happens
+        // after the store has read its own output.
+        var path = UTHelpers.GetFullFilePath($"DecUpdate_{DateTime.UtcNow.Ticks}");
         var store = new DataStore(path);
 
         var collection = store.GetCollection<DecimalModel>("decModel");
-        await collection.InsertOneAsync(new DecimalModel { Id = 1, Price = 79228162514264337593543950m });
+        await collection.InsertOneAsync(new DecimalModel { Id = 1, Price = 123456789012345678.5m });
+        await collection.UpdateOneAsync(1, new { OptionalAmount = 12345678901234567890.5m });
 
         store.Dispose();
 
         var store2 = new DataStore(path);
         var item = store2.GetCollection<DecimalModel>("decModel").AsQueryable().First();
 
-        // Precision is lost — assert the value differs from the input.
-        Assert.NotEqual(79228162514264337593543950m, item.Price);
+        Assert.Equal(123456789012345678.5m, item.Price);
+        Assert.Equal(12345678901234567890.5m, item.OptionalAmount);
+
+        store2.Dispose();
+        UTHelpers.Down(path);
+    }
+
+    [Theory]
+    [InlineData(double.MaxValue)]
+    [InlineData(double.MinValue)]
+    [InlineData(double.Epsilon)]
+    [InlineData(1e-30)]
+    public async Task Double_OutsideDecimalRange_RoundTrip(double value)
+    {
+        // Values outside decimal's range must not be read as one: too large throws, too small
+        // rounds to zero without any error. Both fall back to double parsing.
+        var path = UTHelpers.GetFullFilePath($"DoubleRange_{value}_{DateTime.UtcNow.Ticks}");
+        var store = new DataStore(path);
+
+        var collection = store.GetCollection<Movie>("movie");
+        await collection.InsertOneAsync(new Movie { Name = "Extreme", Rating = value });
+
+        store.Dispose();
+
+        var store2 = new DataStore(path);
+        var movie = store2.GetCollection<Movie>("movie").AsQueryable().First();
+
+        Assert.Equal(value, movie.Rating);
 
         store2.Dispose();
         UTHelpers.Down(path);
