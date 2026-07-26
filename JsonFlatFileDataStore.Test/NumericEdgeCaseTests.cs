@@ -1,3 +1,6 @@
+using System.Collections;
+using Newtonsoft.Json.Linq;
+
 namespace JsonFlatFileDataStore.Test;
 
 /// <summary>
@@ -70,6 +73,81 @@ public class NumericEdgeCaseTests
     }
 
     [Fact]
+    public async Task Decimal_DocumentWithSmallestRepresentableValue_KeepsPrecision()
+    {
+        // 1e-28 is exactly representable as a decimal, so it must not push the document onto the
+        // double path and corrupt the high-precision decimal stored next to it.
+        var path = UTHelpers.GetFullFilePath($"DecTinyNeighbour_{DateTime.UtcNow.Ticks}");
+        var store = new DataStore(path);
+
+        await store.GetCollection<DecimalModel>("decModel").InsertOneAsync(new DecimalModel { Id = 1, Price = decimal.MaxValue });
+        await store.GetCollection<Movie>("movie").InsertOneAsync(new Movie { Name = "Tiny", Rating = 1e-28 });
+
+        store.Dispose();
+
+        var store2 = new DataStore(path);
+
+        Assert.Equal(decimal.MaxValue, store2.GetCollection<DecimalModel>("decModel").AsQueryable().First().Price);
+        Assert.Equal(1e-28, store2.GetCollection<Movie>("movie").AsQueryable().First().Rating);
+
+        store2.Dispose();
+        UTHelpers.Down(path);
+    }
+
+    [Fact]
+    public void GetItem_NestedContainers_DoNotExposeDecimal()
+    {
+        // Dynamic values have always been doubles and a dynamic decimal can not even be compared
+        // to a double literal, so no decimal may leak out through a nested array or object either.
+        var path = UTHelpers.GetFullFilePath($"NestedDyn_{DateTime.UtcNow.Ticks}");
+        var store = new DataStore(path);
+
+        store.InsertItem("nested", new object[] { new[] { 1.5, 2.5 }, new { inner = 3.5 } });
+        store.Dispose();
+
+        var store2 = new DataStore(path);
+        var item = store2.GetItem("nested");
+
+        Assert.Empty(FindDecimals(item));
+
+        store2.Dispose();
+        UTHelpers.Down(path);
+    }
+
+    private static IEnumerable<object> FindDecimals(object value)
+    {
+        switch (value)
+        {
+            case decimal:
+                yield return value;
+                break;
+
+            case JValue jValue:
+                foreach (var found in FindDecimals(jValue.Value))
+                    yield return found;
+                break;
+
+            case JObject jObject:
+                foreach (var found in jObject.Properties().SelectMany(p => FindDecimals(p.Value)))
+                    yield return found;
+                break;
+
+            case IEnumerable<KeyValuePair<string, object>> expando:
+                foreach (var found in expando.SelectMany(p => FindDecimals(p.Value)))
+                    yield return found;
+                break;
+
+            case IEnumerable sequence when value is not string:
+                foreach (var element in sequence)
+                {
+                    foreach (var found in FindDecimals(element))
+                        yield return found;
+                }
+                break;
+        }
+    }
+
+    [Fact]
     public async Task Decimal_UpdatedAfterReload_KeepsPrecision()
     {
         // The reload path parses the file again, so precision must survive a write that happens
@@ -98,6 +176,8 @@ public class NumericEdgeCaseTests
     [InlineData(double.MinValue)]
     [InlineData(double.Epsilon)]
     [InlineData(1e-30)]
+    [InlineData(1.5e-28)]
+    [InlineData(1e-28)]
     public async Task Double_OutsideDecimalRange_RoundTrip(double value)
     {
         // Values outside decimal's range must not be read as one: too large throws, too small

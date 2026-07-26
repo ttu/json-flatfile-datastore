@@ -438,7 +438,10 @@ public class DataStore : IDataStore
                 return JsonConvert.DeserializeObject<ExpandoObject>(content, _converter) as dynamic;
 
             case var arrayToken when e.Type == JTokenType.Array:
-                return e.ToObject<List<object>>().Select(NormalizeFloatValue).ToList();
+                // Read through the JSON text like an object rather than converting the tokens, so
+                // that no decimal survives anywhere inside a nested array or object either
+                var arrayContent = string.Format(CultureInfo.InvariantCulture, "{0}", arrayToken);
+                return JsonConvert.DeserializeObject<List<object>>(arrayContent);
 
             case JValue jv when e is JValue:
                 return NormalizeFloatValue(jv.Value);
@@ -450,8 +453,8 @@ public class DataStore : IDataStore
 
     // The document keeps non-integral numbers as decimal so their precision survives a round trip,
     // but the dynamic API has always handed them out as double — and a dynamic decimal can not even
-    // be compared to a double literal. Objects are unaffected: they are read through
-    // ExpandoObject, which materializes them as double regardless.
+    // be compared to a double literal. Objects and arrays are read through their JSON text, which
+    // materializes every number in them as double regardless.
     private static object NormalizeFloatValue(object value) => value is decimal d ? (double)d : value;
 
     private string GetJsonTextFromFile() => FileAccess.ReadJsonFromFile(_filePath, _encryptJson, _decryptJson);

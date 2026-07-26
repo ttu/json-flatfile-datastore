@@ -20,10 +20,10 @@ namespace JsonFlatFileDataStore;
 /// </summary>
 internal static class JsonParser
 {
-    // Smallest positive decimal is 1e-28, so an exponent at or past that can lose the value
-    private const int UnsafeNegativeExponent = 28;
+    // Decimal keeps at most 28 digits after the point
+    private const int MaxDecimalScale = 28;
 
-    private static readonly string _unsafeSmallLiteral = "0." + new string('0', UnsafeNegativeExponent);
+    private static readonly string _unsafeSmallLiteral = "0." + new string('0', MaxDecimalScale);
 
     private static readonly JsonSerializerSettings _decimalSettings = new JsonSerializerSettings
     { FloatParseHandling = FloatParseHandling.Decimal };
@@ -101,12 +101,30 @@ internal static class JsonParser
             {
                 exponent = exponent * 10 + (jsonText[digitIndex] - '0');
 
-                if (exponent >= UnsafeNegativeExponent)
+                if (exponent > MaxDecimalScale)
                     return true;
             }
+
+            // The exponent alone does not decide it: the digits the mantissa already has after the
+            // point shift the value further down. 1e-28 is exact, 1.5e-28 is not.
+            if (digitIndex > i + 2 && exponent + CountFractionDigits(jsonText, i) > MaxDecimalScale)
+                return true;
         }
 
         // Same magnitude written without an exponent, which only a hand-authored file contains
         return jsonText.IndexOf(_unsafeSmallLiteral, StringComparison.Ordinal) >= 0;
+    }
+
+    /// <summary>
+    /// Number of digits the mantissa ending at <paramref name="exponentIndex"/> has after the point.
+    /// </summary>
+    private static int CountFractionDigits(string jsonText, int exponentIndex)
+    {
+        var index = exponentIndex - 1;
+
+        while (index >= 0 && char.IsDigit(jsonText[index]))
+            index--;
+
+        return index >= 0 && jsonText[index] == '.' ? exponentIndex - 1 - index : 0;
     }
 }
