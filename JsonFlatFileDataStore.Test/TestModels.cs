@@ -61,6 +61,15 @@ public class PrivateOwner
     public Dictionary<int, int> MyIntegers { get; set; }
 }
 
+public class OwnerWithDictionaryInterfaces
+{
+    public string FirstName { get; set; }
+
+    public IDictionary<string, string> Attributes { get; set; }
+
+    public IReadOnlyDictionary<string, string> ReadOnlyAttributes { get; set; }
+}
+
 public class Family
 {
     public int Id { get; set; }
