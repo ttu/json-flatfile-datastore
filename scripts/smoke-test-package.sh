@@ -158,7 +158,12 @@ XML
 
 if [ "$MODE" = "pack" ]; then
     echo "==> Packing JsonFlatFileDataStore $VERSION"
-    dotnet pack "$CSPROJ" -c Release -o "$FEED" --nologo -v quiet
+    # GeneratePackageOnBuild=true drops Build from pack's dependencies (the SDK treats
+    # it like NoBuild, since pack already runs after build), so `dotnet pack` packages
+    # whatever already sits in bin/Release -- a stale assembly, or nothing at all.
+    # Turning it off restores Build as a pack dependency, so the .nupkg under test
+    # always reflects the current source.
+    dotnet pack "$CSPROJ" -c Release -o "$FEED" -p:GeneratePackageOnBuild=false --nologo -v quiet
 
     NUPKG="$FEED/JsonFlatFileDataStore.$VERSION.nupkg"
     [ -f "$NUPKG" ] || { echo "FAIL: expected $NUPKG to exist" >&2; exit 1; }

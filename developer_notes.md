@@ -23,24 +23,25 @@ open coverage-report/index.html   # macOS (Linux: xdg-open, Windows: start)
 
 ### Update package version and create a new release
 
-1. Update version and push to master ([example](https://github.com/ttu/json-flatfile-datastore/commit/a5d4b1f2099a831ac8c5f37e6db9383ab3c4c20e)). Edit version from csproj with an editor. Also add the version to `CHANGELOG.md` and to the version selector in `docs/index.html`.
-2. Smoke test the package before pushing. A push to nuget.org can't be undone — a version number can be unlisted but never reused. `dotnet test` uses project references, so it passes even when the package itself is broken.
+1. Update the version ([example](https://github.com/ttu/json-flatfile-datastore/commit/a5d4b1f2099a831ac8c5f37e6db9383ab3c4c20e)). Edit `Version`, `PackageVersion`, `AssemblyVersion` and `FileVersion` in the csproj with an editor. Also add the version to `CHANGELOG.md` and to the version selector in `docs/index.html`. Don't push yet, smoke test first, so a packaging problem is fixed in the same commit instead of needing a follow-up one.
+2. Smoke test the package. A push to nuget.org can't be undone, a version number can be unlisted but never reused. `dotnet test` uses project references, so it passes even when the package itself is broken.
 ```sh
 $ ./scripts/smoke-test-package.sh
 ```
-This packs the library, checks the `.nupkg` contents (netstandard2.0 assembly, XML docs, README, LICENSE, Newtonsoft.Json and Microsoft.CSharp dependencies), then builds a throwaway console app that consumes the package from a local feed and exercises the public API. It restores into a temporary `NUGET_PACKAGES` directory so the unpublished version never lands in the global cache, where it would shadow the real package after release. NuGet package source mapping pins `JsonFlatFileDataStore` to the local feed, so the packed build is what gets tested even for a version that already exists on nuget.org; the transitive dependencies still come from nuget.org.
+Packs the library from the current source, checks the `.nupkg` contents, then runs a throwaway console app against it. No prior `dotnet build` needed; the script's header comment explains the details.
 
-3. Update Tags
+3. Commit the version changes and push to master.
+4. Update Tags
 ```sh
 $ git tag x.x.x
 $ git push origin --tags
 ```
-4. Build new release. Check API key from [Nuget](https://www.nuget.org/account/apikeys)
+5. Build new release. Check API key from [Nuget](https://www.nuget.org/account/apikeys)
 ```sh
 $ dotnet build --configuration Release
 $ dotnet nuget push .\JsonFlatFileDataStore\bin\Release\JsonFlatFileDataStore.x.x.x.nupkg --source https://api.nuget.org/v3/index.json --api-key xxxxx
 ```
-5. Smoke test the published package. Same checks as step 2, but against the artifact users will actually restore — this catches a bad upload or a package that behaves differently once it comes from the live feed.
+6. Smoke test the published package. Same checks as step 2, but against the artifact users will actually restore — this catches a bad upload or a package that behaves differently once it comes from the live feed.
 ```sh
 $ ./scripts/smoke-test-package.sh --from-nuget x.x.x
 ```
