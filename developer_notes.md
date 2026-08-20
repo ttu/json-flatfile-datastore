@@ -28,7 +28,7 @@ open coverage-report/index.html   # macOS (Linux: xdg-open, Windows: start)
 ```sh
 $ ./scripts/smoke-test-package.sh
 ```
-This packs the library, checks the `.nupkg` contents (netstandard2.0 assembly, XML docs, README, LICENSE, Newtonsoft.Json and Microsoft.CSharp dependencies), then builds a throwaway console app that consumes the package from a local feed and exercises the public API. It restores into a temporary `NUGET_PACKAGES` directory so the unpublished version never lands in the global cache, where it would shadow the real package after release.
+This packs the library, checks the `.nupkg` contents (netstandard2.0 assembly, XML docs, README, LICENSE, Newtonsoft.Json and Microsoft.CSharp dependencies), then builds a throwaway console app that consumes the package from a local feed and exercises the public API. It restores into a temporary `NUGET_PACKAGES` directory so the unpublished version never lands in the global cache, where it would shadow the real package after release. NuGet package source mapping pins `JsonFlatFileDataStore` to the local feed, so the packed build is what gets tested even for a version that already exists on nuget.org; the transitive dependencies still come from nuget.org.
 
 3. Update Tags
 ```sh
@@ -40,5 +40,10 @@ $ git push origin --tags
 $ dotnet build --configuration Release
 $ dotnet nuget push .\JsonFlatFileDataStore\bin\Release\JsonFlatFileDataStore.x.x.x.nupkg --source https://api.nuget.org/v3/index.json --api-key xxxxx
 ```
+5. Smoke test the published package. Same checks as step 2, but against the artifact users will actually restore — this catches a bad upload or a package that behaves differently once it comes from the live feed.
+```sh
+$ ./scripts/smoke-test-package.sh --from-nuget x.x.x
+```
+nuget.org indexing lags a minute or two behind the push, so a restore failure right afterwards usually just means "not indexed yet" — wait and rerun.
 
 
