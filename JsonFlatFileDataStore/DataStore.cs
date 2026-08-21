@@ -45,7 +45,7 @@ public class DataStore : IDataStore
             {
                 // Serializing JObject ignores SerializerSettings, so we have to first deserialize to ExpandoObject and then serialize
                 // http://json.codeplex.com/workitem/23853
-                var jObject = JsonConvert.DeserializeObject<ExpandoObject>(data.ToString());
+                var jObject = JsonParser.ToExpandoObject(data.ToString());
                 return JsonConvert.SerializeObject(jObject, usedFormatting, _serializerSettings);
             })
             : (s => s.ToString(usedFormatting));
@@ -82,7 +82,7 @@ public class DataStore : IDataStore
                 {
                     lock (_jsonData)
                     {
-                        _jsonData = JObject.Parse(jsonText);
+                        _jsonData = JsonParser.Parse(jsonText);
                     }
 
                     return FileAccess.WriteJsonToFile(_filePath, _encryptJson, jsonText);
@@ -110,7 +110,7 @@ public class DataStore : IDataStore
     {
         lock (_jsonData)
         {
-            _jsonData = JObject.Parse(jsonData);
+            _jsonData = JsonParser.Parse(jsonData);
         }
 
         FileAccess.WriteJsonToFile(_filePath, _encryptJson, jsonData);
@@ -438,15 +438,24 @@ public class DataStore : IDataStore
                 return JsonConvert.DeserializeObject<ExpandoObject>(content, _converter) as dynamic;
 
             case var arrayToken when e.Type == JTokenType.Array:
-                return e.ToObject<List<object>>();
+                // Read through the JSON text like an object rather than converting the tokens, so
+                // that no decimal survives anywhere inside a nested array or object either
+                var arrayContent = string.Format(CultureInfo.InvariantCulture, "{0}", arrayToken);
+                return JsonConvert.DeserializeObject<List<object>>(arrayContent);
 
             case JValue jv when e is JValue:
-                return jv.Value;
+                return NormalizeFloatValue(jv.Value);
 
             default:
                 return e.ToObject<object>();
         }
     }
+
+    // The document keeps non-integral numbers as decimal so their precision survives a round trip,
+    // but the dynamic API has always handed them out as double — and a dynamic decimal can not even
+    // be compared to a double literal. Objects and arrays are read through their JSON text, which
+    // materializes every number in them as double regardless.
+    private static object NormalizeFloatValue(object value) => value is decimal d ? (double)d : value;
 
     private string GetJsonTextFromFile() => FileAccess.ReadJsonFromFile(_filePath, _encryptJson, _decryptJson);
 
@@ -463,7 +472,7 @@ public class DataStore : IDataStore
             var jsonText = GetJsonTextFromFile();
             try
             {
-                return JObject.Parse(jsonText);
+                return JsonParser.Parse(jsonText);
             }
             catch (JsonReaderException) when (attempt < maxAttempts - 1)
             {

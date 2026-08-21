@@ -47,7 +47,7 @@ internal static class CommitActionHandler
             {
                 try
                 {
-                    var (actionSuccess, updatedJson) = action.HandleAction(JObject.Parse(jsonText));
+                    var (actionSuccess, updatedJson) = action.HandleAction(JsonParser.Parse(jsonText));
 
                     callbacks.Enqueue((action, actionSuccess));
 
