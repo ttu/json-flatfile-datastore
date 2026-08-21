@@ -72,23 +72,39 @@ public class DataStore : IDataStore
 
         _jsonData = GetJsonObjectFromFile();
 
-        // Run updates on a background thread and use BlockingCollection to prevent multiple updates to run simultaneously
-        Task.Run(() =>
+        // Run updates on a dedicated background thread and use BlockingCollection to prevent multiple updates to run simultaneously.
+        // The handler blocks on Take() for the whole lifetime of the store, so it must not sit on a thread pool thread: a process
+        // holding several stores would then permanently occupy that many pool threads and starve every other continuation.
+        var commitHandlerThread = new Thread(() =>
         {
-            CommitActionHandler.HandleStoreCommitActions(_cts.Token,
-                _updates,
-                executionState => _executingJsonUpdate = executionState,
-                jsonText =>
-                {
-                    lock (_jsonData)
+            try
+            {
+                CommitActionHandler.HandleStoreCommitActions(_cts.Token,
+                    _updates,
+                    executionState => _executingJsonUpdate = executionState,
+                    jsonText =>
                     {
-                        _jsonData = JObject.Parse(jsonText);
-                    }
+                        lock (_jsonData)
+                        {
+                            _jsonData = JObject.Parse(jsonText);
+                        }
 
-                    return FileAccess.WriteJsonToFile(_filePath, _encryptJson, jsonText);
-                },
-                GetJsonTextFromFile);
-        });
+                        return FileAccess.WriteJsonToFile(_filePath, _encryptJson, jsonText);
+                    },
+                    GetJsonTextFromFile);
+            }
+            catch
+            {
+                // Keeps the previous Task.Run semantics, where an exception escaping the handler
+                // ended the loop as an unobserved task exception instead of tearing down the process.
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "JsonFlatFileDataStore commit handler"
+        };
+
+        commitHandlerThread.Start();
     }
 
     public void Dispose()

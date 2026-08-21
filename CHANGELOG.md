@@ -5,6 +5,7 @@
 * FIXED: Retry JSON parse on read to tolerate concurrent partial-file writes
 * FIXED: A failing commit action no longer hangs other callers in the same batch
 * FIXED: Collection key in file not matching configured case is now matched case-insensitively, instead of reading empty and duplicating the key on save
+* FIXED: Run DataStore's commit handler on its own background thread, so writes are not delayed when the application's thread pool is busy
 
 ### [2.4.2] - 2023-06-25
 * FIXED: Duplicate collection data to JSON on save when configured case was not used with collection name
