@@ -1,6 +1,9 @@
 # Changelog
 
 ### [Unreleased]
+
+
+### [2.4.3] - 2026-08-22
 * FIXED: Update functionality when objects has collections with nested collections
 * FIXED: Retry JSON parse on read to tolerate concurrent partial-file writes
 * FIXED: A failing commit action no longer hangs other callers in the same batch
