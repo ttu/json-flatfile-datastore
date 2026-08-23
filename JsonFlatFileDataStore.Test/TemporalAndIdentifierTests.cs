@@ -1,4 +1,4 @@
-namespace JsonFlatFileDataStore.Test;
+﻿namespace JsonFlatFileDataStore.Test;
 
 /// <summary>
 /// Round-trip tests for temporal types (DateTimeOffset, TimeSpan, DateTime.Kind)

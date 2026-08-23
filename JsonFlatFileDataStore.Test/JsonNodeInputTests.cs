@@ -1,24 +1,24 @@
-using Newtonsoft.Json.Linq;
+﻿using System.Text.Json.Nodes;
 
 namespace JsonFlatFileDataStore.Test;
 
 /// <summary>
-/// Pin behavior of public APIs that accept Newtonsoft JToken/JObject/JArray as input.
-/// Migration to System.Text.Json must decide: keep these as a compatibility shim
-/// or drop them as a breaking change. These tests lock the contract before that decision.
+/// Pin behavior of public APIs that accept System.Text.Json.Nodes JsonNode/JsonObject/JsonArray
+/// as input. The original tests targeted Newtonsoft's JToken/JObject/JArray; after the
+/// Newtonsoft → System.Text.Json migration the equivalent contract is exercised here.
 /// </summary>
-public class JTokenInputTests
+public class JsonNodeInputTests
 {
     [Fact]
-    public async Task InsertOne_JToken_AnonymousObject_RoundTrip()
+    public async Task InsertOne_JsonNode_AnonymousObject_RoundTrip()
     {
         var path = UTHelpers.GetFullFilePath($"JTInsert_{DateTime.UtcNow.Ticks}");
         var store = new DataStore(path);
 
-        var token = JToken.Parse("{ 'id': 1, 'name': 'Alice', 'age': 30 }");
+        var node = JsonNode.Parse("{ \"id\": 1, \"name\": \"Alice\", \"age\": 30 }");
 
         var collection = store.GetCollection("user");
-        await collection.InsertOneAsync(token);
+        await collection.InsertOneAsync(node);
 
         store.Dispose();
 
@@ -34,7 +34,7 @@ public class JTokenInputTests
     }
 
     [Fact]
-    public async Task UpdateOne_JTokenPatch_AppliesCorrectly()
+    public async Task UpdateOne_JsonNodePatch_AppliesCorrectly()
     {
         var path = UTHelpers.GetFullFilePath($"JTUpdate_{DateTime.UtcNow.Ticks}");
         var store = new DataStore(path);
@@ -42,7 +42,7 @@ public class JTokenInputTests
         var collection = store.GetCollection("user");
         await collection.InsertOneAsync(new { id = 1, name = "Original", age = 20, location = "NY" });
 
-        var patch = JToken.Parse("{ 'name': 'Patched', 'age': 25 }");
+        var patch = JsonNode.Parse("{ \"name\": \"Patched\", \"age\": 25 }");
         var updated = await collection.UpdateOneAsync((Predicate<dynamic>)(e => e.id == 1), patch);
         Assert.True(updated);
 
@@ -60,7 +60,7 @@ public class JTokenInputTests
     }
 
     [Fact]
-    public async Task ReplaceOne_JObject_NestedJArray()
+    public async Task ReplaceOne_JsonObject_NestedJsonArray()
     {
         var path = UTHelpers.GetFullFilePath($"JTReplace_{DateTime.UtcNow.Ticks}");
         var store = new DataStore(path);
@@ -68,12 +68,12 @@ public class JTokenInputTests
         var collection = store.GetCollection("things");
         await collection.InsertOneAsync(new { id = 1, label = "old", tags = new[] { "a" } });
 
-        var replacement = new JObject
+        var replacement = new JsonObject
         {
             ["id"] = 1,
             ["label"] = "new",
-            ["tags"] = new JArray { "x", "y", "z" },
-            ["nested"] = new JArray { new JArray { 1, 2 }, new JArray { 3, 4 } }
+            ["tags"] = new JsonArray("x", "y", "z"),
+            ["nested"] = new JsonArray(new JsonArray(1, 2), new JsonArray(3, 4))
         };
 
         var ok = await collection.ReplaceOneAsync((Predicate<dynamic>)(e => e.id == 1), replacement);
@@ -96,13 +96,13 @@ public class JTokenInputTests
     }
 
     [Fact]
-    public async Task InsertMany_JTokenArray_AllItemsInserted()
+    public async Task InsertMany_JsonArray_AllItemsInserted()
     {
         var path = UTHelpers.GetFullFilePath($"JTMany_{DateTime.UtcNow.Ticks}");
         var store = new DataStore(path);
 
-        var json = "[ { 'id': 1, 'name': 'A' }, { 'id': 2, 'name': 'B' }, { 'id': 3, 'name': 'C' } ]";
-        var array = JToken.Parse(json);
+        var json = "[ { \"id\": 1, \"name\": \"A\" }, { \"id\": 2, \"name\": \"B\" }, { \"id\": 3, \"name\": \"C\" } ]";
+        var array = (JsonArray)JsonNode.Parse(json);
 
         var collection = store.GetCollection("items");
         await collection.InsertManyAsync(array);

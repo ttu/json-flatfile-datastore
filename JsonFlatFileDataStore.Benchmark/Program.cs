@@ -6,10 +6,10 @@ internal class Program
     {
         var switcher = new BenchmarkSwitcher(new[]
         {
-                typeof(TypedCollectionBenchmark),
-                typeof(DynamicCollectionBenchmark),
-                typeof(ObjectExtensionsBenchmark)
-            });
+            typeof(TypedCollectionBenchmark),
+            typeof(DynamicCollectionBenchmark),
+            typeof(ObjectExtensionsBenchmark)
+        });
 
         switcher.Run(args);
     }
