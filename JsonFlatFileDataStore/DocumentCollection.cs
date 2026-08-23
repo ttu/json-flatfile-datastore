@@ -11,6 +11,7 @@ public class DocumentCollection<T> : IDocumentCollection<T>
 {
     private readonly string _path;
     private readonly string _idField;
+    private bool? _isGuidIdField;
     private readonly Lazy<List<T>> _data;
     private readonly Func<string, Func<List<T>, bool>, bool, Task<bool>> _commit;
     private readonly Func<T, T> _insertConvert;
@@ -381,6 +382,12 @@ public class DocumentCollection<T> : IDocumentCollection<T>
 
     private dynamic GetNextIdValue(List<T> data, T item = default(T))
     {
+        if (IsGuidIdField)
+        {
+            // Guid id-fields are not incremented, so a value that the caller has set is used as is
+            return TryGetItemGuid(item, out Guid itemGuid, out _) ? itemGuid : Guid.NewGuid();
+        }
+
         if (!data.Any())
         {
             if (item != null)
@@ -410,7 +417,68 @@ public class DocumentCollection<T> : IDocumentCollection<T>
         if (keyValue is Int64)
             return (int)keyValue + 1;
 
+        // With dynamic collections the id-field's type is only known from the stored value
+        if (IsGuidValue((object)keyValue, out Guid _))
+        {
+            if (!TryGetItemGuid(item, out Guid itemGuid, out object itemIdValue))
+                return Guid.NewGuid().ToString();
+
+            // A caller-defined value is used as is, so its original format is not lost
+            return itemIdValue as string ?? itemGuid.ToString();
+        }
+
         return ParseNextIntegerToKeyValue(keyValue.ToString());
+    }
+
+    /// <summary>
+    /// True when the collection's type has a Guid id-field. The value is resolved once,
+    /// as the collection's type and the name of the id-field don't change.
+    /// </summary>
+    private bool IsGuidIdField
+    {
+        get
+        {
+            if (_isGuidIdField is null)
+            {
+                var idFieldType = ObjectExtensions.GetFieldType<T>(_idField);
+                _isGuidIdField = idFieldType == typeof(Guid) || idFieldType == typeof(Guid?);
+            }
+
+            return _isGuidIdField.Value;
+        }
+    }
+
+    /// <summary>
+    /// Get the item's id-field value when the caller has set it to a non-empty Guid.
+    /// The value is returned both parsed and as it was stored on the item.
+    /// </summary>
+    private bool TryGetItemGuid(T item, out Guid guid, out object value)
+    {
+        guid = Guid.Empty;
+        value = null;
+
+        if (item == null)
+            return false;
+
+        // Note: GetFieldValue routes the value through ExpandoObjectConverter, which presents a Guid as a string
+        value = GetFieldValue(item, _idField);
+
+        return IsGuidValue(value, out guid) && guid != Guid.Empty;
+    }
+
+    private static bool IsGuidValue(object value, out Guid guid)
+    {
+        switch (value)
+        {
+            case Guid guidValue:
+                guid = guidValue;
+                return true;
+            case string stringValue:
+                return Guid.TryParse(stringValue, out guid);
+            default:
+                guid = Guid.Empty;
+                return false;
+        }
     }
 
     private dynamic GetFieldValue(T item, string fieldName)

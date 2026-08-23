@@ -430,11 +430,7 @@ await collection.DeleteManyAsync(e => e.City == "NY");
 
 If incrementing Id-field values are used, `GetNextIdValue` returns the next Id-field value. For integer Id-properties, the last item's value is incremented by one. For non-integer fields, the value is converted to a string and number at the end of the sting is parsed and incremented by one.
 
-> **Supported Id-field types:** integer types and `string` work as the collection key.
-> `Guid` is **not** supported as the Id property of a typed collection — inserts throw
-> at runtime. Use `int` or `string` as the key and keep the `Guid` in another field if
-> you need one per row. `Guid` is fine everywhere else (non-key fields,
-> `InsertItem`/`GetItem<Guid>` for single items).
+> **Supported Id-field types:** integer types, `string` and `Guid` work as the collection key.
 
 ```csharp
 var store = new DataStore(newFilePath, keyProperty: "myId");
@@ -451,6 +447,41 @@ var nextId = collection.GetNextIdValue();
 
 collection.InsertOne(new { myId = "hello3" });
 // nextId = "hello4"
+var nextId = collection.GetNextIdValue();
+```
+
+##### Guid Id-Fields
+
+`Guid` Id-field values are not incremented. `GetNextIdValue` returns a new `Guid` and on insert
+a new value is generated only when the item doesn't have an Id-field value yet, so an Id-field
+value that the caller has set is always kept as is.
+
+```csharp
+public class Employee
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; }
+}
+
+var collection = store.GetCollection<Employee>();
+
+// Id is generated as it is Guid.Empty
+collection.InsertOne(new Employee { Name = "Phil" });
+
+// Id is used as is
+collection.InsertOne(new Employee { Id = Guid.NewGuid(), Name = "Raymond" });
+```
+
+When the Id-field is not declared as a `Guid` — a dynamic collection, or a `string` Id-property —
+the type is only known from the stored value. A new `Guid` is generated as a string when the
+collection's last item has an Id-field value that is a valid `Guid`, instead of incrementing the
+number at the end of the string.
+
+```csharp
+var collection = store.GetCollection("employee");
+
+collection.InsertOne(new { id = Guid.NewGuid(), name = "Phil" });
+// nextId is a new Guid as a string
 var nextId = collection.GetNextIdValue();
 ```
 
