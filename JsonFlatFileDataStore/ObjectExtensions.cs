@@ -67,6 +67,19 @@ internal static class ObjectExtensions
                name.IndexOf("AnonymousType", StringComparison.Ordinal) > 0;
     }
 
+    /// <summary>
+    /// Get the declared type of a field. Returns null if the type doesn't have the field,
+    /// e.g. when the collection's type is dynamic.
+    /// </summary>
+    internal static Type GetFieldType<T>(string fieldName)
+    {
+        var property = typeof(T)
+                        .GetProperties()
+                        .FirstOrDefault(p => string.Equals(p.Name, fieldName, StringComparison.OrdinalIgnoreCase));
+
+        return property?.PropertyType;
+    }
+
     internal static bool HasField<T>(T item, string idField)
     {
         var idProperty = item.GetType()

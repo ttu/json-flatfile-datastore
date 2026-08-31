@@ -1,6 +1,8 @@
 # Changelog
 
 ### [Unreleased]
+* ADDED: Support for `Guid` Id-fields. Values are not incremented: a new `Guid` is generated when the inserted item doesn't have an Id-field value, and a value set by the caller is kept as is
+* CHANGED: When the Id-field is not declared as a `Guid` but the collection's last item has an Id-field value that is a valid `Guid`, the next value is a new `Guid` as a string. Earlier the number at the end of the string was incremented, which returned a valid `Guid` only when the previous value happened to end in a digit, e.g. `..0305e82c330a` returned `..0305e82c330a0` and `Guid.Empty` returned `00000000-0000-0000-0000-1`
 
 
 ### [2.4.3] - 2026-08-22

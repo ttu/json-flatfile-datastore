@@ -103,21 +103,18 @@ public class TemporalAndIdentifierTests
     }
 
     [Fact]
-    public void Guid_AsIdField_NotSupported_BehaviorPinned()
+    public void Guid_AsIdField_Supported()
     {
-        // Documented limitation: a typed model with a Guid as the key property fails on insert
-        // because the library's dynamic-dispatch path through ObjectExtensions.AddDataToField
-        // cannot set a Guid value via reflection in this code path.
-        //
-        // Migration note: STJ may or may not surface this same failure. If it does not,
-        // update this test to assert success.
+        // A typed model can use a Guid as the key property. See GuidIdFieldTests for the full behavior.
         var path = UTHelpers.GetFullFilePath($"GuidIdLim_{DateTime.UtcNow.Ticks}");
         var store = new DataStore(path);
 
         var collection = store.GetCollection<GuidIdModel>("guidIdModel");
 
-        Assert.Throws<ArgumentException>(() =>
-            collection.InsertOne(new GuidIdModel { Id = Guid.NewGuid(), Name = "X" }));
+        var id = Guid.NewGuid();
+        collection.InsertOne(new GuidIdModel { Id = id, Name = "X" });
+
+        Assert.Equal(id, collection.AsQueryable().Single().Id);
 
         store.Dispose();
         UTHelpers.Down(path);
