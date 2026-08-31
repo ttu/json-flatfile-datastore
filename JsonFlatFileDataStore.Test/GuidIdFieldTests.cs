@@ -362,6 +362,48 @@ public class GuidIdFieldTests
         UTHelpers.Down(newFilePath);
     }
 
+    [Fact]
+    public void InsertOne_Dynamic_GeneratesIdWhenFirstItemHasEmptyGuid()
+    {
+        var newFilePath = UTHelpers.Up();
+        var store = new DataStore(newFilePath);
+
+        var collection = store.GetCollection("dynamicEmptyGuidIds");
+
+        // Anonymous types keep the id-field the caller set, so an ExpandoObject is used here
+        dynamic item = new System.Dynamic.ExpandoObject();
+        item.id = Guid.Empty;
+        item.name = "Jim";
+
+        collection.InsertOne(item);
+
+        var inserted = collection.AsQueryable().Single();
+
+        var generated = (string)inserted.id;
+        Assert.True(Guid.TryParse(generated, out var parsed));
+        Assert.NotEqual(Guid.Empty, parsed);
+
+        UTHelpers.Down(newFilePath);
+    }
+
+    [Fact]
+    public void InsertOne_Typed_GeneratesIdWhenFirstStringIdIsEmptyGuid()
+    {
+        var newFilePath = UTHelpers.Up();
+        var store = new DataStore(newFilePath);
+
+        var collection = store.GetCollection<StringIdModel>("stringEmptyGuidIds");
+
+        collection.InsertOne(new StringIdModel { Id = Guid.Empty.ToString(), Name = "Jim" });
+
+        var item = collection.AsQueryable().Single();
+
+        Assert.True(Guid.TryParse(item.Id, out var generated));
+        Assert.NotEqual(Guid.Empty, generated);
+
+        UTHelpers.Down(newFilePath);
+    }
+
     public class StringIdModel
     {
         public string Id { get; set; }

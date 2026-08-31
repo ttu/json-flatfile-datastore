@@ -400,6 +400,10 @@ public class DocumentCollection<T> : IDocumentCollection<T>
                     if (primaryKeyValue is Int64)
                         return (int)primaryKeyValue;
 
+                    // An empty Guid is not a usable identifier, so a new value is generated
+                    if (IsGuidValue((object)primaryKeyValue, out Guid primaryKeyGuid) && primaryKeyGuid == Guid.Empty)
+                        return Guid.NewGuid().ToString();
+
                     return primaryKeyValue;
                 }
             }
